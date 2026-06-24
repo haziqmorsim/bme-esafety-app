@@ -5,9 +5,15 @@ export const employeeInfo = {
 			title: 'Assistant Manager',
 			email: 'catherine@boilermech.com'
 		},
-		{ name: 'Khor Hui Kiang', title: 'Account Manager', email: 'khorhk@boilermech.com' },
-		{ name: 'Leanne Teo Zi Ying', title: 'Senior Accountant', email: 'leanne@boilermech.com' },
-		{ name: 'Norsakila Binti Ab. Jalil', title: 'Account Clerk', email: 'sakila@boilermech.com' },
+		{ 
+			name: 'Khor Hui Kiang', 
+			title: 'Account Manager', 
+			email: 'khorhk@boilermech.com' 
+		},
+		{ 
+			name: 'Norsakila Binti Ab. Jalil', 
+			title: 'Account Clerk', 
+			email: 'sakila@boilermech.com' },
 		{
 			name: 'Nur Anis Haziqah Ismail',
 			title: 'Account Assistant',
@@ -18,36 +24,88 @@ export const employeeInfo = {
 			title: 'Account Assistant',
 			email: 'farhana@boilermech.com'
 		},
-		{ name: 'Nurafifah Binti Hasnul', title: 'Account Executive', email: 'afifah@boilermech.com' },
-		{ name: 'Sarfaizah Miswan', title: 'Account Executive', email: 'sarfaizah@boilermech.com' },
-		{ name: 'Siti Nur Jawahir', title: 'Account Clerk', email: 'wawa@boilermech.com' },
-		{ name: 'Tan Ee Ming', title: 'Group Financial Controller', email: 'eeming@boilermech.com' },
-		{ name: 'Tan Mei Ling', title: 'Assistant Manager', email: 'tanml@boilermech.com' },
-		{ name: 'Tan Pei Ji', title: 'Assistant Manager', email: 'tanpj@boilermech.com' }
+		{ 
+			name: 'Nurafifah Binti Hasnul', 
+			title: 'Account Executive', 
+			email: 'afifah@boilermech.com' 
+		},
+		{ 
+			name: 'Sarfaizah Miswan', 
+			title: 'Account Executive', 
+			email: 'sarfaizah@boilermech.com' 
+		},
+		{ 
+			name: 'Siti Nur Jawahir', 
+			title: 'Account Clerk', 
+			email: 'wawa@boilermech.com' 
+		},
+		{ 
+			name: 'Tan Ee Ming', 
+			title: 'Group Financial Controller', 
+			email: 'eeming@boilermech.com' 
+		},
+		{ 
+			name: 'Tan Mei Ling', 
+			title: 'Assistant Manager', 
+			email: 'tanml@boilermech.com' 
+		},
+		{ 
+			name: 'Wan Joon Hong', 
+			title: 'Account Executive', 
+			email: 'joonhong@boilermech.com' 
+		}
 	],
 	Administration: [
-		{ name: 'Ashley Phang Ji Kei', title: 'Admin Executive', email: 'ashley@boilermech.com' },
+		{ 
+			name: 'Ashley Phang Ji Kei', 
+			title: 'Admin Executive', 
+			email: 'ashley@boilermech.com' },
 		{
 			name: 'Harvindar Singh A/L Koldip Singh',
 			title: 'Senior General Manager',
 			email: 'harvindar@boilermech.com'
 		},
-		{ name: 'Helen Koh', title: 'Senior Administration Executive', email: 'helen@boilermech.com' },
-		{ name: 'Michelle Yeap', title: 'Administration Executive', email: 'michelle@boilermech.com' },
+		{ 
+			name: 'Helen Koh', 
+			title: 'Senior Administration Executive', 
+			email: 'helen@boilermech.com' 
+		},
+		{ 
+			name: 'Michelle Yeap', 
+			title: 'Administration Executive', 
+			email: 'michelle@boilermech.com' 
+		},
 		{
 			name: 'Noor Ezzati Binti Che Mahmood',
 			title: 'Admin Officer',
 			email: 'ezzati@boilermech.com'
 		},
-		{ name: 'Nur Fatihah Binti Mustapha', title: 'Admin Officer', email: 'fatihah@boilermech.com' },
-		{ name: 'See An Yong', title: 'Senior Executive', email: 'anyong@boilermech.com' }
+		{ 
+			name: 'Nur Fatihah Binti Mustapha', 
+			title: 'Admin Officer', 
+			email: 'fatihah@boilermech.com' 
+		},
+		{ 
+			name: 'See An Yong', 
+			title: 'Senior Executive', 
+			email: 'anyong@boilermech.com' 
+		}
 	],
 	'After Sales': [
-		{ name: 'Cham Thean Ho', title: 'Sales Manager', email: 'chamth@boilermech.com' },
+		{ 
+			name: 'Cham Thean Ho', 
+			title: 'Sales Manager', 
+			email: 'chamth@boilermech.com' 
+		},
 		{
 			name: 'Dvendran A/L Sandre Mohanan',
 			title: 'Senior Project Engineer',
 			email: 'dven@boilermech.com'
+		},
+		{
+			name: 'Ezra Lee Hung Ern',
+			title: 'Assistant Manager',
+			email: 'ezra.lee@boilermech.com'
 		},
 		{
 			name: 'Fairuza Aula Binti Zakariah',
@@ -59,15 +117,31 @@ export const employeeInfo = {
 			title: 'Assistant Manager',
 			email: 'harith@boilermech.com'
 		},
-		{ name: 'Hazwan Bin Abd Razak', title: 'Assistant Manager', email: 'hazwan@boilermech.com' },
-		{ name: 'Lee Yi Xian', title: 'Sales Engineer', email: 'leeyx@boilermech.com' },
+		{ 
+			name: 'Hazwan Bin Abd Razak', 
+			title: 'Assistant Manager', 
+			email: 'hazwan@boilermech.com' 
+		},
+		{ 
+			name: 'Lee Yi Xian', 
+			title: 'Sales Engineer', 
+			email: 'leeyx@boilermech.com' 
+		},
 		{
 			name: 'Lializa Miswan',
 			title: 'Senior Administration Executive',
 			email: 'lia@boilermech.com'
 		},
-		{ name: 'Loo Chee Han', title: 'Sales Engineer', email: 'cheehan@boilermech.com' },
-		{ name: 'Mohd Rahimi Abd Rahman', title: 'Senior Supervisor', email: 'rahim@boilermech.com' },
+		{ 
+			name: 'Loo Chee Han', 
+			title: 'Sales Engineer', 
+			email: 'cheehan@boilermech.com' 
+		},
+		{ 
+			name: 'Mohd Rahimi Abd Rahman', 
+			title: 'Senior Supervisor', 
+			email: 'rahim@boilermech.com' 
+		},
 		{
 			name: 'Muhamad Idzwan Hilmy Bin Amiruddin',
 			title: 'Project Engineer',
@@ -83,26 +157,58 @@ export const employeeInfo = {
 			title: 'Project Engineer',
 			email: 'shankar@boilermech.com'
 		},
-		{ name: 'Noorzia Binti Mursalin', title: 'Sales Coordinator', email: 'noorzia@boilermech.com' },
+		{ 
+			name: 'Noorzia Binti Mursalin', 
+			title: 'Sales Coordinator', 
+			email: 'noorzia@boilermech.com' 
+		},
 		{
 			name: 'Suhaila Nabila Salleh',
 			title: 'Aftersales Coordinator',
 			email: 'suhaila@boilermech.com'
 		},
-		{ name: 'Wong Chih Chung', title: 'Manager', email: 'wongcc@boilermech.com' }
+		{ 
+			name: 'Wong Chih Chung', 
+			title: 'Manager', 
+			email: 'wongcc@boilermech.com' 
+		}
 	],
 	'Business Development': [
-		{ name: 'Chan Kong Yap', title: 'Technical Engineer', email: 'chanky@boilermech.com' },
-		{ name: 'Joyce Lee', title: 'Sales Admin Executive', email: 'leelh@boilermech.com' },
-		{ name: 'Keith Lun Jee Leong', title: 'Sales Manager', email: 'keith@boilermech.com' },
-		{ name: 'Khoo Erbin', title: 'Sales Engineer', email: 'khoo.erbin@boilermech.com' },
+		{ 
+			name: 'Chan Kong Yap', 
+			title: 'Technical Engineer', 
+			email: 'chanky@boilermech.com' 
+		},
+		{ 
+			name: 'Joyce Lee', 
+			title: 'Sales Admin Executive', 
+			email: 'leelh@boilermech.com' 
+		},
+		{ 
+			name: 'Keith Lun Jee Leong', 
+			title: 'Sales Manager', 
+			email: 'keith@boilermech.com' 
+		},
+		{ 
+			name: 'Khoo Erbin', 
+			title: 'Sales Engineer', 
+			email: 'khoo.erbin@boilermech.com' 
+		},
 		{
 			name: 'Phuang Ke Shong',
 			title: 'Senior Proposal Engineer',
 			email: 'phuangks@boilermech.com'
 		},
-		{ name: 'Shirley Lee', title: 'Sales Manager', email: 'leeshirley@boilermech.com' },
-		{ name: 'Yuen Yoon Li', title: 'Technical Manager', email: 'yuen@boilermech.com' }
+		{ 
+			name: 'Shirley Lee', 
+			title: 'Sales Manager', 
+			email: 'leeshirley@boilermech.com' 
+		},
+		{ 
+			name: 'Yuen Yoon Li', 
+			title: 'Technical Manager', 
+			email: 'yuen@boilermech.com' 
+		}
 	],
 	Design: [
 		{ name: 'Chiew Jia Jien', title: 'Design Engineer', email: 'chiewjj@boilermech.com' },
@@ -140,21 +246,21 @@ export const employeeInfo = {
 			title: 'Senior Technical Clerk',
 			email: 'afiqah@boilermech.com'
 		},
+		{ name: 'Siew Kar Keat', title: 'Design Engineer', email: 'siewkk@boilermech.com' },
 		{ name: 'Sim Lih Chi', title: 'Assistant Manager II', email: 'simlc@boilermech.com' },
-		{ name: 'Soo Chin Chin', title: 'Assistant Manager II', email: 'soocc@boilermech.com' },
+		{ name: 'Soo Chin Chin', title: 'Assistant Manager', email: 'soocc@boilermech.com' },
 		{ name: 'Tan Jie Sheng', title: 'Manager I', email: 'tanjs@boilermech.com' },
 		{ name: 'Zatul Itri Binti Abdul Karim', title: 'Draughtsman', email: 'zatul@boilermech.com' }
 	],
 	HR: [
-		{ name: 'Chan Choi Ngan', title: 'Assistant Manager', email: 'choingan@boilermech.com' },
+		{ name: 'Amirah Binti Abdullah', title: 'HR Executive', email: 'amirah.abdullah@boilermech.com' },
+		{ name: 'Chan Choi Ngan', title: 'Senior Executive', email: 'riqun@boilermech.com' },
+		{ name: 'Hai Ri Qun', title: 'Assistant Manager', email: 'choingan@boilermech.com' },
 		{ name: 'Ivy Tan Tsung Lyn', title: 'HR Executive', email: 'ivy.tan@boilermech.com' },
+		{ name: 'Lee Wai Ken', title: 'HR Executive', email: 'leewk@boilermech.com' },
 		{ name: 'Ling Chui Hong', title: 'HR Executive', email: 'chuihong@boilermech.com' },
-		{
-			name: 'Muhamad Saiful Bin Roslaily',
-			title: 'Store Supervisor',
-			email: 'saiful@boilermech.com'
-		},
 		{ name: 'Raphael Tan Wen Wu', title: 'HR Executive', email: 'raphael@boilermech.com' },
+		{ name: 'Raymond Lee Wai Ken', title: 'HR Executive', email: 'raymond@boilermech.com' },
 		{ name: 'Shenny Ngan Yuih Xian', title: 'Senior Executive', email: 'shenny@boilermech.com' },
 		{
 			name: 'Shirley Yap Lei Peng',
@@ -176,6 +282,11 @@ export const employeeInfo = {
 			name: 'Mohd Farib Awang',
 			title: 'Inventory Assistant Manager',
 			email: 'farib@boilermech.com'
+		},
+		{
+			name: 'Muhamad Saiful Bin Roslaily',
+			title: 'Store Supervisor',
+			email: 'saiful@boilermech.com'
 		},
 		{
 			name: 'Norhazliza Mohamad Yunus',
@@ -245,6 +356,11 @@ export const employeeInfo = {
 			title: 'Shipping & Packing Manager',
 			email: 'andyfoo@boilermech.com'
 		},
+		{
+			name: 'Lilian Cheng Yee Lian',
+			title: 'Shipping Executive',
+			email: 'yeelian@boilermech.com'
+		},
 		{ name: 'Muhammad Shahril Izzad', title: 'Senior Assistant', email: 'izzad@boilermech.com' },
 		{ name: 'Ng Yong Seng', title: 'Senior Packing Executive', email: 'ngys@boilermech.com' },
 		{
@@ -268,6 +384,11 @@ export const employeeInfo = {
 			name: 'Nur Alyani Nadiah Binti Mohd Hazli',
 			title: 'Production Engineer',
 			email: 'alyani@boilermech.com'
+		},
+		{
+			name: 'Saizatul Affiza binti Arman',
+			title: 'Clerk',
+			email: 'affiza@boilermech.com'
 		},
 		{
 			name: 'Shahrul Izwan Bin Suhaimi',
@@ -303,6 +424,11 @@ export const employeeInfo = {
 			email: 'hafzal@boilermech.com'
 		},
 		{
+			name: 'Muhammad Fauzi bin Shamsul Bahri',
+			title: 'Project Engineer',
+			email: 'fauzi.shamsul@boilermech.com'
+		},
+		{
 			name: 'Muhammad Safuan Bin Abd Rasip',
 			title: 'Assistant Manager',
 			email: 'safuan@boilermech.com'
@@ -330,6 +456,11 @@ export const employeeInfo = {
 		{ name: 'Ng Sheng Shien', title: 'Senior Project Engineer', email: 'ngss@boilermech.com' },
 		{ name: 'Ng Wai Lead', title: 'Manager', email: 'ngwl@boilermech.com' },
 		{ name: 'Norlela Hayati Wahid', title: 'Project Clerk', email: 'norlela@boilermech.com' },
+		{
+			name: 'Nurazmina Hanie Binti Yusri',
+			title: 'Executive',
+			email: 'nurazmina@boilermech.com'
+		},
 		{
 			name: 'Nurul Nabila Binti Mohd Saleh',
 			title: 'Project Coordinator',
@@ -379,6 +510,11 @@ export const employeeInfo = {
 		{ name: 'Hoi Yoke Sum', title: 'QC Manager', email: 'hoiys@boilermech.com' },
 		{ name: 'Mohd Faizal Ismail', title: 'Site Assistant Manager', email: 'faizal@boilermech.com' },
 		{
+			name: 'Muhammad Amir Akmal Bin Adnan',
+			title: 'QC Executive',
+			email: 'amir.akmal@boilermech.com'
+		},
+		{
 			name: 'Muhammad Amzar Muhsin Bin Akhmal',
 			title: 'QC Engineer',
 			email: 'amzar@boilermech.com'
@@ -395,7 +531,8 @@ export const employeeInfo = {
 			email: 'zahro@boilermech.com'
 		},
 		{ name: 'Roshan A/L Rabinder', title: 'QC Inspector', email: 'roshan@boilermech.com' },
-		{ name: 'Saizatul Affira Binti Arman', title: 'QC Clerk', email: 'affira@boilermech.com' }
+		{ name: 'Saizatul Affira Binti Arman', title: 'QC Clerk', email: 'affira@boilermech.com' },
+		{ name: 'Tang Hong Tyng', title: 'QC Assistant Manager', email: 'anne@boilermech.com' }
 	],
 	'Safety & Health': [
 		{
@@ -474,7 +611,6 @@ export const employeeInfo = {
 			title: 'Project Engineer',
 			email: 'taufeek@boilermech.com'
 		},
-		{ name: 'Tang Hon Tyng', title: 'QA Assistant Manager', email: 'tanht@boilermech.com' },
 		{ name: 'Wong Poon Han', title: 'Senior Manager', email: 'wpoonhan@boilermech.com' },
 		{ name: 'Yong Thian Hock', title: 'Senior Manager', email: 'yongth@boilermech.com' }
 	]
