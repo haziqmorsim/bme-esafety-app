@@ -382,7 +382,7 @@
 		<h2 class="heading">Acknowledgement and Submission</h2>
 		<div class="container">
 			<div class="checkbox">
-				<input type="checkbox" name="checkbox" id="checkbox" bind:value={acknowledged} />
+				<input type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} />
 			</div>
 			<div class="declaration">
 				<p>The declaration for the Safety Officer Audit Report as below:</p>

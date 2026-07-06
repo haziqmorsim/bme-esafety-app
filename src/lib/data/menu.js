@@ -76,6 +76,12 @@ export const menuSections = [
 				route: '/osh/e-hkp'
 			},
 			{
+				icon: '/icons/eIDF.png',
+				title: 'Induction Form (e-IDF) Submission',
+				description: 'For OSH engineers to submit induction form',
+				route: '/osh/e-idf'
+			},
+			{
 				icon: '/icons/eIPR.png',
 				title: 'Inspection Record (e-IPR) Submission',
 				description: 'For OSH engineers to submit safety inspection record',
