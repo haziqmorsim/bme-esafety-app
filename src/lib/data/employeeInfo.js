@@ -21,7 +21,7 @@ export const employeeInfo = {
 		},
 		{
 			name: 'Nur Farhana Rostam Affendi',
-			title: 'Account Assistant',
+			title: 'Account Executive',
 			email: 'farhana@boilermech.com'
 		},
 		{ 
@@ -31,7 +31,7 @@ export const employeeInfo = {
 		},
 		{ 
 			name: 'Sarfaizah Miswan', 
-			title: 'Account Executive', 
+			title: 'Senior Account Executive', 
 			email: 'sarfaizah@boilermech.com' 
 		},
 		{ 
@@ -129,7 +129,7 @@ export const employeeInfo = {
 		},
 		{
 			name: 'Lializa Miswan',
-			title: 'Senior Administration Executive',
+			title: 'Assistant Manager',
 			email: 'lia@boilermech.com'
 		},
 		{ 
@@ -159,7 +159,7 @@ export const employeeInfo = {
 		},
 		{ 
 			name: 'Noorzia Binti Mursalin', 
-			title: 'Sales Coordinator', 
+			title: 'After Sales Executive', 
 			email: 'noorzia@boilermech.com' 
 		},
 		{
@@ -169,7 +169,7 @@ export const employeeInfo = {
 		},
 		{ 
 			name: 'Wong Chih Chung', 
-			title: 'Manager', 
+			title: 'Senior Manager', 
 			email: 'wongcc@boilermech.com' 
 		}
 	],
@@ -350,18 +350,13 @@ export const employeeInfo = {
 		},
 		{ 
 			name: 'Hai Ri Qun', 
-			title: 'Assistant Manager', 
+			title: 'Senior Executive', 
 			email: 'choingan@boilermech.com' 
 		},
 		{ 
 			name: 'Ivy Tan Tsung Lyn', 
 			title: 'HR Executive', 
 			email: 'ivy.tan@boilermech.com' 
-		},
-		{ 
-			name: 'Lee Wai Ken', 
-			title: 'HR Executive', 
-			email: 'leewk@boilermech.com' 
 		},
 		{ 
 			name: 'Ling Chui Hong', 
@@ -380,7 +375,7 @@ export const employeeInfo = {
 		},
 		{ 
 			name: 'Shenny Ngan Yuih Xian', 
-			title: 'Senior Executive', 
+			title: 'Assistant Manager', 
 			email: 'shenny@boilermech.com' 
 		},
 		{
@@ -422,7 +417,7 @@ export const employeeInfo = {
 		},
 		{
 			name: 'Muhamad Saiful Bin Roslaily',
-			title: 'Store Supervisor',
+			title: 'Senior Store Supervisor',
 			email: 'saiful@boilermech.com'
 		},
 		{
@@ -490,18 +485,6 @@ export const employeeInfo = {
 			email: 'foongsl@boilermech.com' 
 		}
 	],
-	Logistics: [
-		{ 
-			name: 'Norhasni Farina', 
-			title: 'Shipping Assistant', 
-			email: 'farina@boilermech.com' 
-		},
-		{ 
-			name: 'Sarimah Binti Ismail', 
-			title: 'Shipping Executive', 
-			email: 'sarimah@boilermech.com' 
-		}
-	],
 	Management: [
 		{
 			name: 'Chan Van Chee',
@@ -556,49 +539,17 @@ export const employeeInfo = {
 	],
 	'Operations Excellence': [
 		{
-			name: 'Chong Wen Yang',
-			title: 'Operations Excellence Executive',
-			email: 'chongwy@boilermech.com'
-		},
-		{
 			name: 'Muhammad Haziq Husni bin Morsim',
 			title: 'Automation Developer',
 			email: 'haziq.husni@boilermech.com'
 		}
 	],
-	Packing: [
-		{
-			name: 'Ahmad Fariq Farhan Bin Suhaimi',
-			title: 'Packing Admin Assistant',
-			email: 'fariq@boilermech.com'
-		},
-		{
-			name: 'Andy Foo Shyang How',
-			title: 'Shipping & Packing Manager',
-			email: 'andyfoo@boilermech.com'
-		},
-		{
-			name: 'Lilian Cheng Yee Lian',
-			title: 'Shipping Executive',
-			email: 'yeelian@boilermech.com'
-		},
-		{ 
-			name: 'Muhammad Shahril Izzad', 
-			title: 'Senior Assistant', 
-			email: 'izzad@boilermech.com' 
-		},
-		{ 
-			name: 'Ng Yong Seng', 
-			title: 'Senior Packing Executive', 
-			email: 'ngys@boilermech.com' 
-		},
-		{
-			name: 'Shafinas Shahirah Binti Hishamudin',
-			title: 'Packing Admin Assistant',
-			email: 'shafinas@boilermech.com'
-		}
-	],
 	Production: [
+		{ 
+			name: 'Elton Lee Yuen Lok', 
+			title: 'Executive', 
+			email: 'elton@boilermech.com' 
+		},
 		{ 
 			name: 'Koh Chuan Keat', 
 			title: 'Production Engineer', 
@@ -651,10 +602,15 @@ export const employeeInfo = {
 		}
 	],
 	Project: [
-		{
-			name: 'Andrew Tan Thian Chern',
-			title: 'Senior Administration Executive',
-			email: 'andrew@boilermech.com'
+		{ 
+			name: 'Ahmad Arsyad Fathi bin Abd Wahab', 
+			title: 'Project Engineer', 
+			email: 'arsyad.fathi@boilermech.com' 
+		},
+		{ 
+			name: 'Arfan Haziq bin &apos;Ainudin', 
+			title: 'Project Engineer', 
+			email: 'arsyad.fathi@boilermech.com' 
 		},
 		{ 
 			name: 'Chan Zhen Yi', 
@@ -693,7 +649,7 @@ export const employeeInfo = {
 		},
 		{ 
 			name: 'Law Chee Wong', 
-			title: 'Senior General Manager', 
+			title: 'Executive Director', 
 			email: 'lawcw@boilermech.com' 
 		},
 		{ 
@@ -1045,7 +1001,7 @@ export const employeeInfo = {
 		},
 		{ 
 			name: 'Laila Binti Othman', 
-			title: 'Senior Admin Assistant', 
+			title: 'Executive', 
 			email: 'laila@boilermech.com' 
 		},
 		{ 
@@ -1059,7 +1015,54 @@ export const employeeInfo = {
 			email: 'yongys@boilermech.com' 
 		}
 	],
+	'Shipping & Packing': [
+		{
+			name: 'Ahmad Fariq Farhan Bin Suhaimi',
+			title: 'Packing Admin Assistant',
+			email: 'fariq@boilermech.com'
+		},
+		{
+			name: 'Andy Foo Shyang How',
+			title: 'Shipping & Packing Manager',
+			email: 'andyfoo@boilermech.com'
+		},
+		{
+			name: 'Lilian Cheng Yee Lian',
+			title: 'Shipping Executive',
+			email: 'yeelian@boilermech.com'
+		},
+		{ 
+			name: 'Muhammad Shahril Izzad', 
+			title: 'Senior Assistant', 
+			email: 'izzad@boilermech.com' 
+		},
+		{ 
+			name: 'Ng Yong Seng', 
+			title: 'Senior Packing Executive', 
+			email: 'ngys@boilermech.com' 
+		},
+		{ 
+			name: 'Norhasni Farina', 
+			title: 'Shipping Assistant', 
+			email: 'farina@boilermech.com' 
+		},
+		{ 
+			name: 'Sarimah Binti Ismail', 
+			title: 'Shipping Executive', 
+			email: 'sarimah@boilermech.com' 
+		},
+		{
+			name: 'Shafinas Shahirah Binti Hishamudin',
+			title: 'Packing Admin Assistant',
+			email: 'shafinas@boilermech.com'
+		}
+	],
 	'Special Project': [
+		{ 
+			name: 'Abdul Rahman Ashraf', 
+			title: 'Project Engineer', 
+			email: 'ashraf@boilermech.com' 
+		},
 		{ 
 			name: 'Aina Najwa Binti Ilham', 
 			title: 'Document Controller', 
@@ -1074,6 +1077,11 @@ export const employeeInfo = {
 			name: 'Eugene Lee Choon Siong', 
 			title: 'Manager', 
 			email: 'eugene@boilermech.com' 
+		},
+		{ 
+			name: 'Kavinmithran A/L Kalibaskara', 
+			title: 'Project Engineer', 
+			email: 'kavin@boilermech.com' 
 		},
 		{ 
 			name: 'Kim Shi Xian', 
@@ -1097,7 +1105,7 @@ export const employeeInfo = {
 		},
 		{ 
 			name: 'Mohd Zahid Bin Zaing', 
-			title: 'Project Engineer', 
+			title: 'Senior Project Engineer', 
 			email: 'zahid@boilermech.com' 
 		},
 		{
