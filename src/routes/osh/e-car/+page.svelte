@@ -3,7 +3,7 @@
 	import FileText from '@lucide/svelte/icons/file-text';
 	import FileClock from '@lucide/svelte/icons/file-clock';
 	import Check from '@lucide/svelte/icons/check';
-	import { supabase, waitForSession } from '$lib/supabase';
+	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { requireUser } from '$lib/auth-guard';

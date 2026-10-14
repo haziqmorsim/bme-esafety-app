@@ -1,7 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { supabase, waitForSession } from '$lib/supabase';
+	import { supabase } from '$lib/supabase';
 	import { menuSections } from '$lib/data/menu';
 	import Check from '@lucide/svelte/icons/check';
 	import { requireUser } from '$lib/auth-guard';

@@ -3,7 +3,7 @@
 	import Plus from '@lucide/svelte/icons/plus';
 	import Search from '@lucide/svelte/icons/search';
 	import Close from '@lucide/svelte/icons/x';
-	import { supabase, waitForSession } from '$lib/supabase';
+	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { requireUser } from '$lib/auth-guard';

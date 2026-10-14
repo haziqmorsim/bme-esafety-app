@@ -1,7 +1,7 @@
 <script>
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
-	import { supabase, waitForSession } from '$lib/supabase';
+	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
 	import { requireUser } from '$lib/auth-guard';
 
