@@ -7,6 +7,7 @@
 	import History from '@lucide/svelte/icons/history';
 	import Calendar from '@lucide/svelte/icons/calendar-days';
 	import Bell from '@lucide/svelte/icons/bell';
+	import House from '@lucide/svelte/icons/house';
 
 	const isAuthPage = $derived.by(() => {
 		const path = $page.url.pathname;
@@ -69,8 +70,9 @@
 </script>
 
 <div class="container">
-	<div class="logo">
+	<div>
 		<a href="/"><img src="/images/bme_logo.jpg" alt="BME Logo" class="logo" /></a>
+		<a href="/" class="navigation"><House size={20} />Main Menu</a>
 	</div>
 	{#if !isAuthPage && hasUser}
 		<div class="welcome">
@@ -128,11 +130,12 @@
 
 	.container {
 		display: flex;
+		margin-bottom: 15px;
 		padding: 0 10px;
 	}
 
 	.logo {
-		width: 35%;
+		width: 70%;
 	}
 
 	.navigation {
@@ -155,9 +158,9 @@
 		flex-direction: column;
 		align-items: flex-end;
 		position: absolute;
-		top: 40px;
+		top: 80px;
 		right: 10px;
-		gap: 10px;
+		gap: 20px;
 	}
 
 	@media (max-width: 600px) {
