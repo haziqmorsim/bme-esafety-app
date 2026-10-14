@@ -1,45 +1,56 @@
 <script>
+	import { onMount } from 'svelte';
+	import { getSupabase } from '$lib/supabase';
 	import Search from '@lucide/svelte/icons/search';
-	import { employeeInfo } from '$lib/data/employeeInfo';
 	import ChevronsLeft from '@lucide/svelte/icons/chevrons-left';
 	import ChevronsRight from '@lucide/svelte/icons/chevrons-right';
+
+	let employees = $state([]);
+	let loading = $state(true);
+	let loadError = $state(null);
+
+	onMount(async () => {
+		const supabase = getSupabase();
+		if (!supabase) {
+			loadError = 'Supabase client is not available.';
+			loading = false;
+			return;
+		}
+
+		const { data, error } = await supabase
+			.from('employees')
+			.select('id, department, name, title, email')
+			.order('department', { ascending: true })
+			.order('name', { ascending: true });
+
+		if (error) {
+			console.error('Failed to load employees from Supabase:', error.message);
+			loadError = error.message;
+		} else {
+			employees = data ?? [];
+		}
+		loading = false;
+	});
 
 	let selectedDepartment = $state('All');
 	let searchText = $state('');
 	let currentPage = $state(1);
 	const pageSize = 20;
 
-	const departments = ['All', ...Object.keys(employeeInfo)];
-
 	const normalizeSearch = (value) => value.trim().toLowerCase();
 
-	const sortByDepartment = (list) =>
-		list
-			.slice()
-			.sort(
-				(a, b) =>
-					resolveDepartment(a).localeCompare(resolveDepartment(b)) || a.name.localeCompare(b.name)
-			);
-
-	const resolveDepartment = (employee) => {
-		if (employee.department) return employee.department;
-		const match = Object.entries(employeeInfo).find(([, employees]) =>
-			employees.some((item) => item.email === employee.email)
-		);
-		return match ? match[0] : '';
-	};
+	let departments = $derived([
+		'All',
+		...Array.from(new Set(employees.map((e) => e.department))).sort((a, b) => a.localeCompare(b))
+	]);
 
 	let filteredEmployees = $derived.by(() => {
 		const keyword = normalizeSearch(searchText);
+
 		const baseList =
 			selectedDepartment === 'All'
-				? Object.entries(employeeInfo).flatMap(([department, employees]) =>
-						employees.map((employee) => ({ ...employee, department }))
-					)
-				: (employeeInfo[selectedDepartment] ?? []).map((employee) => ({
-						...employee,
-						department: selectedDepartment
-					}));
+				? employees
+				: employees.filter((emp) => emp.department === selectedDepartment);
 
 		const filtered = keyword
 			? baseList.filter((emp) => {
@@ -48,7 +59,9 @@
 				})
 			: baseList;
 
-		return sortByDepartment(filtered);
+		return filtered
+			.slice()
+			.sort((a, b) => a.department.localeCompare(b.department) || a.name.localeCompare(b.name));
 	});
 
 	let totalPages = $derived(Math.max(1, Math.ceil(filteredEmployees.length / pageSize)));
@@ -142,14 +155,22 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#if filteredEmployees.length === 0}
+				{#if loading}
+					<tr>
+						<td colspan="4">Loading employees…</td>
+					</tr>
+				{:else if loadError}
+					<tr>
+						<td colspan="4">Could not load employees: {loadError}</td>
+					</tr>
+				{:else if filteredEmployees.length === 0}
 					<tr>
 						<td colspan="4">No employees found.</td>
 					</tr>
 				{:else}
-					{#each paginatedEmployees as employee, index (index)}
+					{#each paginatedEmployees as employee (employee.id)}
 						<tr>
-							<td class="col-department">{resolveDepartment(employee)}</td>
+							<td class="col-department">{employee.department}</td>
 							<td class="col-name">{employee.name}</td>
 							<td class="col-position">{employee.title}</td>
 							<td class="col-email">{employee.email}</td>
