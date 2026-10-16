@@ -3,12 +3,12 @@ export const menuSections = [
 		key: 'Admin',
 		department: 'Admin',
 		items: [
-			{
-				icon: '/icons/building.png',
-				title: 'Departments and Employees List',
-				description: 'For admins to view employee information',
-				route: '/admin/departments'
-			},
+			// {
+			// 	icon: '/icons/building.png',
+			// 	title: 'Departments and Employees List',
+			// 	description: 'For admins to view employee information',
+			// 	route: '/admin/departments'
+			// },
 			{
 				icon: '/icons/uim.png',
 				title: 'User Information Management',

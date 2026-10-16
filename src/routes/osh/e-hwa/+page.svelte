@@ -4,13 +4,11 @@
 	 * @typedef {{ items: AuditItem[] }} Subsection
 	 */
 
-	import Search from '@lucide/svelte/icons/search';
 	import FileText from '@lucide/svelte/icons/file-text';
-	import Info from '@lucide/svelte/icons/info';
-	import Check from '@lucide/svelte/icons/check';
 	import { supabase } from '$lib/supabase';
 	import { goto } from '$app/navigation';
 	import { requireUser } from '$lib/auth-guard';
+	import { toast } from '$lib/stores/toast';
 
 	let permit_date = '';
 	let location_allowed = '';
@@ -67,9 +65,6 @@
 	let errorMsg = '';
 	let saving = false;
 
-	let showSuccess = false;
-	let successTimer;
-
 	async function handleSubmit(e) {
 		e.preventDefault();
 		errorMsg = '';
@@ -110,18 +105,14 @@
 				created_by_name: submitterName
 			};
 
-			const { error, insError } = await withTimeout(
+			const { error: insError } = await withTimeout(
 				supabase.from('hwa_submissions').insert(payload),
 				15000
 			);
 			if (insError) throw insError;
 
-			showSuccess = true;
-
-			setTimeout(() => {
-				showSuccess = false;
-				goto('/');
-			}, 3000);
+			toast.success('Hot Work Activities Report (e-HWA) submitted successfully.');
+			goto('/');
 		} catch (error) {
 			errorMsg = error?.message ?? String(error);
 		} finally {
@@ -264,14 +255,6 @@
 			>
 		</div>
 	</form>
-	{#if showSuccess}
-		<div class="success-overlay">
-			<div class="success-popup">
-				<h3>Success! <Check strokeWidth={4} /></h3>
-				<p>Your form submission was successful.</p>
-			</div>
-		</div>
-	{/if}
 </div>
 
 <style>

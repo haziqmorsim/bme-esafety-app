@@ -1,10 +1,11 @@
 <script>
     import Search from '@lucide/svelte/icons/search';
     import FileText from '@lucide/svelte/icons/file-text';
-    import Check from '@lucide/svelte/icons/check';
     import { supabase } from '$lib/supabase';
     import { goto } from '$app/navigation';
     import { requireUser } from '$lib/auth-guard';
+	import Modal from '$lib/components/Modal.svelte';
+	import { toast } from '$lib/stores/toast';
 
     let showProjectModal = false;
     let projects = [];
@@ -32,9 +33,6 @@
 
     let errorMsg = '';
     let saving = false;
-
-    let showSuccess = false;
-    let successTimer;
 
     function withTimeout(promise, ms = 20000) {
         return Promise.race([
@@ -111,18 +109,14 @@
                 created_by_name: submitterName
             };
 
-            const { error, insErr } = await withTimeout(
+            const { error: insErr } = await withTimeout(
                 supabase.from('idf_submissions').insert(payload), 
                 15000
             );
             if (insErr) throw insErr;
 
-            showSuccess = true;
-
-            setTimeout(() => {
-                showSuccess = false;
-                goto('/');
-            }, 3000);
+            toast.success('Induction Form (e-IDF) submitted successfully.');
+			goto('/');
         } catch (error) {
             errorMsg = error?.message ?? String(error);
         } finally {
@@ -199,44 +193,39 @@
             <label for="project-date" class="forms-label">Activity Date:</label>
             <input type="date" class="forms-input forms-date" bind:value={activity_date} onfocus={(e) => e.target.showPicker?.()} required />
         </div>
-        {#if showProjectModal}
-            <div class="modal-overlay" role="dialog" aria-modal="true" aria-label="Select project">
-                <div class="modal">
-                    <h3>Select a Project</h3>
-                    <div class="project-search">
-                        <input type="text" class="project-search-input" placeholder="Project Name/Project ID" bind:value={projectSearch} oninput={filterProjects} />
-                        <button type="button" class="project-search-button" onclick={filterProjects}>
-                            <Search />
-                        </button>
-                    </div>
-                    <div class="project-list">
-                        <div class="project-list-header">
-                            <span>Project Name</span>
-                            <span>Project ID</span>
-                        </div>
-                        {#if projectLoading}
-                            <p class="project-status">Loading projects...</p>
-                        {:else if projectError}
-                            <p class="project-status error">{projectError}</p>
-                        {:else if filteredProjects.length === 0}
-                            <p class="project-status">No projects found.</p>
-                        {:else}
-                            {#each filteredProjects as project}
-                                <button type="button" class="project-row" onclick={() => selectProject(project)}>
-                                    <span>{project.project_name ?? '-'}</span>
-                                    <span class="project-row-id">{project.project_id ?? '-'}</span>
-                                </button>
-                            {/each}
-                        {/if}
-                    </div>
-                    <div class="modal-actions">
-                        <button type="button" class="button-secondary" onclick={closeProjectModal}>
-                            Cancel
-                        </button>
-                    </div>
-                </div>
+        <Modal open={showProjectModal} title="Select a Project" onclose={closeProjectModal}>
+            <div class="project-search">
+                <input type="text" class="project-search-input" placeholder="Project Name/Project ID" bind:value={projectSearch} oninput={filterProjects} />
+                <button type="button" class="project-search-button" onclick={filterProjects}>
+                    <Search />
+                </button>
             </div>
-        {/if}
+            <div class="project-list">
+                <div class="project-list-header">
+                    <span>Project Name</span>
+                    <span>Project ID</span>
+                </div>
+                {#if projectLoading}
+                    <p class="project-status">Loading projects...</p>
+                {:else if projectError}
+                    <p class="project-status error">{projectError}</p>
+                {:else if filteredProjects.length === 0}
+                    <p class="project-status">No projects found.</p>
+                {:else}
+                    {#each filteredProjects as project}
+                        <button type="button" class="project-row" onclick={() => selectProject(project)}>
+                            <span>{project.project_name ?? '-'}</span>
+                            <span class="project-row-id">{project.project_id ?? '-'}</span>
+                        </button>
+                    {/each}
+                {/if}
+            </div>
+        	{#snippet footer()}
+                <button type="button" class="button-secondary" onclick={closeProjectModal}>
+                    Cancel
+                </button>
+        	{/snippet}
+        </Modal>
         <br />
         <hr />
         <h2 class="heading">Induction Details</h2>
@@ -297,14 +286,6 @@
             <button type="submit" class="button-submit" disabled={saving}><FileText />{saving ? 'Submitting...' : 'Submit'}</button>
         </div>
     </form>
-    {#if showSuccess}
-        <div class="success-overlay">
-            <div class="success-popup">
-                <h3>Success! <Check strokeWidth={4} /></h3>
-                <p>Your form submission was successful.</p>
-            </div>
-        </div>
-    {/if}
 </div>
 
 <style>
@@ -428,30 +409,6 @@
 		margin-top: 10px;
 	}
 
-	.modal-overlay {
-		position: fixed;
-		inset: 0;
-		background: rgba(9, 23, 71, 0.35);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 20px;
-		z-index: 50;
-	}
-
-	.modal {
-		background: #ffffff;
-		border-radius: 10px;
-		box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
-		padding: 20px;
-		width: min(600px, 95vw);
-	}
-
-	.modal h3 {
-		margin: 0 0 16px 0;
-		font-size: 20px;
-	}
-
 	.project-search {
 		display: flex;
 		gap: 10px;
@@ -531,12 +488,6 @@
 		margin: 0;
 	}
 
-	.modal-actions {
-		display: flex;
-		justify-content: flex-start;
-		margin-top: 16px;
-	}
-
 	.remarks {
 		width: 100%;
 		height: 200px;
@@ -555,55 +506,6 @@
 		justify-content: flex-end;
 	}
 
-	.success-overlay {
-		position: fixed;
-		inset: 0;
-		background: rgba(0, 0, 0, 0.4);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 9999;
-	}
-
-	.success-popup {
-		height: 250px;
-		background: #ffffff;
-		padding: 25px 35px;
-		border: 1px solid #091747;
-		border-radius: 6px;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		text-align: center;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-		animation: fadeIn 0.3s ease;
-	}
-
-	.success-popup h3 {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		color: #2e7d32;
-		font-size: 20px;
-		font-weight: bold;
-		margin-bottom: 15px;
-	}
-
-	.success-popup h3 :global(svg) {
-		display: block;
-	}
-
-	@keyframes fadeIn {
-		from {
-			opacity: 0;
-			transform: scale(0.95);
-		}
-		to {
-			opacity: 1;
-			transform: scale(1);
-		}
-	}
 
 	.title {
 		font-size: 35px;
@@ -685,17 +587,16 @@
 			word-break: break-word;
 			overflow-wrap: anywhere;
 		}
-
-		.modal {
-			max-height: 85vh;
-			overflow-y: auto;
-		}
 	}
 
 	@media (max-width: 600px) {
 		.title {
 			font-size: 22px;
 			margin-bottom: 14px;
+		}
+
+		.type-select {
+			width: 100%;
 		}
 
 		.heading {

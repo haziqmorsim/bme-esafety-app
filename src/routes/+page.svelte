@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { menuSections } from '$lib/data/menu';
 	import { onDestroy, onMount } from 'svelte';
+	import { authUser } from '$lib/auth-store';
 
 	let allowedMenuAccess = [];
 	let visibleSections = [];
@@ -11,7 +12,6 @@
 
 	function computeVisible() {
 		const allowedRoutes = new Set(allowedMenuAccess ?? []);
-		const isAdmin = allowedRoutes.size === 0 ? false : false;
 
 		visibleSections = menuSections
 			.map((section) => {
@@ -46,11 +46,16 @@
 		return groups;
 	}
 
+	let loading = true;
+	let loadedForUserId = null;
+	let loadToken = 0;
+
 	async function loadMenu() {
+		const token = ++loadToken;
 		errorMsg = '';
 
 		const auth = await requireUser();
-		if (!auth) return;
+		if (!auth || token !== loadToken) return;
 
 		const { supabase, user } = auth;
 
@@ -60,36 +65,33 @@
 			.eq('id', user.id)
 			.single();
 
+		if (token !== loadToken) return;
+		loading = false;
+
 		if (error) {
 			errorMsg = error.message;
 			return;
 		}
 
+		loadedForUserId = user.id;
 		allowedMenuAccess = profile?.menu_access ?? [];
 		computeVisible();
 	}
 
-	onMount(async () => {
-		const auth = await requireUser();
-		if (!auth) return;
+	onMount(() => {
+		loadMenu();
 
-		const { supabase } = auth;
-
-		await loadMenu();
-
-		const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
-			if (!session?.user) {
-				await goto('/signin');
+		authUnsub = authUser.subscribe((user) => {
+			if (!user) {
+				if (loadedForUserId) goto('/signin');
 				return;
 			}
-
-			await loadMenu();
+			if (loadedForUserId && user.id !== loadedForUserId) loadMenu();
 		});
-
-		authUnsub = () => data.subscription.unsubscribe();
 	});
 
 	onDestroy(() => {
+		loadToken++;
 		if (authUnsub) authUnsub();
 	});
 </script>
@@ -99,6 +101,12 @@
 {/if}
 
 <h1 class="title">Main Menu</h1>
+
+{#if loading}
+	<p class="status">Loading menu...</p>
+{:else if !errorMsg && visibleSections.length === 0}
+	<p class="status">No menu items have been assigned to your account yet.</p>
+{/if}
 
 {#each visibleSections as section}
 	<h2 class="department">Department: <span class="item">{section.department}</span></h2>
@@ -115,7 +123,11 @@
 					<h4>{item.title}</h4>
 					<p>{item.description}</p>
 				</div>
-				<button	type="button" disabled={item.disabled} on:click={() => !item.disabled && goto(item.route)}>
+				<button
+					type="button"
+					disabled={item.disabled}
+					on:click={() => !item.disabled && goto(item.route)}
+				>
 					Open
 				</button>
 			</div>
@@ -216,7 +228,46 @@
 		color: #091747;
 	}
 
+	.status {
+		padding: 0 10px;
+		color: #5b6480;
+	}
+
+	.error {
+		margin: 10px;
+		color: #c62828;
+		font-weight: bold;
+	}
+
+	@media (max-width: 1024px) {
+		.title {
+			font-size: 24px;
+			margin-bottom: 15px;
+		}
+	}
+
 	@media (max-width: 600px) {
+		.title {
+			font-size: 22px;
+		}
+
+		.department,
+		.item {
+			font-size: 16px;
+		}
+
+		.menu-card {
+			padding: 12px;
+		}
+
+		.menu-info h4 {
+			font-size: 15px;
+		}
+
+		.menu-info p {
+			font-size: 13px;
+		}
+
 		.menu-card button {
 			height: 32px;
 			padding: 0 12px;

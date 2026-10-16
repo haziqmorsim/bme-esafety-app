@@ -2,8 +2,7 @@
 	import { onMount } from 'svelte';
 	import { getSupabase } from '$lib/supabase';
 	import Search from '@lucide/svelte/icons/search';
-	import ChevronsLeft from '@lucide/svelte/icons/chevrons-left';
-	import ChevronsRight from '@lucide/svelte/icons/chevrons-right';
+	import Pagination, { pageSlice } from '$lib/components/Pagination.svelte';
 
 	let employees = $state([]);
 	let loading = $state(true);
@@ -64,19 +63,7 @@
 			.sort((a, b) => a.department.localeCompare(b.department) || a.name.localeCompare(b.name));
 	});
 
-	let totalPages = $derived(Math.max(1, Math.ceil(filteredEmployees.length / pageSize)));
-	let pages = $derived(Array.from({ length: totalPages }, (_, i) => i + 1));
-	let visiblePages = $derived.by(() => {
-		const maxVisible = 3;
-		let start = Math.max(1, currentPage - 1);
-		let end = Math.min(totalPages, start + maxVisible - 1);
-
-		start = Math.max(1, end - maxVisible + 1);
-		return pages.slice(start - 1, end);
-	});
-	let paginatedEmployees = $derived(
-		filteredEmployees.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-	);
+	let paginatedEmployees = $derived(pageSlice(filteredEmployees, currentPage, pageSize));
 	let records = $derived(filteredEmployees);
 
 	$effect(() => {
@@ -84,26 +71,6 @@
 		searchText;
 		currentPage = 1;
 	});
-
-	$effect(() => {
-		if (currentPage > totalPages) currentPage = totalPages;
-		if (currentPage < 1) currentPage = 1;
-	});
-
-	// @ts-ignore
-	function gotoPage(n) {
-		if (n < 1) n = 1;
-		if (n > totalPages) n = totalPages;
-		currentPage = n;
-	}
-
-	function prev() {
-		gotoPage(currentPage - 1);
-	}
-
-	function next() {
-		gotoPage(currentPage + 1);
-	}
 </script>
 
 <svelte:head>
@@ -157,40 +124,35 @@
 			<tbody>
 				{#if loading}
 					<tr>
-						<td colspan="4">Loading employees…</td>
+						<td colspan="4" class="empty">Loading employees…</td>
 					</tr>
 				{:else if loadError}
 					<tr>
-						<td colspan="4">Could not load employees: {loadError}</td>
+						<td colspan="4" class="empty">Could not load employees: {loadError}</td>
 					</tr>
 				{:else if filteredEmployees.length === 0}
 					<tr>
-						<td colspan="4">No employees found.</td>
+						<td colspan="4" class="empty">No employees found.</td>
 					</tr>
 				{:else}
 					{#each paginatedEmployees as employee (employee.id)}
 						<tr>
-							<td class="col-department">{employee.department}</td>
-							<td class="col-name">{employee.name}</td>
-							<td class="col-position">{employee.title}</td>
-							<td class="col-email">{employee.email}</td>
+							<td class="col-department" data-label="Department">{employee.department}</td>
+							<td class="col-name" data-label="Name">{employee.name}</td>
+							<td class="col-position" data-label="Title">{employee.title}</td>
+							<td class="col-email" data-label="E-mail">{employee.email}</td>
 						</tr>
 					{/each}
 				{/if}
 			</tbody>
 		</table>
 
-		<div class="pagination">
-			<button onclick={prev} disabled={currentPage === 1} aria-label="Previous"
-				><ChevronsLeft /></button
-			>
-			{#each visiblePages as p}
-				<button class:active={p === currentPage} onclick={() => gotoPage(p)}>{p}</button>
-			{/each}
-			<button onclick={next} disabled={currentPage === totalPages} aria-label="Next"
-				><ChevronsRight /></button
-			>
-		</div>
+		<Pagination
+			bind:page={currentPage}
+			totalItems={filteredEmployees.length}
+			{pageSize}
+			showSummary={false}
+		/>
 	</div>
 </div>
 
@@ -331,41 +293,6 @@
 		padding: 0 10px;
 	}
 
-	.pagination {
-		display: flex;
-		gap: 6px;
-		justify-content: flex-end;
-		margin-top: 12px;
-	}
-
-	.pagination button {
-		min-width: 34px;
-		height: 34px;
-		border-radius: 4px;
-		border: 1px solid #283a5a33;
-		background: white;
-		color: #091747;
-		cursor: pointer;
-		padding: 0 8px;
-	}
-
-	.pagination button[disabled] {
-		opacity: 0.5;
-		cursor: default;
-	}
-
-	.pagination button.active,
-	.pagination button.active:focus {
-		background: #091747;
-		color: white;
-		border-color: #091747;
-	}
-
-	.pagination button:hover:not([disabled]) {
-		background: #091747b9;
-		color: white;
-	}
-
 	@media (max-width: 1024px) {
 		.title {
 			font-size: 24px;
@@ -421,11 +348,6 @@
 			padding: 10px 12px;
 			white-space: nowrap;
 		}
-
-		.pagination {
-			flex-wrap: wrap;
-			gap: 6px;
-		}
 	}
 
 	@media (max-width: 600px) {
@@ -472,21 +394,61 @@
 
 		.table-container {
 			margin-top: 10px;
-			overflow-x: auto;
-			-webkit-overflow-scrolling: touch;
+			overflow: visible;
 		}
 
 		.dept-table {
-			min-width: 700px;
+			min-width: 0;
 		}
 
-		.pagination {
-			flex-wrap: wrap;
+		.dept-table thead {
+			display: none;
 		}
 
-		.pagination button {
-			min-width: 36px;
-			height: 36px;
+		.dept-table,
+		.dept-table tbody,
+		.dept-table tr,
+		.dept-table td {
+			display: block;
+			width: 100%;
+		}
+
+		.dept-table tbody tr {
+			margin-bottom: 10px;
+			padding: 8px 12px;
+			border: 1px solid #dcdcdc;
+			border-radius: 4px;
+			background-color: #ffffff;
+			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+		}
+
+		.dept-table tbody tr:nth-child(even) {
+			background-color: #ffffff;
+		}
+
+		.dept-table td {
+			display: grid;
+			grid-template-columns: 96px minmax(0, 1fr);
+			gap: 8px;
+			padding: 4px 0;
+			border: none;
+			white-space: normal;
+			overflow-wrap: anywhere;
+			text-align: left;
+		}
+
+		.dept-table td::before {
+			content: attr(data-label);
+			font-weight: bold;
+		}
+
+		.dept-table td.empty {
+			display: block;
+			text-align: center;
+		}
+
+		.dept-table td.empty::before {
+			content: none;
 		}
 	}
 </style>

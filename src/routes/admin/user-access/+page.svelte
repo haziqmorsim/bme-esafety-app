@@ -1,10 +1,9 @@
 <script>
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import { supabase } from '$lib/supabase';
 	import { menuSections } from '$lib/data/menu';
-	import Check from '@lucide/svelte/icons/check';
 	import { requireUser } from '$lib/auth-guard';
+	import { toast } from '$lib/stores/toast';
 
 	let users = [];
 	let errorMsg = '';
@@ -13,8 +12,6 @@
 	let selectedDepartment = 'All';
 	let selectedUser = '';
 	let selectedMenuAccess = [];
-
-	let showSuccess = false;
 
 	const getUserName = (user) => {
 		return `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim();
@@ -57,12 +54,11 @@
 		}
 	};
 
-	const saveMenuAccess = async () => {
+	const saveMenuAccess = async (successMessage) => {
 		if (!selectedUser) return;
 
 		isSaving = true;
 		errorMsg = '';
-		showSuccess = false;
 
 		try {
 			const { error: updateError } = await supabase
@@ -96,12 +92,12 @@
 				u.id === selectedUser ? { ...u, menu_access: updated.menu_access } : u
 			);
 
-			showSuccess = true;
-
-			setTimeout(() => {
-				showSuccess = false;
-				goto('/');
-			}, 3000);
+			const user = users.find((u) => u.id === selectedUser);
+			toast.success(
+				typeof successMessage === 'string'
+					? successMessage
+					: `Access updated successfully for ${getUserName(user ?? {}) || 'the user'}.`
+			);
 		} catch (e) {
 			errorMsg = e?.message ?? String(e);
 		} finally {
@@ -111,8 +107,9 @@
 
 	const removeAllAccess = async () => {
 		if (!selectedUser) return;
+		const user = users.find((u) => u.id === selectedUser);
 		selectedMenuAccess = [];
-		await saveMenuAccess();
+		await saveMenuAccess(`All access removed from ${getUserName(user ?? {}) || 'the user'}.`);
 	};
 
 	onMount(async () => {
@@ -197,17 +194,13 @@
 	<button class="button-inverted" on:click={removeAllAccess} disabled={!selectedUser || isSaving}>
 		Remove All Access From This User
 	</button>
-	<button class="button-assign" on:click={saveMenuAccess} disabled={!selectedUser || isSaving}>
+	<button
+		class="button-assign"
+		on:click={() => saveMenuAccess()}
+		disabled={!selectedUser || isSaving}
+	>
 		{isSaving ? 'Saving...' : 'Assign Access To This User'}
 	</button>
-	{#if showSuccess}
-		<div class="success-overlay">
-			<div class="success-popup">
-				<h3>Success! <Check strokeWidth={4} /></h3>
-				<p>The user access was updated.</p>
-			</div>
-		</div>
-	{/if}
 </div>
 
 {#if errorMsg}
@@ -398,56 +391,6 @@
 		margin: 4px 0 0;
 		font-size: 14px;
 		color: #091747;
-	}
-
-	.success-overlay {
-		position: fixed;
-		inset: 0;
-		background: rgba(0, 0, 0, 0.4);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 9999;
-	}
-
-	.success-popup {
-		height: 250px;
-		background: #ffffff;
-		padding: 25px 35px;
-		border: 1px solid #091747;
-		border-radius: 6px;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		text-align: center;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-		animation: fadeIn 0.3s ease;
-	}
-
-	.success-popup h3 {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		color: #2e7d32;
-		font-size: 20px;
-		font-weight: bold;
-		margin-bottom: 15px;
-	}
-
-	.success-popup h3 :global(svg) {
-		display: block;
-	}
-
-	@keyframes fadeIn {
-		from {
-			opacity: 0;
-			transform: scale(0.95);
-		}
-		to {
-			opacity: 1;
-			transform: scale(1);
-		}
 	}
 
 	.title {

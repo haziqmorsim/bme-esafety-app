@@ -2,14 +2,15 @@
 	/** @type {Array<{ items: Array<any>}>} */
 	import Plus from '@lucide/svelte/icons/plus';
 	import Search from '@lucide/svelte/icons/search';
-	import Close from '@lucide/svelte/icons/x';
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import { requireUser } from '$lib/auth-guard';
+	import { toast } from '$lib/stores/toast';
+	import Modal from '$lib/components/Modal.svelte';
 
 	let notifications = [];
 	let errorMsg = '';
+	let loading = true;
 	let isSaving = false;
 	let fromDate = '';
 	let toDate = '';
@@ -28,15 +29,13 @@
 		file_path: ''
 	};
 
-	let noti_photo;
-	let noti_file;
+	let noti_photo_file = null;
+	let noti_file_file = null;
+	let createError = '';
 
 	function onFile(e, setter) {
 		setter(e.currentTarget.files?.[0] ?? null);
 	}
-
-	let showSuccess = false;
-	let successTimer;
 
 	function withTimeout(promise, ms = 20000) {
 		return Promise.race([
@@ -111,6 +110,7 @@
 
 		if (profileError) {
 			errorMsg = profileError.message;
+			loading = false;
 			return;
 		}
 
@@ -127,6 +127,8 @@
 				'id, created_at, created_by, title, summary, full_content, priority, photo_path, file_path'
 			)
 			.order('created_at', { ascending: false });
+
+		loading = false;
 
 		if (error) {
 			errorMsg = error.message;
@@ -146,43 +148,65 @@
 			photo_path: '',
 			file_path: ''
 		};
+		noti_photo_file = null;
+		noti_file_file = null;
+		createError = '';
 		showCreateModal = true;
 	};
 
 	const closeCreateModal = () => {
+		if (isSaving) return;
 		showCreateModal = false;
 	};
 
 	const createNotification = async () => {
-		isSaving = true;
-		errorMsg = '';
+		createError = '';
 
-		const [photo_path, file_path] = await Promise.all([
-			uploadToBucket(noti_photo_file, 'noti_photo'),
-			uploadToBucket(noti_file_file, 'noti_file')
-		]);
-
-		const payload = {
-			title: createForm.title.trim() || null,
-			summary: createForm.summary.trim() || null,
-			full_content: createForm.full_content.trim() || null,
-			priority: createForm.priority.trim() || null,
-			photo_path: createForm.photo_path.trim() || null,
-			file_path: createForm.file_path.trim() || null,
-			created_by: currentUserName || null
-		};
-
-		const { data, error } = await supabase.from('notifications').insert(payload).select().single();
-
-		isSaving = false;
-
-		if (error) {
-			errorMsg = error.message;
+		const title = createForm.title.trim();
+		if (!title) {
+			createError = 'Please enter a title.';
+			return;
+		}
+		if (!createForm.priority) {
+			createError = 'Please choose a priority.';
 			return;
 		}
 
-		notifications = data ? [data, ...notifications] : notifications;
-		closeCreateModal();
+		isSaving = true;
+
+		try {
+			const [photo_path, file_path] = await Promise.all([
+				withTimeout(uploadToBucket(noti_photo_file, 'noti_photo')),
+				withTimeout(uploadToBucket(noti_file_file, 'noti_file'))
+			]);
+
+			const payload = {
+				title,
+				summary: createForm.summary.trim() || null,
+				full_content: createForm.full_content.trim() || null,
+				priority: createForm.priority.trim() || null,
+				photo_path: photo_path ?? null,
+				file_path: file_path ?? null,
+				created_by: currentUserName || null
+			};
+
+			const { data, error } = await supabase
+				.from('notifications')
+				.insert(payload)
+				.select()
+				.single();
+
+			if (error) throw error;
+
+			notifications = data ? [data, ...notifications] : notifications;
+			isSaving = false;
+			closeCreateModal();
+			toast.success(`Notification "${title}" created successfully.`);
+		} catch (error) {
+			createError = error?.message ?? String(error);
+		} finally {
+			isSaving = false;
+		}
 	};
 
 	function formatDate(iso) {
@@ -246,10 +270,6 @@
 			on:focus={(e) => e.target.showPicker?.()}
 		/>
 	</div>
-	<div>
-		<p class="hidden">Search</p>
-		<button class="button-primary" id="button-search"><Search />Search Notification</button>
-	</div>
 </div>
 
 <div class="notifications-create">
@@ -259,6 +279,10 @@
 		>
 	{/if}
 </div>
+
+{#if errorMsg}
+	<p class="error page-error">{errorMsg}</p>
+{/if}
 
 <div class="project-box">
 	{#each filteredNotifications as n (n.id)}
@@ -282,78 +306,80 @@
 				<p>File: {n.file_path ?? '-'}</p>
 			</div>
 		</div>
+	{:else}
+		<p class="empty">
+			{loading
+				? 'Loading notifications...'
+				: notifications.length === 0
+					? 'No notifications yet.'
+					: 'No notifications match the filters.'}
+		</p>
 	{/each}
 </div>
 
-{#if showCreateModal}
-	<div class="modal-backdrop" role="presentation">
-		<div class="modal" role="dialog" aria-modal="true" aria-label="Create notification">
-			<button class="modal-close" on:click={closeCreateModal} disabled={isSaving}>
-				<Close size={18} />
-			</button>
-			<h2>New Notification</h2>
-			<div class="modal-body">
-				<label>Title: <input type="text" bind:value={createForm.title} /></label>
-				<label>Summary: <input type="text" bind:value={createForm.summary} /></label>
-				<label
-					>Full Content: <textarea
-						name="content"
-						id="content"
-						rows="6"
-						bind:value={createForm.full_content}
-					></textarea></label
-				>
-				<label
-					>Priority:
-					<select bind:value={createForm.priority} class="priority-select">
-						<option value="" disabled selected>Choose Priority</option>
-						<option value="Normal">Normal</option>
-						<option value="Important">Important</option>
-						<option value="Urgent">Urgent</option>
-					</select>
-				</label>
-				<label
-					>Photo:
-					<div class="upload">
-						<p class="upload-text">
-							<input
-								type="file"
-								name="noti_photo"
-								id="noti_photo"
-								accept="image/png, image/jpeg"
-								multiple
-								on:change={(e) => (noti_photo_file = e.target.files[0])}
-							/>
-						</p>
-					</div>
-				</label>
-				<label
-					>File:
-					<div class="upload">
-						<p class="upload-text">
-							<input
-								type="file"
-								name="noti_file"
-								id="noti_file"
-								accept="image/png, image/jpeg"
-								multiple
-								on:change={(e) => (noti_file_file = e.target.files[0])}
-							/>
-						</p>
-					</div>
-				</label>
+<Modal open={showCreateModal} title="New Notification" busy={isSaving} onclose={closeCreateModal}>
+	<div class="create-form">
+		<label>Title: <input type="text" bind:value={createForm.title} /></label>
+		<label>Summary: <input type="text" bind:value={createForm.summary} /></label>
+		<label
+			>Full Content: <textarea
+				name="content"
+				id="content"
+				rows="6"
+				bind:value={createForm.full_content}
+			></textarea></label
+		>
+		<label
+			>Priority:
+			<select bind:value={createForm.priority} class="priority-select">
+				<option value="" disabled selected>Choose Priority</option>
+				<option value="Normal">Normal</option>
+				<option value="Important">Important</option>
+				<option value="Urgent">Urgent</option>
+			</select>
+		</label>
+		<label
+			>Photo:
+			<div class="upload">
+				<p class="upload-text">
+					<input
+						type="file"
+						name="noti_photo"
+						id="noti_photo"
+						accept="image/png, image/jpeg"
+						multiple
+						on:change={(e) => (noti_photo_file = e.target.files[0])}
+					/>
+				</p>
 			</div>
-			<div class="modal-actions">
-				<button class="button-inverted" on:click={closeCreateModal} disabled={isSaving}>
-					Cancel
-				</button>
-				<button on:click={createNotification} disabled={isSaving}>
-					{isSaving ? 'Saving...' : 'Confirm'}
-				</button>
+		</label>
+		<label
+			>File:
+			<div class="upload">
+				<p class="upload-text">
+					<input
+						type="file"
+						name="noti_file"
+						id="noti_file"
+						accept="image/png, image/jpeg"
+						multiple
+						on:change={(e) => (noti_file_file = e.target.files[0])}
+					/>
+				</p>
 			</div>
-		</div>
+		</label>
 	</div>
-{/if}
+	{#if createError}
+		<p class="error">{createError}</p>
+	{/if}
+
+	{#snippet footer()}
+		<button class="button-inverted" on:click={closeCreateModal} disabled={isSaving}>Cancel</button>
+		<button class="button-confirm" on:click={createNotification} disabled={isSaving}>
+			{isSaving ? 'Saving...' : 'Confirm'}
+		</button>
+	{/snippet}
+</Modal>
 
 <style>
 	* {
@@ -405,24 +431,6 @@
 		background-color: #dedede;
 	}
 
-	.button-primary {
-		background-color: #091747;
-		padding: 10px 20px;
-	}
-
-	.button-primary:hover {
-		background-color: #091747b9;
-	}
-
-	#button-search {
-		height: 40px;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 8px;
-		border: 1px;
-	}
-
 	.filter-input {
 		width: 350px;
 		font-size: 14px;
@@ -436,90 +444,59 @@
 		cursor: pointer;
 	}
 
-	h2 {
-		font-weight: bold;
-	}
-
 	h3 {
 		font-size: 18px;
 		font-weight: bold;
 		margin-bottom: 5px;
 	}
 
-	.hidden {
-		opacity: 0;
-	}
-
-	.modal-backdrop {
-		position: fixed;
-		inset: 0;
-		background: rgba(9, 23, 71, 0.45);
-		display: flex;
-		align-items: flex-start;
-		justify-content: center;
-		padding: 32px 20px;
-		z-index: 10;
-	}
-
-	.modal {
-		position: relative;
-		width: min(560px, 100%);
-		max-height: calc(100vh - 64px);
-		overflow: auto;
-		background: #ffffff;
-		border-radius: 8px;
-		padding: 20px;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-	}
-
-	.modal-close {
-		position: absolute;
-		top: 20px;
-		right: 12px;
-		background: transparent;
-		border: none;
-		cursor: pointer;
-		padding: 4px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: #091747;
-	}
-
-	.modal-close:hover {
-		background: rgba(0, 0, 0, 0.05);
-		border-radius: 50%;
-	}
-
-	.modal h2 {
-		margin: 0 0 16px;
-		font-size: 20px;
-	}
-
-	.modal-body {
+	.create-form {
 		display: grid;
 		gap: 12px;
 	}
 
-	.modal-body label {
+	.create-form label {
 		display: grid;
 		gap: 6px;
 		font-size: 13px;
 		font-weight: bold;
 	}
 
-	.modal-body input {
+	.create-form input[type='text'],
+	.create-form textarea,
+	.create-form select {
+		width: 100%;
 		border: 1px solid #dcdcdc;
 		border-radius: 4px;
 		padding: 8px 10px;
 		font-size: 14px;
+		font-weight: normal;
 	}
 
-	.modal-actions {
-		display: flex;
-		justify-content: flex-end;
-		gap: 10px;
-		margin-top: 18px;
+	.button-confirm {
+		background-color: #091747;
+		font-weight: bold;
+		padding: 8px 20px;
+	}
+
+	.button-confirm:hover:not(:disabled) {
+		background-color: #091747b9;
+	}
+
+	.error {
+		color: #c62828;
+		font-weight: bold;
+		margin: 12px 0 0;
+	}
+
+	.page-error {
+		margin: 0 10px 10px;
+	}
+
+	.empty {
+		padding: 16px;
+		text-align: center;
+		color: #5b6480;
 	}
 
 	.notification-card {
@@ -656,10 +633,6 @@
 			width: 100%;
 		}
 
-		#button-search {
-			margin-top: 0;
-		}
-
 		.notification-card {
 			padding: 12px;
 		}
@@ -690,21 +663,11 @@
 			padding: 0;
 		}
 
-		.hidden {
-			display: none;
-		}
-
 		.filter-input,
 		.date-from,
 		.date-to,
 		.priority-select {
 			width: 100%;
-		}
-
-		#button-search {
-			width: 100%;
-			justify-content: center;
-			margin-top: 6px;
 		}
 
 		.notifications-create {
@@ -742,23 +705,6 @@
 
 		.summary {
 			font-size: 14px;
-		}
-
-		.modal-backdrop {
-			padding: 16px 12px;
-		}
-
-		.modal {
-			padding: 16px;
-		}
-
-		.modal-actions {
-			flex-direction: column;
-			gap: 8px;
-		}
-
-		.modal-actions button {
-			width: 100%;
 		}
 
 		.upload-text {

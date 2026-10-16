@@ -1,6 +1,7 @@
 <script>
 	import { supabase } from '$lib/supabase';
 	import { goto } from '$app/navigation';
+	import { toast } from '$lib/stores/toast';
 
 	let first_name = '';
 	let last_name = '';
@@ -15,19 +16,20 @@
 	let error = '';
 	let emailError = '';
 	let showPasswordRules = false;
+	let submitting = false;
 
 	function validateEmail(value) {
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 		if (!value) {
-			emailError: '';
+			emailError = '';
 			return;
 		}
 
 		if (!emailRegex.test(value)) {
-			emailError: 'Please enter a valid e-mail address';
+			emailError = 'Please enter a valid e-mail address';
 		} else {
-			emailError: '';
+			emailError = '';
 		}
 	}
 
@@ -57,6 +59,7 @@
 			return;
 		}
 
+		submitting = true;
 		const { error: signUpError } = await supabase.auth.signUp({
 			email,
 			password,
@@ -74,10 +77,14 @@
 			}
 		});
 
+		submitting = false;
+
 		if (signUpError) {
 			error = signUpError.message;
 			return;
 		}
+
+		toast.success('Account created successfully. Please check your e-mail to confirm your account.');
 
 		goto('/confirmation');
 	}
@@ -221,7 +228,9 @@
 			{#if error}
 				<p class="error">{error}</p>
 			{/if}
-			<button type="submit" class="button-primary">Sign Up</button>
+			<button type="submit" class="button-primary" disabled={submitting}>
+				{submitting ? 'Signing up...' : 'Sign Up'}
+			</button>
 			<p class="have-account">
 				Already have an account? Sign in <a href="/signin" class="signup">here</a>.
 			</p>
@@ -264,6 +273,11 @@
 		background-color: #091747;
 		font-weight: bold;
 		padding: 10px 20px;
+	}
+
+	button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
 	}
 
 	.button-primary:hover {

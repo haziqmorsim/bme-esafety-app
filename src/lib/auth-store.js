@@ -7,6 +7,13 @@ export const authUser = writable(null);
 let started = false;
 let unsub = null;
 
+function setUser(user) {
+	const current = get(authUser);
+	if ((current?.id ?? null) !== (user?.id ?? null) || current?.email !== user?.email) {
+		authUser.set(user ?? null);
+	}
+}
+
 export function initAuthStore() {
 	if (started) return;
 	started = true;
@@ -24,7 +31,9 @@ export function initAuthStore() {
 				data: { session }
 			} = await supabase.auth.getSession();
 
-			authUser.set(session?.user ?? null);
+			setUser(session?.user ?? null);
+		} catch {
+			// Leave the user as-is; requireUser() will try again.
 		} finally {
 			authReady.set(true);
 		}
@@ -33,8 +42,11 @@ export function initAuthStore() {
 	seed();
 
 	const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-		authUser.set(session?.user ?? null);
-		authReady.set(true);
+		const user = session?.user ?? null;
+		setTimeout(() => {
+			setUser(user);
+			authReady.set(true);
+		}, 0);
 	});
 
 	unsub = () => data.subscription.unsubscribe();
@@ -68,7 +80,7 @@ export async function waitForAuthReady(timeoutMs = 8000) {
 
 		function stop() {
 			clearTimeout(timer);
-			unsubReady();
+			unsubReady?.();
 		}
 	});
 }

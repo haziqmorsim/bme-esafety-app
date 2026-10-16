@@ -9,11 +9,15 @@
 	import Plus from '@lucide/svelte/icons/plus';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
-	import Close from '@lucide/svelte/icons/x';
-	import CircleCheck from '@lucide/svelte/icons/circle-check';
-	import { onMount, onDestroy } from 'svelte';
+	import Check from '@lucide/svelte/icons/check';
+	import Minus from '@lucide/svelte/icons/minus';
+	import X from '@lucide/svelte/icons/x';
+	import { onMount } from 'svelte';
 	import { supabase } from '$lib/supabase';
 	import { requireUser } from '$lib/auth-guard';
+	import { toast } from '$lib/stores/toast';
+	import Modal from '$lib/components/Modal.svelte';
+	import Pagination, { pageSlice } from '$lib/components/Pagination.svelte';
 
 	const startYear = 2026;
 	const endYear = 2028;
@@ -119,22 +123,7 @@
 	const HOLIDAY_PAGE_SIZE = 10;
 	let holidayPage = $state(1);
 
-	const holidayTotalPages = $derived(Math.max(1, Math.ceil(holidays.length / HOLIDAY_PAGE_SIZE)));
-	const pagedHolidays = $derived(
-		holidays.slice((holidayPage - 1) * HOLIDAY_PAGE_SIZE, holidayPage * HOLIDAY_PAGE_SIZE)
-	);
-	const holidayPageItems = $derived.by(() => {
-		const items = [];
-		let last = 0;
-		for (let p = 1; p <= holidayTotalPages; p++) {
-			if (p === 1 || p === holidayTotalPages || Math.abs(p - holidayPage) <= 2) {
-				if (last && p - last > 1) items.push('gap-' + p);
-				items.push(p);
-				last = p;
-			}
-		}
-		return items;
-	});
+	const pagedHolidays = $derived(pageSlice(holidays, holidayPage, HOLIDAY_PAGE_SIZE));
 
 	const holidayNamesByDate = $derived.by(() => {
 		const map = {};
@@ -143,10 +132,6 @@
 		}
 		return map;
 	});
-
-	function gotoHolidayPage(n) {
-		holidayPage = Math.min(Math.max(1, n), holidayTotalPages);
-	}
 
 	function prev() {
 		if (index > 0) index -= 1;
@@ -419,27 +404,6 @@
 		loadHolidays(viewYear);
 	});
 
-	const TOAST_DURATION = 4000;
-	let toast = $state(null);
-	let toastTimer;
-
-	function showToast(message) {
-		clearTimeout(toastTimer);
-		toast = { id: Date.now() + Math.random(), message };
-		toastTimer = setTimeout(() => (toast = null), TOAST_DURATION);
-	}
-
-	function dismissToast() {
-		clearTimeout(toastTimer);
-		toast = null;
-	}
-
-	onDestroy(() => clearTimeout(toastTimer));
-
-	$effect(() => {
-		if (holidayPage > holidayTotalPages) holidayPage = holidayTotalPages;
-	});
-
 	$effect(() => {
 		holidayForm.holiday_date;
 		holidayForm.name;
@@ -594,7 +558,7 @@
 			if (!saved.holiday_date.startsWith(String(viewYear))) {
 				message += ` It is listed under ${saved.holiday_date.slice(0, 4)}.`;
 			}
-			showToast(message);
+			toast.success(message);
 		} catch (error) {
 			const msg = error?.message ?? String(error);
 			holidayFormError =
@@ -639,23 +603,14 @@
 			holidays = holidays.filter((h) => h.id !== removedId);
 			holidayDeleting = false;
 			closeDeleteHoliday();
-			showToast(`Holiday "${removedName}" deleted successfully.`);
+			toast.success(`Holiday "${removedName}" deleted successfully.`);
 		} catch (error) {
 			holidayDeleteError = error?.message ?? String(error);
 		} finally {
 			holidayDeleting = false;
 		}
 	}
-
-	function onWindowKeydown(event) {
-		if (event.key !== 'Escape') return;
-		if (showDeleteHolidayModal) closeDeleteHoliday();
-		else if (showHolidayModal) closeHolidayModal();
-		else if (showSubmissionsModal) closeSubmissionsModal();
-	}
 </script>
-
-<svelte:window onkeydown={onWindowKeydown} />
 
 <h1 class="title">Calendar View</h1>
 
@@ -717,7 +672,7 @@
 					{@const cellState = dayState(dayStatusByDate[dateKey])}
 					{@const holidayNames = dateKey ? holidayNamesByDate[dateKey] : undefined}
 					<div
-						class="cell"
+						class="cell {day ? `state-${cellState}` : ''}"
 						class:today={isToday(day, months[index].year, months[index].month)}
 						class:clickable={day}
 						role="button"
@@ -739,7 +694,16 @@
 								class:status-incomplete={cellState === 'incomplete'}
 								class:status-bad={cellState === 'not-working'}
 							>
-								{STATE_LABEL[cellState]}
+								<span class="status-full">{STATE_LABEL[cellState]}</span>
+								<span class="status-icon" aria-hidden="true">
+									{#if cellState === 'working'}
+										<Check size={16} strokeWidth={3} />
+									{:else if cellState === 'incomplete'}
+										<Minus size={16} strokeWidth={3} />
+									{:else}
+										<X size={16} strokeWidth={3} />
+									{/if}
+								</span>
 							</div>
 							<div class="day-num">{String(day).padStart(2, '0')}</div>
 						{/if}
@@ -748,6 +712,13 @@
 			</div>
 		{/each}
 	</div>
+
+	<ul class="legend" aria-label="Calendar legend">
+		<li><span class="legend-swatch state-working"></span>Working</li>
+		<li><span class="legend-swatch state-incomplete"></span>Incomplete</li>
+		<li><span class="legend-swatch state-not-working"></span>Not Working</li>
+		<li><span class="legend-dot"></span>Public Holiday</li>
+	</ul>
 
 	{#if isAdmin}
 		<div class="action-buttons">
@@ -823,224 +794,162 @@
 			{/each}
 		</div>
 
-		{#if holidayTotalPages > 1}
-			<div class="pagination">
-				<button
-					onclick={() => gotoHolidayPage(holidayPage - 1)}
-					disabled={holidayPage === 1}
-					aria-label="Previous page"
-				>
-					<ChevronsLeft />
-				</button>
-				{#each holidayPageItems as item (item)}
-					{#if typeof item === 'number'}
-						<button
-							class:active={item === holidayPage}
-							onclick={() => gotoHolidayPage(item)}
-							aria-label={`Page ${item}`}
-							aria-current={item === holidayPage ? 'page' : undefined}
-						>
-							{item}
-						</button>
-					{:else}
-						<span class="page-gap">…</span>
-					{/if}
-				{/each}
-				<button
-					onclick={() => gotoHolidayPage(holidayPage + 1)}
-					disabled={holidayPage === holidayTotalPages}
-					aria-label="Next page"
-				>
-					<ChevronsRight />
-				</button>
-			</div>
-		{/if}
+		<Pagination
+			bind:page={holidayPage}
+			totalItems={holidays.length}
+			pageSize={HOLIDAY_PAGE_SIZE}
+			itemLabel="holidays"
+		/>
 	</section>
 
-	{#if showSubmissionsModal}
-		<div class="modal-backdrop" role="presentation">
-			<div class="modal" role="dialog" aria-modal="true" aria-label="Submissions Summary">
-				<div class="modal-actions">
-					<h3>{formatSelectedDate(selectedDay, months[index].year, months[index].month)}</h3>
-					<button class="modal-close" onclick={closeSubmissionsModal}><Close size={18} /></button>
-				</div>
-				<div class="modal-body">
-					{#if submissionsError}
-						<p class="status-error">{submissionsError}</p>
-					{:else if submissionsLoading}
-						<p>Loading...</p>
-					{:else}
-						<div class="submissions-info">
-							<p>Tool Box Meeting (e-TBM):</p>
-							<p class:status-ok={submissionStatus.tbm} class:status-bad={!submissionStatus.tbm}>
-								{submissionStatus.tbm ? 'Submitted' : 'Not submitted'}
-							</p>
-						</div>
-						<div class="submissions-info">
-							<p>PPE Visual Inspections (e-PPE):</p>
-							<p class:status-ok={submissionStatus.ppe} class:status-bad={!submissionStatus.ppe}>
-								{submissionStatus.ppe ? 'Submitted' : 'Not submitted'}
-							</p>
-						</div>
-						<div class="submissions-info">
-							<p>Housekeeping (e-HKP):</p>
-							<p class:status-ok={submissionStatus.hkp} class:status-bad={!submissionStatus.hkp}>
-								{submissionStatus.hkp ? 'Submitted' : 'Not submitted'}
-							</p>
-						</div>
-					{/if}
-				</div>
+	<Modal
+		open={showSubmissionsModal}
+		title={formatSelectedDate(selectedDay, months[index].year, months[index].month)}
+		size="sm"
+		onclose={closeSubmissionsModal}
+		closeOnBackdrop
+	>
+		{#if submissionsError}
+			<p class="status-error">{submissionsError}</p>
+		{:else if submissionsLoading}
+			<p>Loading...</p>
+		{:else}
+			<div class="submissions-info">
+				<p>Tool Box Meeting (e-TBM):</p>
+				<p class:status-ok={submissionStatus.tbm} class:status-bad={!submissionStatus.tbm}>
+					{submissionStatus.tbm ? 'Submitted' : 'Not submitted'}
+				</p>
 			</div>
-		</div>
-	{/if}
+			<div class="submissions-info">
+				<p>PPE Visual Inspections (e-PPE):</p>
+				<p class:status-ok={submissionStatus.ppe} class:status-bad={!submissionStatus.ppe}>
+					{submissionStatus.ppe ? 'Submitted' : 'Not submitted'}
+				</p>
+			</div>
+			<div class="submissions-info">
+				<p>Housekeeping (e-HKP):</p>
+				<p class:status-ok={submissionStatus.hkp} class:status-bad={!submissionStatus.hkp}>
+					{submissionStatus.hkp ? 'Submitted' : 'Not submitted'}
+				</p>
+			</div>
+		{/if}
+	</Modal>
 </div>
 
-{#if isAdmin && showHolidayModal}
-	<div class="modal-backdrop" role="presentation">
-		<div
-			class="modal modal-form"
-			role="dialog"
-			aria-modal="true"
-			aria-label={holidayMode === 'create' ? 'Create holiday' : 'Edit holiday'}
-		>
-			<button
-				class="modal-close"
-				onclick={closeHolidayModal}
-				disabled={holidaySaving}
-				aria-label="Close"
+<Modal
+	open={isAdmin && showHolidayModal}
+	title={holidayMode === 'create' ? 'Create Holiday' : 'Edit Holiday'}
+	busy={holidaySaving}
+	onclose={closeHolidayModal}
+>
+	<form id="holiday-form" class="holiday-form" onsubmit={saveHoliday} novalidate>
+		<label class="field">
+			<span>Date</span>
+			<input
+				type="date"
+				bind:value={holidayForm.holiday_date}
+				onfocus={(e) => e.currentTarget.showPicker?.()}
+			/>
+		</label>
+
+		<label class="field">
+			<span>Name</span>
+			<input type="text" bind:value={holidayForm.name} />
+		</label>
+
+		<div class="field">
+			<label for="holiday-region">Region</label>
+			<select
+				id="holiday-region"
+				bind:value={regionPick}
+				onchange={addRegion}
+				disabled={availableRegions.length === 0}
 			>
-				<Close size={18} />
-			</button>
-			<h2 class="modal-title">{holidayMode === 'create' ? 'Create Holiday' : 'Edit Holiday'}</h2>
+				<option value="">
+					{availableRegions.length === 0 ? 'All regions selected' : 'Choose an option...'}
+				</option>
+				{#each availableRegions as region (region)}
+					<option value={region}>{region}</option>
+				{/each}
+			</select>
 
-			<form class="holiday-form" onsubmit={saveHoliday} novalidate>
-				<label class="field">
-					<span>Date</span>
-					<input
-						type="date"
-						bind:value={holidayForm.holiday_date}
-						onfocus={(e) => e.currentTarget.showPicker?.()}
-					/>
-				</label>
+			<label class="checkbox-row">
+				<input type="checkbox" checked={allRegionsSelected} onchange={toggleAllRegions} />
+				All Regions
+			</label>
 
-				<label class="field">
-					<span>Name</span>
-					<input type="text" bind:value={holidayForm.name} />
-				</label>
-
-				<div class="field">
-					<label for="holiday-region">Region</label>
-					<select
-						id="holiday-region"
-						bind:value={regionPick}
-						onchange={addRegion}
-						disabled={availableRegions.length === 0}
-					>
-						<option value="">
-							{availableRegions.length === 0 ? 'All regions selected' : 'Choose an option...'}
-						</option>
-						{#each availableRegions as region (region)}
-							<option value={region}>{region}</option>
-						{/each}
-					</select>
-
-					<label class="checkbox-row">
-						<input type="checkbox" checked={allRegionsSelected} onchange={toggleAllRegions} />
-						All Regions
-					</label>
-
-					{#if holidayForm.regions.length > 0}
-						<div class="region-list">
-							{#each holidayForm.regions as region, i (region)}
-								<div class="region-row">
-									<span class="region-no">{i + 1}.</span>
-									<span class="region-name">{region}</span>
-									<button
-										type="button"
-										class="icon-button bg-danger"
-										onclick={() => removeRegion(region)}
-										aria-label={`Remove ${region}`}
-										title="Remove region"
-									>
-										<Trash2 size={16} />
-									</button>
-								</div>
-							{/each}
+			{#if holidayForm.regions.length > 0}
+				<div class="region-list">
+					{#each holidayForm.regions as region, i (region)}
+						<div class="region-row">
+							<span class="region-no">{i + 1}.</span>
+							<span class="region-name">{region}</span>
+							<button
+								type="button"
+								class="icon-button bg-danger"
+								onclick={() => removeRegion(region)}
+								aria-label={`Remove ${region}`}
+								title="Remove region"
+							>
+								<Trash2 size={16} />
+							</button>
 						</div>
-					{/if}
+					{/each}
 				</div>
-
-				{#if holidayFormError}
-					<p class="status-error">{holidayFormError}</p>
-				{/if}
-
-				<div class="form-actions">
-					<button
-						type="button"
-						class="button-inverted"
-						onclick={closeHolidayModal}
-						disabled={holidaySaving}
-					>
-						Cancel
-					</button>
-					<button type="submit" class="button-primary" disabled={holidaySaving}>
-						{#if holidaySaving}
-							Saving...
-						{:else}
-							{holidayMode === 'create' ? 'Create' : 'Update'}
-						{/if}
-					</button>
-				</div>
-			</form>
-		</div>
-	</div>
-{/if}
-
-{#if isAdmin && showDeleteHolidayModal && deletingHoliday}
-	<div class="modal-backdrop" role="presentation">
-		<div class="modal modal-form" role="dialog" aria-modal="true" aria-label="Delete holiday">
-			<button
-				class="modal-close"
-				onclick={closeDeleteHoliday}
-				disabled={holidayDeleting}
-				aria-label="Close"
-			>
-				<Close size={18} />
-			</button>
-			<h2 class="modal-title">Delete Holiday</h2>
-			<p>Are you sure you want to delete this holiday?</p>
-			<div class="delete-summary">
-				<p><b>Name:</b> {deletingHoliday.name}</p>
-				<p><b>Date:</b> {formatHolidayDate(deletingHoliday.holiday_date)}</p>
-				<p><b>Region ({deletingHoliday.regions?.length ?? 0}):</b> {(deletingHoliday.regions ?? []).join(', ')}</p>
-			</div>
-			<p class="hint">This action cannot be undone.</p>
-			{#if holidayDeleteError}
-				<p class="status-error">{holidayDeleteError}</p>
 			{/if}
-			<div class="form-actions">
-				<button class="button-inverted" onclick={closeDeleteHoliday} disabled={holidayDeleting}>
-					Cancel
-				</button>
-				<button class="button-danger" onclick={deleteHoliday} disabled={holidayDeleting}>
-					{holidayDeleting ? 'Deleting...' : 'Delete'}
-				</button>
-			</div>
 		</div>
-	</div>
-{/if}
 
-{#if toast}
-	{#key toast.id}
-		<div class="toast" role="status" aria-live="polite">
-			<CircleCheck size={20} />
-			<span>{toast.message}</span>
-			<button class="toast-close" onclick={dismissToast} aria-label="Dismiss notification">
-				<Close size={16} />
-			</button>
+		{#if holidayFormError}
+			<p class="status-error">{holidayFormError}</p>
+		{/if}
+	</form>
+
+	{#snippet footer()}
+		<button type="button" class="button-inverted" onclick={closeHolidayModal} disabled={holidaySaving}>
+			Cancel
+		</button>
+		<button type="submit" form="holiday-form" class="button-primary" disabled={holidaySaving}>
+			{#if holidaySaving}
+				Saving...
+			{:else}
+				{holidayMode === 'create' ? 'Create' : 'Update'}
+			{/if}
+		</button>
+	{/snippet}
+</Modal>
+
+<Modal
+	open={isAdmin && showDeleteHolidayModal && !!deletingHoliday}
+	title="Delete Holiday"
+	size="sm"
+	busy={holidayDeleting}
+	onclose={closeDeleteHoliday}
+>
+	<p>Are you sure you want to delete this holiday?</p>
+	{#if deletingHoliday}
+		<div class="delete-summary">
+			<p><b>Name:</b> {deletingHoliday.name}</p>
+			<p><b>Date:</b> {formatHolidayDate(deletingHoliday.holiday_date)}</p>
+			<p>
+				<b>Region ({deletingHoliday.regions?.length ?? 0}):</b>
+				{(deletingHoliday.regions ?? []).join(', ')}
+			</p>
 		</div>
-	{/key}
-{/if}
+	{/if}
+	<p class="hint">This action cannot be undone.</p>
+	{#if holidayDeleteError}
+		<p class="status-error">{holidayDeleteError}</p>
+	{/if}
+
+	{#snippet footer()}
+		<button class="button-inverted" onclick={closeDeleteHoliday} disabled={holidayDeleting}>
+			Cancel
+		</button>
+		<button class="button-danger" onclick={deleteHoliday} disabled={holidayDeleting}>
+			{holidayDeleting ? 'Deleting...' : 'Delete'}
+		</button>
+	{/snippet}
+</Modal>
 
 <style>
 	* {
@@ -1148,6 +1057,18 @@
 		color: #064c6dd7;
 	}
 
+	.status-icon,
+	.legend {
+		display: none;
+	}
+
+	.status-full,
+	.status-icon {
+		color: inherit;
+		font-size: inherit;
+		font-weight: inherit;
+	}
+
 	.cell-status {
 		text-align: center;
 		margin-top: 6px;
@@ -1161,76 +1082,6 @@
 		height: 12px;
 		border-radius: 50%;
 		background-color: #f57c00;
-	}
-
-	.modal-actions {
-		display: flex;
-		justify-content: space-between;
-	}
-
-	.modal-backdrop {
-		position: fixed;
-		inset: 0;
-		background: rgba(9, 23, 71, 0.45);
-		display: flex;
-		align-items: flex-start;
-		justify-content: center;
-		padding: 32px 20px;
-		z-index: 10;
-	}
-
-	.modal-body {
-		margin-top: 15px;
-	}
-
-	.modal {
-		position: relative;
-		width: min(400px, 100%);
-		height: 200px;
-		overflow: auto;
-		background: #ffffff;
-		border-radius: 8px;
-		margin: auto;
-		padding: 20px;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-	}
-
-	.modal.modal-form {
-		width: min(480px, 100%);
-		height: auto;
-		max-height: calc(100vh - 64px);
-		margin: 0 auto;
-	}
-
-	.modal-close {
-		position: absolute;
-		top: 20px;
-		right: 12px;
-		background: transparent;
-		border: none;
-		cursor: pointer;
-		padding: 4px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: #091747;
-	}
-
-	.modal-close:hover {
-		background: rgba(0, 0, 0, 0.05);
-		border-radius: 50%;
-	}
-
-	.modal h3 {
-		margin: 0 0 16px;
-		font-size: 16px;
-		font-weight: bold;
-	}
-
-	.modal-title {
-		margin: 0 32px 16px 0;
-		font-size: 20px;
-		font-weight: bold;
 	}
 
 	.nav {
@@ -1485,98 +1336,6 @@
 		text-align: center;
 	}
 
-	.pagination {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		justify-content: flex-end;
-		margin-top: 12px;
-		flex-wrap: wrap;
-	}
-
-	.pagination button {
-		min-width: 34px;
-		height: 34px;
-		border-radius: 4px;
-		border: 1px solid #283a5a33;
-		background: white;
-		color: #091747;
-		padding: 0 8px;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.pagination button.active,
-	.pagination button.active:focus {
-		background: #091747;
-		color: white;
-		border-color: #091747;
-	}
-
-	.pagination button:hover:not([disabled]) {
-		background: #091747b9;
-		color: white;
-	}
-
-	.page-gap {
-		padding: 0 4px;
-	}
-
-	.toast {
-		position: fixed;
-		right: 20px;
-		bottom: 20px;
-		z-index: 30;
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		max-width: min(420px, calc(100vw - 40px));
-		padding: 12px 14px;
-		background-color: #0f8f2f;
-		color: #ffffff;
-		border-radius: 6px;
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-		animation: toast-in 0.25s ease-out;
-	}
-
-	.toast span {
-		color: #ffffff;
-		font-weight: bold;
-		word-break: break-word;
-	}
-
-	.toast-close {
-		background: transparent;
-		color: #ffffff;
-		padding: 2px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-shrink: 0;
-	}
-
-	.toast-close:hover {
-		background: rgba(255, 255, 255, 0.2);
-		border-radius: 50%;
-	}
-
-	@keyframes toast-in {
-		from {
-			opacity: 0;
-			transform: translateY(12px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.toast {
-			animation: none;
-		}
-	}
 
 	.holiday-form {
 		display: grid;
@@ -1644,13 +1403,6 @@
 		height: 30px;
 	}
 
-	.form-actions {
-		display: flex;
-		justify-content: flex-end;
-		gap: 10px;
-		margin-top: 6px;
-	}
-
 	.delete-summary {
 		margin: 12px 0;
 		padding: 10px 12px;
@@ -1715,11 +1467,6 @@
 			width: 100%;
 		}
 
-		.modal {
-			height: auto;
-			max-height: 80vh;
-		}
-
 		.submissions-info {
 			gap: 10px;
 		}
@@ -1758,11 +1505,79 @@
 			padding: 4px;
 		}
 
+		.status-full {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip: rect(0 0 0 0);
+			white-space: nowrap;
+		}
+
+		.status-icon {
+			display: flex;
+			justify-content: center;
+		}
+
 		.cell-status {
-			font-size: 10px;
-			line-height: 1.1;
-			padding: 2px 0;
-			margin-top: 2px;
+			margin-top: -10px;
+		}
+
+		.cell.state-working {
+			background-color: #e6f4ea;
+		}
+
+		.cell.state-incomplete {
+			background-color: #fff2e0;
+		}
+
+		.cell.state-not-working {
+			background-color: #fdecec;
+		}
+
+		.legend {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px 16px;
+			list-style: none;
+			margin: 10px 0 0;
+			padding: 0;
+		}
+
+		.legend li {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			font-size: 12px;
+		}
+
+		.legend-swatch {
+			width: 14px;
+			height: 14px;
+			border-radius: 3px;
+			border: 1px solid #b0b0b0;
+		}
+
+		.legend-swatch.state-working {
+			background-color: #e6f4ea;
+			border-color: #0f8f2f;
+		}
+
+		.legend-swatch.state-incomplete {
+			background-color: #fff2e0;
+			border-color: #e67e00;
+		}
+
+		.legend-swatch.state-not-working {
+			background-color: #fdecec;
+			border-color: #c62828;
+		}
+
+		.legend-dot {
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+			background-color: #f57c00;
 		}
 
 		.day-num {
@@ -1802,29 +1617,12 @@
 			margin-top: 4px;
 		}
 
-		.modal {
-			width: 100%;
-			padding: 16px;
-		}
-
-		.modal h3 {
-			font-size: 14px;
-		}
-
 		.submissions-info {
 			align-items: center;
 		}
 
 		.submissions-info p {
 			font-size: 13px;
-		}
-
-		.form-actions {
-			flex-direction: column-reverse;
-		}
-
-		.form-actions button {
-			width: 100%;
 		}
 	}
 </style>

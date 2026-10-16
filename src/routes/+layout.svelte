@@ -4,58 +4,102 @@
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
+	import Toast from '$lib/components/Toast.svelte';
 	import { spinner } from '$lib/stores/spinner.js';
+	import { toast } from '$lib/stores/toast';
 	import { onMount, onDestroy } from 'svelte';
-	import { initAuthStore, destroyAuthStore } from '$lib/auth-store';
+	import { get } from 'svelte/store';
+	import { initAuthStore, destroyAuthStore, authUser } from '$lib/auth-store';
+	import { checkSession } from '$lib/auth-guard';
 	import { getSupabase } from '$lib/supabase';
-	import { goto } from '$app/navigation';
+	import { goto, onNavigate } from '$app/navigation';
 
 	/** @type {{ children: any }} */
 	const { children } = $props();
 
 	const MIN_SPINNER_MS = 400;
 	const INACTIVITY_MS = 30 * 60 * 1000;
+	const INACTIVITY_CHECK_MS = 60 * 1000;
+	const NAVIGATION_SESSION_CHECK_MS = 8000;
+	const FORCED_RELOAD_KEY = 'bme:forced-reload-at';
 
 	let spinnerActive = $state(false);
 	/** @type {ReturnType<typeof setTimeout> | null} */
 	let hideTimer = null;
 	/** @type {null | (() => void)} */
 	let navUnsub = null;
-	let inactivityTimer = null;
+	/** @type {ReturnType<typeof setInterval> | null} */
+	let inactivityInterval = null;
+	let lastActivity = Date.now();
+	let signingOut = false;
 
-	const isAuthPage = $derived.by(() => {
-		const path = $page.url.pathname;
-		return (
-			path === '/signin' ||
-			path === '/signup' ||
-			path === '/auth/forgotpw' ||
-			path === '/auth/resetpw' ||
-			path == '/confirmation'
-		);
+	const AUTH_PATHS = ['/signin', '/signup', '/auth/forgotpw', '/auth/resetpw', '/confirmation'];
+
+	const isAuthPage = $derived(AUTH_PATHS.includes($page.url.pathname));
+
+	function recentlyForcedReload() {
+		try {
+			const at = Number(sessionStorage.getItem(FORCED_RELOAD_KEY) || 0);
+			return Date.now() - at < 30_000;
+		} catch {
+			return false;
+		}
+	}
+
+	onNavigate(async (navigation) => {
+		const target = navigation.to?.url;
+		if (!target || navigation.willUnload || target.origin !== location.origin) return;
+		if (AUTH_PATHS.includes(target.pathname) || !get(authUser)) return;
+
+		const { ok } = await checkSession(NAVIGATION_SESSION_CHECK_MS);
+		if (ok || recentlyForcedReload()) return;
+
+		try {
+			sessionStorage.setItem(FORCED_RELOAD_KEY, String(Date.now()));
+		} catch {
+			// ignore
+		}
+		location.href = target.href;
+		await new Promise(() => {});
 	});
 
 	async function handleSessionTimeout() {
-		if (isAuthPage) return;
+		if (isAuthPage || signingOut || !get(authUser)) return;
+		signingOut = true;
 
-		const supabase = getSupabase();
-		if (supabase) {
-			await supabase.auth.signOut();
+		try {
+			const supabase = getSupabase();
+			if (supabase) {
+				await Promise.race([
+					supabase.auth.signOut(),
+					new Promise((resolve) => setTimeout(resolve, 5000))
+				]);
+			}
+		} catch {
+			// Sign-out failures still end with the sign-in page.
+		} finally {
+			signingOut = false;
 		}
 
+		toast.info('You were signed out after 30 minutes of inactivity.');
 		await goto('/signin');
 	}
 
-	function resetInactivityTimer() {
-		if (isAuthPage) return;
-
-		if (inactivityTimer) {
-			clearTimeout(inactivityTimer);
-		}
-
-		inactivityTimer = setTimeout(() => {
-			handleSessionTimeout();
-		}, INACTIVITY_MS);
+	function markActivity() {
+		lastActivity = Date.now();
 	}
+
+	function checkInactivity() {
+		if (Date.now() - lastActivity >= INACTIVITY_MS) {
+			handleSessionTimeout();
+		}
+	}
+
+	function onVisibilityChange() {
+		if (document.visibilityState === 'visible') checkInactivity();
+	}
+
+	const ACTIVITY_EVENTS = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
 
 	onMount(() => {
 		initAuthStore();
@@ -75,26 +119,26 @@
 			}
 		});
 
-		const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-
-		for (const events of activityEvents) {
-			window.addEventListener(event, resetInactivityTimer, true);
+		for (const name of ACTIVITY_EVENTS) {
+			window.addEventListener(name, markActivity, { capture: true, passive: true });
 		}
+		document.addEventListener('visibilitychange', onVisibilityChange);
 
-		resetInactivityTimer();
+		markActivity();
+		inactivityInterval = setInterval(checkInactivity, INACTIVITY_CHECK_MS);
 
 		return () => {
-			for (const events of activityEvents) {
-				window.removeEventListener(event, resetInactivityTimer, true);
+			for (const name of ACTIVITY_EVENTS) {
+				window.removeEventListener(name, markActivity, { capture: true });
 			}
+			document.removeEventListener('visibilitychange', onVisibilityChange);
 		};
 	});
 
 	onDestroy(() => {
-		// @ts-ignore
 		if (navUnsub) navUnsub();
 		if (hideTimer) clearTimeout(hideTimer);
-		if (inactivityTimer) clearTimeout(inactivityTimer);
+		if (inactivityInterval) clearInterval(inactivityInterval);
 		destroyAuthStore();
 	});
 </script>
@@ -120,14 +164,19 @@
 	{/if}
 </div>
 
+<Toast />
+
 <style>
 	.app-shell {
 		min-height: 100vh;
+		min-height: 100dvh;
 		display: flex;
 		flex-direction: column;
 	}
 
 	.app-main {
 		flex: 1;
+		width: 100%;
+		min-width: 0;
 	}
 </style>

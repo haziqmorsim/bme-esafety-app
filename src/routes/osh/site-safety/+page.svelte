@@ -1,8 +1,8 @@
 <script>
 	import Search from '@lucide/svelte/icons/search';
 	import CloudDownload from '@lucide/svelte/icons/cloud-download';
-	import Close from '@lucide/svelte/icons/x';
 	import { supabase } from '$lib/supabase';
+	import Modal from '$lib/components/Modal.svelte';
 
 	let formType = '';
 	let fromDate = '';
@@ -337,12 +337,6 @@
 			onfocus={(e) => e.target.showPicker?.()}
 		/>
 	</div>
-	<div>
-		<p class="hidden">Search</p>
-		<button class="button-primary" id="button-search" onclick={loadForms}
-			><Search />Search Project</button
-		>
-	</div>
 </div>
 
 <div class="site-safety-download">
@@ -457,43 +451,35 @@
 			{/if}
 		</div>
 	{/each}
-	{#if showDetailsModal}
-		<div class="modal-backdrop" role="presentation">
-			<div class="modal" role="dialog" aria-modal="true" aria-label="Show details">
-				<button class="modal-close" onclick={closeDetailsModal}>
-					<Close size={18} />
-				</button>
-				<h3 class="form-heading">eForm Details</h3>
-				{#if modalLoading}
-					<p>Loading...</p>
-				{:else if modalError}
-					<p class="error">{modalError}</p>
-				{:else if formType === 'eTBM'}
-					<p><b>Meeting Topics:</b></p>
-					<p class="form-details">{formatArray(details?.meeting_topics ?? '-')}</p>
-					<p><b>Competency:</b></p>
-					<p class="form-details">{formatCompetency(details?.competency ?? '-')}</p>
-					<p><b>Attendance:</b></p>
-					<p class="form-details">{formatAttendance(details?.attendance ?? '-')}</p>
-				{:else if formType === 'ePPE'}
-					<p><b>Attendance:</b></p>
-					<p class="form-details">{formatAttendance(details?.attendance ?? '-')}</p>
-				{:else if formType === 'eHKP'}
-					<p><b>Report Day:</b></p>
-					<p class="form-details">{formatReportDay(details?.report_day ?? '-')}</p>
-				{:else if formType === 'eZCA'}
-					<p><b>Subsections:</b></p>
-					<p class="form-details subsections-text">
-						{formatSubsections(details?.subsections ?? '-')}
-					</p>
-				{/if}
+	<Modal open={showDetailsModal} title="eForm Details" onclose={closeDetailsModal} closeOnBackdrop>
+		{#if modalLoading}
+			<p>Loading...</p>
+		{:else if modalError}
+			<p class="error">{modalError}</p>
+		{:else if formType === 'eTBM'}
+			<p><b>Meeting Topics:</b></p>
+			<p class="form-details">{formatArray(details?.meeting_topics ?? '-')}</p>
+			<p><b>Competency:</b></p>
+			<p class="form-details">{formatCompetency(details?.competency ?? '-')}</p>
+			<p><b>Attendance:</b></p>
+			<p class="form-details">{formatAttendance(details?.attendance ?? '-')}</p>
+		{:else if formType === 'ePPE'}
+			<p><b>Attendance:</b></p>
+			<p class="form-details">{formatAttendance(details?.attendance ?? '-')}</p>
+		{:else if formType === 'eHKP'}
+			<p><b>Report Day:</b></p>
+			<p class="form-details">{formatReportDay(details?.report_day ?? '-')}</p>
+		{:else if formType === 'eZCA'}
+			<p><b>Subsections:</b></p>
+			<p class="form-details subsections-text">
+				{formatSubsections(details?.subsections ?? '-')}
+			</p>
+		{/if}
 
-				<div class="modal-actions">
-					<button type="button" class="button-primary" onclick={closeDetailsModal}>Close</button>
-				</div>
-			</div>
-		</div>
-	{/if}
+		{#snippet footer()}
+			<button type="button" class="button-primary" onclick={closeDetailsModal}>Close</button>
+		{/snippet}
+	</Modal>
 {/if}
 
 <style>
@@ -545,14 +531,6 @@
 		background-color: #091747b9;
 	}
 
-	#button-search {
-		height: 40px;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 8px;
-	}
-
 	.container {
 		display: flex;
 		flex-wrap: wrap;
@@ -599,12 +577,6 @@
 		margin-bottom: 10px;
 	}
 
-	.form-heading {
-		font-size: 20px;
-		font-weight: bold;
-		margin-bottom: 10px;
-	}
-
 	.forms-date {
 		cursor: pointer;
 	}
@@ -615,53 +587,6 @@
 
 	.hint {
 		margin: 10px;
-	}
-
-	.modal-backdrop {
-		position: fixed;
-		inset: 0;
-		background: rgba(9, 23, 71, 0.45);
-		display: flex;
-		align-items: flex-start;
-		justify-content: center;
-		padding: 32px 20px;
-		z-index: 10;
-	}
-
-	.modal {
-		position: relative;
-		width: min(560px, 100%);
-		max-height: calc(100vh - 64px);
-		overflow: auto;
-		background: #ffffff;
-		border-radius: 8px;
-		padding: 20px;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-	}
-
-	.modal-close {
-		position: absolute;
-		top: 20px;
-		right: 12px;
-		background: transparent;
-		border: none;
-		cursor: pointer;
-		padding: 4px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: #091747;
-	}
-
-	.modal-close:hover {
-		background: rgba(0, 0, 0, 0.05);
-		border-radius: 50%;
-	}
-
-	.modal-actions {
-		margin-top: 20px;
-		display: flex;
-		justify-content: flex-end;
 	}
 
 	.project-box {
@@ -752,10 +677,6 @@
 			width: 100%;
 		}
 
-		.hidden {
-			opacity: 0;
-		}
-
 		.date-from,
 		.date-to {
 			width: 100%;
@@ -792,10 +713,6 @@
 			overflow-wrap: anywhere;
 		}
 
-		.modal {
-			max-height: 85vh;
-		}
-
 		.form-details {
 			word-break: break-word;
 		}
@@ -822,10 +739,6 @@
 		.filter-input,
 		.date-from,
 		.date-to {
-			width: 100%;
-		}
-
-		#button-search {
 			width: 100%;
 		}
 
@@ -873,14 +786,6 @@
 
 		.project-name {
 			font-size: 15px;
-		}
-
-		.modal {
-			padding: 16px;
-		}
-
-		.form-heading {
-			font-size: 18px;
 		}
 	}
 </style>

@@ -2,14 +2,29 @@
 	import { supabase } from '$lib/supabase';
 	import { authUser } from '$lib/auth-store';
 	import { goto } from '$app/navigation';
+	import { toast } from '$lib/stores/toast';
 
 	let email = '';
 	let password = '';
 	let error = '';
 	let showPassword = false;
+	let signingIn = false;
 
 	async function signIn() {
+		if (signingIn) return;
 		error = '';
+		signingIn = true;
+
+		try {
+			await completeSignIn();
+		} catch (err) {
+			error = err?.message ?? String(err);
+		} finally {
+			signingIn = false;
+		}
+	}
+
+	async function completeSignIn() {
 		const { data, error: signInError } = await supabase.auth.signInWithPassword({
 			email,
 			password
@@ -83,6 +98,7 @@
 			}
 		}
 
+		toast.success('Signed in successfully.');
 		goto('/');
 	}
 </script>
@@ -170,7 +186,9 @@
 				{#if error}
 					<p class="error">{error}</p>
 				{/if}
-				<button type="submit" class="button-primary">Sign In</button>
+				<button type="submit" class="button-primary" disabled={signingIn}>
+					{signingIn ? 'Signing in...' : 'Sign In'}
+				</button>
 				<!-- <p class="no-account">
 					Don't have an account? Sign up <a href="/signup" class="signup">here</a>.
 				</p> -->
@@ -225,6 +243,11 @@
 		font-weight: bold;
 		margin-top: 10px;
 		padding: 10px 20px;
+	}
+
+	button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
 	}
 
 	.button-primary:hover {

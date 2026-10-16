@@ -1,15 +1,18 @@
 <script>
 	/** @type {Array<{ items: Array<any>}>} */
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import Search from '@lucide/svelte/icons/search';
-	import Close from '@lucide/svelte/icons/x';
+	import Pencil from '@lucide/svelte/icons/pencil';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { supabase } from '$lib/supabase';
 	import { requireUser } from '$lib/auth-guard';
+	import { toast } from '$lib/stores/toast';
+	import Modal from '$lib/components/Modal.svelte';
 
 	let users = [];
 	let errorMsg = '';
 	let isSaving = false;
+	let modalError = '';
 	let showEditModal = false;
 	let showDeleteModal = false;
 	let selectedUser = null;
@@ -60,6 +63,8 @@
 		users = data ?? [];
 	});
 
+	const fullName = (user) => `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim() || user?.email || 'User';
+
 	const openEditModal = (user) => {
 		selectedUser = user;
 		editForm = {
@@ -72,20 +77,24 @@
 			position: user.position ?? '',
 			region: user.region ?? ''
 		};
+		modalError = '';
 		showEditModal = true;
 	};
 
 	const closeEditModal = () => {
+		if (isSaving) return;
 		showEditModal = false;
 		selectedUser = null;
 	};
 
 	const openDeleteModal = (user) => {
 		selectedUser = user;
+		modalError = '';
 		showDeleteModal = true;
 	};
 
 	const closeDeleteModal = () => {
+		if (isSaving) return;
 		showDeleteModal = false;
 		selectedUser = null;
 	};
@@ -93,7 +102,9 @@
 	const saveUser = async () => {
 		if (!selectedUser) return;
 		isSaving = true;
-		errorMsg = '';
+		modalError = '';
+
+		const id = selectedUser.id;
 		const payload = {
 			first_name: editForm.first_name.trim() || null,
 			last_name: editForm.last_name.trim() || null,
@@ -108,38 +119,58 @@
 			region: editForm.region.trim() || null
 		};
 
-		const { data, error } = await supabase
-			.from('profiles')
-			.update(payload)
-			.eq('id', selectedUser.id);
+		try {
+			const { data, error } = await supabase
+				.from('profiles')
+				.update(payload)
+				.eq('id', id)
+				.select('id');
 
-		isSaving = false;
+			if (error) throw error;
+			if (!data || data.length === 0) {
+				throw new Error('The user was not updated. You may not have permission to edit this user.');
+			}
 
-		if (error) {
-			errorMsg = error.message;
-			return;
+			users = users.map((user) => (user.id === id ? { ...user, ...payload } : user));
+			isSaving = false;
+			closeEditModal();
+			toast.success(`User "${fullName(payload)}" updated successfully.`);
+		} catch (error) {
+			modalError = error?.message ?? String(error);
+		} finally {
+			isSaving = false;
 		}
-
-		users = users.map((user) => (user.id === selectedUser.id ? { ...user, ...payload } : user));
-		closeEditModal();
 	};
 
 	const deleteUser = async () => {
 		if (!selectedUser) return;
 		isSaving = true;
-		errorMsg = '';
+		modalError = '';
 
-		const { error } = await supabase.from('profiles').delete().eq('id', selectedUser.id);
+		const id = selectedUser.id;
+		const name = fullName(selectedUser);
 
-		isSaving = false;
+		try {
+			const { data, error } = await supabase
+				.from('profiles')
+				.delete()
+				.eq('id', id)
+				.select('id');
 
-		if (error) {
-			errorMsg = error.message;
-			return;
+			if (error) throw error;
+			if (!data || data.length === 0) {
+				throw new Error('The user was not deleted. You may not have permission to delete this user.');
+			}
+
+			users = users.filter((user) => user.id !== id);
+			isSaving = false;
+			closeDeleteModal();
+			toast.success(`User "${name}" deleted successfully.`);
+		} catch (error) {
+			modalError = error?.message ?? String(error);
+		} finally {
+			isSaving = false;
 		}
-
-		users = users.filter((user) => user.id !== selectedUser.id);
-		closeDeleteModal();
 	};
 </script>
 
@@ -161,11 +192,7 @@
 	</div>
 	<div>
 		<p>User</p>
-		<input type="text" placeholder="Search here..." bind:value={searchText} class="filter-input" />
-	</div>
-	<div>
-		<p class="hidden">Search</p>
-		<button class="button-primary" id="button-search"><Search />Search User</button>
+		<input type="text" placeholder="Search by user..." bind:value={searchText} class="filter-input" />
 	</div>
 </div>
 
@@ -185,90 +212,85 @@
 				<p><b>Region:</b> {u.region ?? '-'}</p>
 			</div>
 			<div class="button-modify">
-				<button onclick={() => openEditModal(u)}>Edit</button>
-				<button class="button-inverted" onclick={() => openDeleteModal(u)}>Delete</button>
+				<button class="button-edit" onclick={() => openEditModal(u)}>
+					<Pencil size={16} /><span>Edit</span>
+				</button>
+				<button class="button-delete" onclick={() => openDeleteModal(u)}>
+					<Trash2 size={16} /><span>Delete</span>
+				</button>
 			</div>
 		</div>
 	{/each}
 </div>
 
-{#if showEditModal}
-	<div class="modal-backdrop" role="presentation">
-		<div class="modal" role="dialog" aria-modal="true" aria-label="Edit user information">
-			<button class="modal-close" onclick={closeEditModal} disabled={isSaving}>
-				<Close size={18} />
-			</button>
-			<h2>Edit User Information</h2>
-			<div class="modal-body">
-				<label>
-					First Name:
-					<input type="text" bind:value={editForm.first_name} />
-				</label>
-				<label>
-					Last Name:
-					<input type="text" bind:value={editForm.last_name} />
-				</label>
-				<label>
-					Nickname:
-					<input type="text" bind:value={editForm.nickname} />
-				</label>
-				<label>
-					E-mail Address:
-					<input type="email" bind:value={editForm.email} />
-				</label>
-				<label>
-					Phone Number:
-					<input type="text" bind:value={editForm.phone} />
-				</label>
-				<label>
-					Department(s) (comma-separated):
-					<input type="text" bind:value={editForm.department} />
-				</label>
-				<label>
-					Position:
-					<input type="text" bind:value={editForm.position} />
-				</label>
-				<label>
-					Region:
-					<input type="text" bind:value={editForm.region} />
-				</label>
-			</div>
-			<div class="modal-actions">
-				<button
-					class="button-inverted"
-					id="button-cancel"
-					onclick={closeEditModal}
-					disabled={isSaving}
-				>
-					Cancel
-				</button>
-				<button onclick={saveUser} disabled={isSaving}>
-					{isSaving ? 'Saving...' : 'Confirm'}
-				</button>
-			</div>
-		</div>
-	</div>
-{/if}
+<Modal open={showEditModal} title="Edit User Information" busy={isSaving} onclose={closeEditModal}>
+	<form id="user-form" class="edit-form" onsubmit={(e) => (e.preventDefault(), saveUser())}>
+		<label>
+			First Name:
+			<input type="text" bind:value={editForm.first_name} />
+		</label>
+		<label>
+			Last Name:
+			<input type="text" bind:value={editForm.last_name} />
+		</label>
+		<label>
+			Nickname:
+			<input type="text" bind:value={editForm.nickname} />
+		</label>
+		<label>
+			E-mail Address:
+			<input type="email" bind:value={editForm.email} />
+		</label>
+		<label>
+			Phone Number:
+			<input type="text" bind:value={editForm.phone} />
+		</label>
+		<label>
+			Department(s) (comma-separated):
+			<input type="text" bind:value={editForm.department} />
+		</label>
+		<label>
+			Position:
+			<input type="text" bind:value={editForm.position} />
+		</label>
+		<label>
+			Region:
+			<input type="text" bind:value={editForm.region} />
+		</label>
+	</form>
+	{#if modalError}
+		<p class="error modal-error">{modalError}</p>
+	{/if}
 
-{#if showDeleteModal}
-	<div class="modal-backdrop" role="presentation">
-		<div class="modal" role="dialog" aria-modal="true" aria-label="Delete user">
-			<button class="modal-close" onclick={closeDeleteModal} disabled={isSaving}>
-				<Close size={18} />
-			</button>
-			<h2>Delete User</h2>
-			<p>Are you sure you want to delete this user?</p>
-			<div class="modal-actions">
-				<button class="button-inverted" onclick={closeDeleteModal} disabled={isSaving}>
-					Cancel
-				</button>
-				<button onclick={deleteUser} disabled={isSaving}>
-					{isSaving ? 'Deleting...' : 'Confirm'}
-				</button>
-			</div>
+	{#snippet footer()}
+		<button class="button-inverted" onclick={closeEditModal} disabled={isSaving}>Cancel</button>
+		<button type="submit" form="user-form" class="button-confirm" disabled={isSaving}>
+			{isSaving ? 'Saving...' : 'Confirm'}
+		</button>
+	{/snippet}
+</Modal>
+
+<Modal open={showDeleteModal} title="Delete User" size="sm" busy={isSaving} onclose={closeDeleteModal}>
+	<p>Are you sure you want to delete this user?</p>
+	{#if selectedUser}
+		<div class="delete-summary">
+			<p><b>Name:</b> {fullName(selectedUser)}</p>
+			<p><b>E-mail:</b> {selectedUser.email ?? '-'}</p>
+			<p><b>Department:</b> {selectedUser.department?.join(', ') || '-'}</p>
 		</div>
-	</div>
-{/if}
+	{/if}
+	<p class="hint">This action cannot be undone.</p>
+	{#if modalError}
+		<p class="error modal-error">{modalError}</p>
+	{/if}
+
+	{#snippet footer()}
+		<button class="button-inverted" onclick={closeDeleteModal} disabled={isSaving}>Cancel</button>
+		<button class="button-danger" onclick={deleteUser} disabled={isSaving}>
+			{isSaving ? 'Deleting...' : 'Delete'}
+		</button>
+	{/snippet}
+</Modal>
 
 <style>
 	* {
@@ -291,8 +313,8 @@
 		background-color: #064c6da4;
 	}
 
-	#button-cancel {
-		margin-top: 0;
+	button span {
+		color: #ffffff;
 	}
 
 	.button-inverted {
@@ -310,26 +332,31 @@
 		background-color: #dedede;
 	}
 
-	#button-search {
-		height: 40px;
+	.button-modify {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		width: 20%;
+		min-width: 96px;
+		align-self: flex-start;
+	}
+
+	.button-edit,
+	.button-delete {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		gap: 8px;
+		gap: 6px;
+		width: 100%;
+		height: 34px;
 	}
 
-	.button-modify {
-		display: grid;
-		width: 20%;
+	.button-delete {
+		background-color: #c62828;
 	}
 
-	.button-primary {
-		background-color: #091747;
-		padding: 10px 20px;
-	}
-
-	.button-primary:hover {
-		background-color: #091747b9;
+	.button-delete:hover:not(:disabled) {
+		background-color: #c62828c7;
 	}
 
 	.department-select {
@@ -365,11 +392,6 @@
 		font-size: 14px;
 	}
 
-	.hidden {
-		opacity: 0;
-	}
-
-	h2,
 	h3 {
 		font-weight: bold;
 	}
@@ -401,76 +423,78 @@
 		font-size: 14px;
 	}
 
-	.modal-backdrop {
-		position: fixed;
-		inset: 0;
-		background: rgba(9, 23, 71, 0.45);
-		display: flex;
-		align-items: flex-start;
-		justify-content: center;
-		padding: 32px 20px;
-		z-index: 10;
-	}
-
-	.modal {
-		position: relative;
-		width: min(560px, 100%);
-		max-height: calc(100vh - 64px);
-		overflow: auto;
-		background: #ffffff;
-		border-radius: 8px;
-		padding: 20px;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-	}
-
-	.modal-close {
-		position: absolute;
-		top: 20px;
-		right: 12px;
-		background: transparent;
-		border: none;
-		cursor: pointer;
-		padding: 4px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: #091747;
-	}
-
-	.modal-close:hover {
-		background: rgba(0, 0, 0, 0.05);
-		border-radius: 50%;
-	}
-
-	.modal h2 {
-		margin: 0 0 16px;
-		font-size: 20px;
-	}
-
-	.modal-body {
+	.edit-form {
 		display: grid;
 		gap: 12px;
 	}
 
-	.modal-body label {
+	.edit-form label {
 		display: grid;
 		gap: 6px;
 		font-size: 13px;
 		font-weight: bold;
 	}
 
-	.modal-body input {
+	.edit-form input {
+		width: 100%;
 		border: 1px solid #dcdcdc;
 		border-radius: 4px;
 		padding: 8px 10px;
 		font-size: 14px;
 	}
 
-	.modal-actions {
-		display: flex;
-		justify-content: flex-end;
-		gap: 10px;
-		margin-top: 18px;
+	.button-confirm,
+	.button-danger {
+		font-weight: bold;
+		padding: 8px 20px;
+	}
+
+	.button-confirm {
+		background-color: #091747;
+	}
+
+	.button-confirm:hover:not(:disabled) {
+		background-color: #091747b9;
+	}
+
+	.button-danger {
+		background-color: #c62828;
+	}
+
+	.button-danger:hover:not(:disabled) {
+		background-color: #c62828c7;
+	}
+
+	button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.error {
+		color: #c62828;
+		font-weight: bold;
+		margin: 8px 10px;
+	}
+
+	.modal-error {
+		margin: 12px 0 0;
+	}
+
+	.delete-summary {
+		margin: 12px 0;
+		padding: 10px 12px;
+		background-color: #f2f4f9;
+		border-radius: 4px;
+	}
+
+	.delete-summary p {
+		margin: 2px 0;
+	}
+
+	.hint {
+		font-size: 12px;
+		color: #5b6480;
+		margin: 8px 0 0;
 	}
 
 	@media (max-width: 1024px) {
@@ -490,10 +514,6 @@
 		}
 
 		.department-select {
-			width: 100%;
-		}
-
-		#button-search {
 			width: 100%;
 		}
 
@@ -557,12 +577,6 @@
 			box-sizing: border-box;
 		}
 
-		#button-search {
-			width: 100%;
-			justify-content: center;
-			margin-top: 6px;
-		}
-
 		.card-grid {
 			grid-template-columns: 1fr;
 		}
@@ -571,29 +585,16 @@
 			padding: 12px;
 		}
 
-		.modal {
-			width: 100%;
-			padding: 16px;
-		}
-
-		.modal-body {
+		.edit-form {
 			gap: 10px;
 		}
 
-		.modal-body label {
+		.edit-form label {
 			font-size: 12px;
 		}
 
-		.modal-body input {
+		.edit-form input {
 			font-size: 14px;
-			width: 100%;
-		}
-
-		.modal-actions {
-			flex-direction: column;
-		}
-
-		.modal-actions button {
 			width: 100%;
 		}
 

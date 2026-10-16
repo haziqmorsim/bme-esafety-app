@@ -8,10 +8,11 @@
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import Search from '@lucide/svelte/icons/search';
 	import Paperclip from '@lucide/svelte/icons/paperclip';
-	import Close from '@lucide/svelte/icons/x';
 	import { onMount } from 'svelte';
 	import { supabase } from '$lib/supabase';
 	import { requireUser } from '$lib/auth-guard';
+	import { toast } from '$lib/stores/toast';
+	import Modal from '$lib/components/Modal.svelte';
 
 	const BUCKET = 'scf_uploads';
 	const ATTACHMENT_FOLDER = 'maps_screenshot';
@@ -357,6 +358,7 @@
 		if (formError) return;
 
 		saving = true;
+		let successMessage = '';
 
 		try {
 			const auth = await requireUser();
@@ -399,6 +401,7 @@
 
 				if (error) throw error;
 				claims = [...claims, data];
+				successMessage = `Claim for ${formatShortDate(fields.claim_date)} created successfully.`;
 			} else {
 				const { data, error } = await supabase
 					.from('scf_submissions')
@@ -414,10 +417,12 @@
 					);
 				}
 				claims = claims.map((c) => (c.id === editingClaim.id ? data[0] : c));
+				successMessage = `Claim for ${formatShortDate(fields.claim_date)} updated successfully.`;
 			}
 
 			saving = false;
 			closeClaimModal();
+			toast.success(successMessage);
 		} catch (error) {
 			formError = error?.message ?? String(error);
 		} finally {
@@ -461,9 +466,11 @@
 			}
 
 			const removedId = deletingClaim.id;
+			const removedDate = deletingClaim.claim_date;
 			claims = claims.filter((c) => c.id !== removedId);
 			deleting = false;
 			closeDeleteModal();
+			toast.success(`Claim for ${formatShortDate(removedDate)} deleted successfully.`);
 		} catch (error) {
 			deleteError = error?.message ?? String(error);
 		} finally {
@@ -503,16 +510,7 @@
 		if (tab && url) tab.location.href = url;
 		else if (tab) tab.close();
 	}
-
-	function onWindowKeydown(event) {
-		if (event.key !== 'Escape') return;
-		if (showProjectModal) closeProjectModal();
-		else if (showDeleteModal) closeDeleteModal();
-		else if (showClaimModal) closeClaimModal();
-	}
 </script>
-
-<svelte:window onkeydown={onWindowKeydown} />
 
 <h1 class="title">Staff Claim Form</h1>
 
@@ -616,289 +614,267 @@
 	</div>
 </div>
 
-{#if showClaimModal}
-	<div class="modal-backdrop" role="presentation">
-		<div
-			class="modal"
-			role="dialog"
-			aria-modal="true"
-			aria-label={modalMode === 'create' ? 'Create Claim' : 'Edit Claim'}
-		>
-			<button class="modal-close" onclick={closeClaimModal} disabled={saving} aria-label="Close">
-				<Close size={18} />
-			</button>
-			<h2>
-				{modalMode === 'create' ? 'Create Claim' : 'Edit Claim'}
-				({formatShortDate(form.claim_date)})
-			</h2>
+<Modal
+	open={showClaimModal}
+	title={`${modalMode === 'create' ? 'Create Claim' : 'Edit Claim'} (${formatShortDate(form.claim_date)})`}
+	busy={saving}
+	onclose={closeClaimModal}
+>
+	<form id="claim-form" class="claim-form" onsubmit={saveClaim} novalidate>
+		<div class="field full">
+			<label for="scf-project"><span class="required">*</span>Project</label>
+			<div class="project-picker">
+				<input
+					id="scf-project"
+					type="text"
+					value={form.project_no}
+					placeholder="Select a project"
+					readonly
+					onclick={openProjectModal}
+				/>
+				<button
+					type="button"
+					class="button-search"
+					onclick={openProjectModal}
+					aria-label="Search project"
+				>
+					<Search size={18} />
+				</button>
+			</div>
+			{#if selectedProjectName}
+				<p class="hint">{selectedProjectName}</p>
+			{/if}
+		</div>
 
-			<form class="modal-body" onsubmit={saveClaim} novalidate>
-				<div class="field full">
-					<label for="scf-project"><span class="required">*</span>Project</label>
-					<div class="project-picker">
-						<input
-							id="scf-project"
-							type="text"
-							value={form.project_no}
-							placeholder="Select a project"
-							readonly
-							onclick={openProjectModal}
-						/>
-						<button
-							type="button"
-							class="button-search"
-							onclick={openProjectModal}
-							aria-label="Search project"
-						>
-							<Search size={18} />
-						</button>
-					</div>
-					{#if selectedProjectName}
-						<p class="hint">{selectedProjectName}</p>
-					{/if}
-				</div>
+		<div class="field full">
+			<label for="scf-description"><span class="required">*</span>Description</label>
+			<input
+				id="scf-description"
+				type="text"
+				placeholder="Home-Site-Home (12km)"
+				bind:value={form.description}
+				class:invalid={descriptionHasComma}
+			/>
+			{#if descriptionHasComma}
+				<p class="field-error">Travel Location must not contain commas (,).</p>
+			{/if}
+		</div>
 
-				<div class="field full">
-					<label for="scf-description"><span class="required">*</span>Description</label>
-					<input
-						id="scf-description"
-						type="text"
-						placeholder="Home-Site-Home (12km)"
-						bind:value={form.description}
-						class:invalid={descriptionHasComma}
-					/>
-					{#if descriptionHasComma}
-						<p class="field-error">Travel Location must not contain commas (,).</p>
-					{/if}
-				</div>
-
-				<div class="field">
-					<label for="scf-site-allowance">Site Allowance</label>
-					<select
-						id="scf-site-allowance"
-						bind:value={form.site_allowance}
-						disabled={siteAllowanceTaken && !hasValue(form.site_allowance)}
-					>
-						<option value=""></option>
-						{#each SITE_ALLOWANCE_OPTIONS as opt (opt.value)}
-							<option value={opt.value}>{opt.label}</option>
-						{/each}
-						{#if hasValue(form.site_allowance) && !SITE_ALLOWANCE_OPTIONS.some((o) => o.value === form.site_allowance)}
-							<option value={form.site_allowance}>RM {form.site_allowance}</option>
-						{/if}
-					</select>
-					{#if siteAllowanceTaken}
-						<p class="field-error">Already claimed on this date.</p>
-					{/if}
-				</div>
-
-				<div class="field">
-					<label for="scf-accommodation">Accommodation</label>
-					<input
-						id="scf-accommodation"
-						type="number"
-						inputmode="decimal"
-						min="0"
-						step="0.01"
-						bind:value={form.accommodation}
-					/>
-				</div>
-
-				<div class="field">
-					<label for="scf-toll">Toll Fare</label>
-					<input
-						id="scf-toll"
-						type="number"
-						inputmode="decimal"
-						min="0"
-						step="0.01"
-						bind:value={form.toll_fare}
-					/>
-				</div>
-
-				<div class="field">
-					<label for="scf-mileage">Mileage / Petrol / Diesel</label>
-					<input
-						id="scf-mileage"
-						type="number"
-						inputmode="decimal"
-						min="0"
-						step="0.01"
-						bind:value={form.claim_mileage}
-					/>
-				</div>
-
-				<div class="field">
-					<label for="scf-site-purchase">Site Purchase</label>
-					<input
-						id="scf-site-purchase"
-						type="number"
-						inputmode="decimal"
-						min="0"
-						step="0.01"
-						bind:value={form.site_purchase}
-					/>
-				</div>
-
-				<div class="field">
-					<label for="scf-other">Other</label>
-					<input
-						id="scf-other"
-						type="number"
-						inputmode="decimal"
-						min="0"
-						step="0.01"
-						bind:value={form.claim_other}
-					/>
-				</div>
-
-				<div class="field full">
-					<label for="scf-remarks">Remarks</label>
-					<input
-						id="scf-remarks"
-						type="text"
-						bind:value={form.claim_remarks}
-						class:invalid={remarksHasComma}
-					/>
-					{#if remarksHasComma}
-						<p class="field-error">Remarks must not contain commas (,).</p>
-					{/if}
-				</div>
-
-				<div class="field full">
-					<span class="field-label">Attachment</span>
-					{#if attachmentLocked}
-						<div class="upload-box locked">
-							<button
-								type="button"
-								class="link-button"
-								onclick={() => openAttachment(editingClaim.maps_screenshot_path)}
-							>
-								<Paperclip size={14} />
-								{fileName(editingClaim.maps_screenshot_path)}
-							</button>
-						</div>
-						<p class="hint">Submitted attachments cannot be modified.</p>
-					{:else}
-						<label class="upload-box" for="scf-attachment">
-							{#if attachmentFile}
-								<Paperclip size={14} />
-								<span class="upload-name">{attachmentFile.name}</span>
-							{:else}
-								Click to upload a file
-							{/if}
-						</label>
-						<input
-							id="scf-attachment"
-							class="visually-hidden"
-							type="file"
-							accept="image/png, image/jpeg, application/pdf"
-							bind:this={fileInput}
-							onchange={onAttachmentChange}
-						/>
-						{#if attachmentFile}
-							<button type="button" class="link-button remove-file" onclick={clearAttachment}>
-								Remove file
-							</button>
-						{/if}
-					{/if}
-				</div>
-
-				{#if formError}
-					<p class="error full">{formError}</p>
+		<div class="field">
+			<label for="scf-site-allowance">Site Allowance</label>
+			<select
+				id="scf-site-allowance"
+				bind:value={form.site_allowance}
+				disabled={siteAllowanceTaken && !hasValue(form.site_allowance)}
+			>
+				<option value=""></option>
+				{#each SITE_ALLOWANCE_OPTIONS as opt (opt.value)}
+					<option value={opt.value}>{opt.label}</option>
+				{/each}
+				{#if hasValue(form.site_allowance) && !SITE_ALLOWANCE_OPTIONS.some((o) => o.value === form.site_allowance)}
+					<option value={form.site_allowance}>RM {form.site_allowance}</option>
 				{/if}
+			</select>
+			{#if siteAllowanceTaken}
+				<p class="field-error">Already claimed on this date.</p>
+			{/if}
+		</div>
 
-				<div class="modal-actions full">
+		<div class="field">
+			<label for="scf-accommodation">Accommodation</label>
+			<input
+				id="scf-accommodation"
+				type="number"
+				inputmode="decimal"
+				min="0"
+				step="0.01"
+				bind:value={form.accommodation}
+			/>
+		</div>
+
+		<div class="field">
+			<label for="scf-toll">Toll Fare</label>
+			<input
+				id="scf-toll"
+				type="number"
+				inputmode="decimal"
+				min="0"
+				step="0.01"
+				bind:value={form.toll_fare}
+			/>
+		</div>
+
+		<div class="field">
+			<label for="scf-mileage">Mileage / Petrol / Diesel</label>
+			<input
+				id="scf-mileage"
+				type="number"
+				inputmode="decimal"
+				min="0"
+				step="0.01"
+				bind:value={form.claim_mileage}
+			/>
+		</div>
+
+		<div class="field">
+			<label for="scf-site-purchase">Site Purchase</label>
+			<input
+				id="scf-site-purchase"
+				type="number"
+				inputmode="decimal"
+				min="0"
+				step="0.01"
+				bind:value={form.site_purchase}
+			/>
+		</div>
+
+		<div class="field">
+			<label for="scf-other">Other</label>
+			<input
+				id="scf-other"
+				type="number"
+				inputmode="decimal"
+				min="0"
+				step="0.01"
+				bind:value={form.claim_other}
+			/>
+		</div>
+
+		<div class="field full">
+			<label for="scf-remarks">Remarks</label>
+			<input
+				id="scf-remarks"
+				type="text"
+				bind:value={form.claim_remarks}
+				class:invalid={remarksHasComma}
+			/>
+			{#if remarksHasComma}
+				<p class="field-error">Remarks must not contain commas (,).</p>
+			{/if}
+		</div>
+
+		<div class="field full">
+			<span class="field-label">Attachment</span>
+			{#if attachmentLocked}
+				<div class="upload-box locked">
 					<button
 						type="button"
-						class="button-inverted"
-						onclick={closeClaimModal}
-						disabled={saving}
+						class="link-button"
+						onclick={() => openAttachment(editingClaim.maps_screenshot_path)}
 					>
-						Cancel
-					</button>
-					<button type="submit" class="button-primary" disabled={saving}>
-						{#if saving}
-							Saving...
-						{:else}
-							{modalMode === 'create' ? 'Create Claim' : 'Save Changes'}
-						{/if}
+						<Paperclip size={14} />
+						{fileName(editingClaim.maps_screenshot_path)}
 					</button>
 				</div>
-			</form>
-		</div>
-	</div>
-{/if}
-
-{#if showProjectModal}
-	<div class="modal-backdrop modal-stacked" role="presentation">
-		<div class="modal" role="dialog" aria-modal="true" aria-label="Select project">
-			<button class="modal-close" onclick={closeProjectModal} aria-label="Close">
-				<Close size={18} />
-			</button>
-			<h2>Select a Project</h2>
-			<div class="project-search">
+				<p class="hint">Submitted attachments cannot be modified.</p>
+			{:else}
+				<label class="upload-box" for="scf-attachment">
+					{#if attachmentFile}
+						<Paperclip size={14} />
+						<span class="upload-name">{attachmentFile.name}</span>
+					{:else}
+						Click to upload a file
+					{/if}
+				</label>
 				<input
-					type="text"
-					placeholder="Project Name/Project ID"
-					class="project-search-input"
-					bind:value={projectSearch}
+					id="scf-attachment"
+					class="visually-hidden"
+					type="file"
+					accept="image/png, image/jpeg, application/pdf"
+					bind:this={fileInput}
+					onchange={onAttachmentChange}
 				/>
-			</div>
-			<div class="project-list">
-				<div class="project-list-header">
-					<span>Project Name</span>
-					<span>Project ID</span>
-				</div>
-				{#if projectLoading}
-					<p class="project-status">Loading projects...</p>
-				{:else if projectError}
-					<p class="project-status error">{projectError}</p>
-				{:else if filteredProjects.length === 0}
-					<p class="project-status">No projects found.</p>
-				{:else}
-					{#each filteredProjects as project}
-						<button type="button" class="project-row" onclick={() => selectProject(project)}>
-							<span>{project.project_name ?? '-'}</span>
-							<span class="project-row-id">{project.project_id ?? '-'}</span>
-						</button>
-					{/each}
+				{#if attachmentFile}
+					<button type="button" class="link-button remove-file" onclick={clearAttachment}>
+						Remove file
+					</button>
 				{/if}
-			</div>
-		</div>
-	</div>
-{/if}
-
-{#if showDeleteModal && deletingClaim}
-	<div class="modal-backdrop" role="presentation">
-		<div class="modal modal-small" role="dialog" aria-modal="true" aria-label="Delete claim">
-			<button class="modal-close" onclick={closeDeleteModal} disabled={deleting} aria-label="Close">
-				<Close size={18} />
-			</button>
-			<h2>Delete Claim</h2>
-			<p>Are you sure you want to delete this claim?</p>
-			<div class="delete-summary">
-				<p><b>Date:</b> {formatShortDate(deletingClaim.claim_date)}</p>
-				<p><b>Project:</b> {deletingClaim.project_no ?? '-'}</p>
-				{#if deletingClaim.description}
-					<p><b>Travel Location:</b> {deletingClaim.description}</p>
-				{/if}
-			</div>
-			<p class="hint">This action cannot be undone.</p>
-			{#if deleteError}
-				<p class="error">{deleteError}</p>
 			{/if}
-			<div class="modal-actions">
-				<button class="button-inverted" onclick={closeDeleteModal} disabled={deleting}>
-					Cancel
-				</button>
-				<button class="button-danger" onclick={deleteClaim} disabled={deleting}>
-					{deleting ? 'Deleting...' : 'Delete'}
-				</button>
-			</div>
 		</div>
+
+		{#if formError}
+			<p class="error full">{formError}</p>
+		{/if}
+	</form>
+
+	{#snippet footer()}
+		<button type="button" class="button-inverted" onclick={closeClaimModal} disabled={saving}>
+			Cancel
+		</button>
+		<button type="submit" form="claim-form" class="button-primary" disabled={saving}>
+			{#if saving}
+				Saving...
+			{:else}
+				{modalMode === 'create' ? 'Create Claim' : 'Save Changes'}
+			{/if}
+		</button>
+	{/snippet}
+</Modal>
+
+<Modal open={showProjectModal} title="Select a Project" onclose={closeProjectModal}>
+	<div class="project-search">
+		<input
+			type="text"
+			placeholder="Project Name/Project ID"
+			class="project-search-input"
+			bind:value={projectSearch}
+		/>
 	</div>
-{/if}
+	<div class="project-list">
+		<div class="project-list-header">
+			<span>Project Name</span>
+			<span>Project ID</span>
+		</div>
+		{#if projectLoading}
+			<p class="project-status">Loading projects...</p>
+		{:else if projectError}
+			<p class="project-status error">{projectError}</p>
+		{:else if filteredProjects.length === 0}
+			<p class="project-status">No projects found.</p>
+		{:else}
+			{#each filteredProjects as project}
+				<button type="button" class="project-row" onclick={() => selectProject(project)}>
+					<span>{project.project_name ?? '-'}</span>
+					<span class="project-row-id">{project.project_id ?? '-'}</span>
+				</button>
+			{/each}
+		{/if}
+	</div>
+
+	{#snippet footer()}
+		<button type="button" class="button-inverted" onclick={closeProjectModal}>Cancel</button>
+	{/snippet}
+</Modal>
+
+<Modal
+	open={showDeleteModal && !!deletingClaim}
+	title="Delete Claim"
+	size="sm"
+	busy={deleting}
+	onclose={closeDeleteModal}
+>
+	<p>Are you sure you want to delete this claim?</p>
+	{#if deletingClaim}
+		<div class="delete-summary">
+			<p><b>Date:</b> {formatShortDate(deletingClaim.claim_date)}</p>
+			<p><b>Project:</b> {deletingClaim.project_no ?? '-'}</p>
+			{#if deletingClaim.description}
+				<p><b>Travel Location:</b> {deletingClaim.description}</p>
+			{/if}
+		</div>
+	{/if}
+	<p class="hint">This action cannot be undone.</p>
+	{#if deleteError}
+		<p class="error">{deleteError}</p>
+	{/if}
+
+	{#snippet footer()}
+		<button class="button-inverted" onclick={closeDeleteModal} disabled={deleting}>Cancel</button>
+		<button class="button-danger" onclick={deleteClaim} disabled={deleting}>
+			{deleting ? 'Deleting...' : 'Delete'}
+		</button>
+	{/snippet}
+</Modal>
 
 <style>
 	* {
@@ -984,8 +960,6 @@
 		font-size: 14px;
 	}
 
-	/* ---------- Note ---------- */
-
 	.note {
 		background-color: #ffffff;
 		border: 1px solid #dcdcdc;
@@ -1019,8 +993,6 @@
 		line-height: 1.6;
 	}
 
-	/* ---------- Month header ---------- */
-
 	.month-header {
 		display: flex;
 		align-items: center;
@@ -1049,8 +1021,6 @@
 	.nav:hover {
 		background: rgba(0, 0, 0, 0.05);
 	}
-
-	/* ---------- Day list ---------- */
 
 	.day-list.is-loading {
 		opacity: 0.6;
@@ -1105,8 +1075,6 @@
 	.button-add:hover {
 		background-color: #064c6d3d;
 	}
-
-	/* ---------- Claim card ---------- */
 
 	.claim-card {
 		background-color: #ffffff;
@@ -1205,69 +1173,13 @@
 		color: #091747;
 	}
 
-	/* ---------- Modals (same look as the admin pages) ---------- */
-
-	.modal-backdrop {
-		position: fixed;
-		inset: 0;
-		background: rgba(9, 23, 71, 0.45);
-		display: flex;
-		align-items: flex-start;
-		justify-content: center;
-		padding: 32px 20px;
-		z-index: 10;
-	}
-
-	.modal-stacked {
-		z-index: 20;
-	}
-
-	.modal {
-		position: relative;
-		width: min(560px, 100%);
-		max-height: calc(100vh - 64px);
-		overflow: auto;
-		background: #ffffff;
-		border-radius: 8px;
-		padding: 20px;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-	}
-
-	.modal-small {
-		width: min(420px, 100%);
-	}
-
-	.modal-close {
-		position: absolute;
-		top: 20px;
-		right: 12px;
-		background: transparent;
-		border: none;
-		padding: 4px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: #091747;
-	}
-
-	.modal-close:hover {
-		background: rgba(0, 0, 0, 0.05);
-		border-radius: 50%;
-	}
-
-	.modal h2 {
-		margin: 0 32px 16px 0;
-		font-size: 20px;
-		font-weight: bold;
-	}
-
-	.modal-body {
+	.claim-form {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
 		gap: 12px 14px;
 	}
 
-	.modal-body .full {
+	.claim-form .full {
 		grid-column: 1 / -1;
 	}
 
@@ -1387,13 +1299,6 @@
 		border: 0;
 	}
 
-	.modal-actions {
-		display: flex;
-		justify-content: flex-end;
-		gap: 10px;
-		margin-top: 8px;
-	}
-
 	.delete-summary {
 		margin: 12px 0;
 		padding: 10px 12px;
@@ -1405,8 +1310,6 @@
 		margin: 2px 0;
 		word-break: break-word;
 	}
-
-	/* ---------- Project search (same look as the original e-SCF page) ---------- */
 
 	.project-search {
 		display: flex;
@@ -1506,29 +1409,8 @@
 			grid-template-columns: 1fr;
 		}
 
-		.modal-backdrop {
-			padding: 16px 10px;
-		}
-
-		.modal {
-			padding: 16px;
-			max-height: calc(100vh - 32px);
-		}
-
-		.modal h2 {
-			font-size: 17px;
-		}
-
-		.modal-body {
+		.claim-form {
 			grid-template-columns: 1fr;
-		}
-
-		.modal-actions {
-			flex-direction: column-reverse;
-		}
-
-		.modal-actions button {
-			width: 100%;
 		}
 	}
 </style>

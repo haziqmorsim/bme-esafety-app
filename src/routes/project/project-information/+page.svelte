@@ -1,25 +1,16 @@
 <script>
-	/** @type {Array<{ items: Array<any>}>} */
 	import ListPlus from '@lucide/svelte/icons/list-plus';
 	import CloudDownload from '@lucide/svelte/icons/cloud-download';
 	import Search from '@lucide/svelte/icons/search';
-	import Close from '@lucide/svelte/icons/x';
+	import Pencil from '@lucide/svelte/icons/pencil';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
 	import { requireUser } from '$lib/auth-guard';
+	import { toast } from '$lib/stores/toast';
+	import Modal from '$lib/components/Modal.svelte';
 
-	let projects = [];
-	let errorMsg = '';
-	let isSaving = false;
-	let showEditModal = false;
-	let showCreateModal = false;
-	let selectedProject = null;
-	let searchText = '';
-	let selectedStatus = 'All';
-	let selectedDataOption = 'All';
-	let currentUserName = '';
-	let editForm = {
+	const EMPTY_FORM = {
 		project_name: '',
 		project_id: '',
 		status: '',
@@ -32,25 +23,31 @@
 		pic_start_date: '',
 		pic_end_date: ''
 	};
-	let createForm = {
-		project_name: '',
-		project_id: '',
-		status: '',
-		region: '',
-		location: '',
-		start_date: '',
-		end_date: '',
-		pic_name: '',
-		pic_position: '',
-		pic_start_date: '',
-		pic_end_date: ''
-	};
+
+	let projects = $state([]);
+	let loading = $state(true);
+	let errorMsg = $state('');
+	let searchText = $state('');
+	let selectedStatus = $state('All');
+	let selectedDataOption = $state('All');
+	let currentUserName = $state('');
+
+	let showFormModal = $state(false);
+	let formMode = $state('create'); // 'create' | 'edit'
+	let selectedProject = $state(null);
+	let form = $state({ ...EMPTY_FORM });
+	let isSaving = $state(false);
+	let formError = $state('');
+
+	let showDeleteModal = $state(false);
+	let deletingProject = $state(null);
+	let isDeleting = $state(false);
+	let deleteError = $state('');
 
 	function formatDate(iso) {
-		if (!iso) return '';
+		if (!iso) return '-';
 
 		const date = new Date(iso);
-
 		const gmt8 = new Date(date.getTime() + 8 * 60 * 60 * 1000);
 
 		const day = String(gmt8.getUTCDate()).padStart(2, '0');
@@ -60,37 +57,38 @@
 		return `${day} ${month} ${year}`;
 	}
 
-	$: filteredProjects = projects.filter((p) => {
-		const search = searchText.toLowerCase();
+	const filteredProjects = $derived(
+		projects.filter((p) => {
+			const search = searchText.trim().toLowerCase();
 
-		const matchesStatus =
-			selectedStatus === 'All' || (p.status ?? '').toLowerCase() === selectedStatus.toLowerCase();
+			const matchesStatus =
+				selectedStatus === 'All' || (p.status ?? '').toLowerCase() === selectedStatus.toLowerCase();
 
-		let matchesSearch = true;
+			let matchesSearch = true;
 
-		if (searchText.trim() !== '') {
-			if (selectedDataOption === 'project-id') {
-				matchesSearch = (p.project_id ?? '').toLowerCase().includes(search);
-			} else if (selectedDataOption === 'project-name') {
-				matchesSearch = (p.project_name ?? '').toLowerCase().includes(search);
-			} else if (selectedDataOption === 'region') {
-				matchesSearch = (p.region ?? '').toLowerCase().includes(search);
-			} else {
-				const haystack =
-					`${p.project_name ?? ''} ${p.project_id ?? ''} ${p.region ?? ''} ${p.status ?? ''}`.toLowerCase();
-				matchesSearch = haystack.includes(search);
+			if (search !== '') {
+				if (selectedDataOption === 'project-id') {
+					matchesSearch = (p.project_id ?? '').toLowerCase().includes(search);
+				} else if (selectedDataOption === 'project-name') {
+					matchesSearch = (p.project_name ?? '').toLowerCase().includes(search);
+				} else if (selectedDataOption === 'region') {
+					matchesSearch = (p.region ?? '').toLowerCase().includes(search);
+				} else {
+					const haystack =
+						`${p.project_name ?? ''} ${p.project_id ?? ''} ${p.region ?? ''} ${p.status ?? ''}`.toLowerCase();
+					matchesSearch = haystack.includes(search);
+				}
 			}
-		}
 
-		return matchesSearch && matchesStatus;
-	});
+			return matchesSearch && matchesStatus;
+		})
+	);
 
 	onMount(async () => {
 		const auth = await requireUser();
 		if (!auth) return;
 
 		const { supabase, user } = auth;
-		if (!user) throw new Error('Not signed in.');
 
 		const { data: profileData, error: profileError } = await supabase
 			.from('profiles')
@@ -113,6 +111,8 @@
 			)
 			.order('created_at', { ascending: false });
 
+		loading = false;
+
 		if (error) {
 			errorMsg = error.message;
 			projects = [];
@@ -122,127 +122,156 @@
 		projects = data ?? [];
 	});
 
-	const openEditModal = (project) => {
-		selectedProject = project;
-		editForm = {
-			project_name: project.project_name ?? '',
-			project_id: project.project_id ?? '',
-			status: project.status ?? '',
-			region: project.region ?? '',
-			location: project.location ?? '',
-			start_date: project.start_date ?? '',
-			end_date: project.end_date ?? '',
-			pic_name: project.pic_name ?? '',
-			pic_position: project.pic_position ?? '',
-			pic_start_date: project.pic_start_date ?? '',
-			pic_end_date: project.pic_end_date ?? ''
-		};
-		showEditModal = true;
-	};
-
-	const closeEditModal = () => {
-		showEditModal = false;
+	function openCreateModal() {
+		formMode = 'create';
 		selectedProject = null;
-	};
+		form = { ...EMPTY_FORM };
+		formError = '';
+		showFormModal = true;
+	}
 
-	const openCreateModal = () => {
-		createForm = {
-			project_name: '',
-			project_id: '',
-			status: '',
-			region: '',
-			location: '',
-			start_date: '',
-			end_date: '',
-			pic_name: '',
-			pic_position: '',
-			pic_start_date: '',
-			pic_end_date: ''
+	function openEditModal(project) {
+		formMode = 'edit';
+		selectedProject = project;
+		form = Object.fromEntries(Object.keys(EMPTY_FORM).map((key) => [key, project[key] ?? '']));
+		formError = '';
+		showFormModal = true;
+	}
+
+	function closeFormModal() {
+		if (isSaving) return;
+		showFormModal = false;
+		selectedProject = null;
+	}
+
+	function buildPayload() {
+		const text = (v) => String(v ?? '').trim() || null;
+		return {
+			project_name: text(form.project_name),
+			project_id: text(form.project_id),
+			status: text(form.status),
+			region: text(form.region),
+			location: text(form.location),
+			start_date: form.start_date || null,
+			end_date: form.end_date || null,
+			pic_name: text(form.pic_name),
+			pic_position: text(form.pic_position),
+			pic_start_date: form.pic_start_date || null,
+			pic_end_date: form.pic_end_date || null
 		};
-		showCreateModal = true;
-	};
+	}
 
-	const closeCreateModal = () => {
-		showCreateModal = false;
-	};
+	async function saveProject(event) {
+		event?.preventDefault();
+		formError = '';
 
-	const saveProject = async () => {
-		if (!selectedProject) return;
-		isSaving = true;
-		errorMsg = '';
-
-		const payload = {
-			project_name: editForm.project_name.trim() || null,
-			project_id: editForm.project_id.trim() || null,
-			status: editForm.status.trim() || null,
-			region: editForm.region.trim() || null,
-			location: editForm.location.trim() || null,
-			start_date: editForm.start_date || null,
-			end_date: editForm.end_date || null,
-			pic_name: editForm.pic_name.trim() || null,
-			pic_position: editForm.pic_position.trim() || null,
-			pic_start_date: editForm.pic_start_date || null,
-			pic_end_date: editForm.pic_end_date || null
-		};
-
-		const { error } = await supabase.from('projects').update(payload).eq('id', selectedProject.id);
-
-		isSaving = false;
-
-		if (error) {
-			errorMsg = error.message;
+		if (!String(form.project_name).trim()) {
+			formError = 'Please enter the project name.';
 			return;
 		}
 
-		projects = projects.map((project) =>
-			project.id === selectedProject.id ? { ...project, ...payload } : project
-		);
-		closeEditModal();
-	};
-
-	const createProject = async () => {
 		isSaving = true;
-		errorMsg = '';
+		const payload = buildPayload();
 
-		const payload = {
-			project_name: createForm.project_name.trim() || null,
-			project_id: createForm.project_id.trim() || null,
-			status: createForm.status.trim() || null,
-			region: createForm.region.trim() || null,
-			location: createForm.location.trim() || null,
-			start_date: createForm.start_date || null,
-			end_date: createForm.end_date || null,
-			pic_name: createForm.pic_name.trim() || null,
-			pic_position: createForm.pic_position.trim() || null,
-			pic_start_date: createForm.pic_start_date || null,
-			pic_end_date: createForm.pic_end_date || null,
-			created_by: currentUserName || null
-		};
+		try {
+			if (formMode === 'create') {
+				const { data, error } = await supabase
+					.from('projects')
+					.insert({ ...payload, created_by: currentUserName || null })
+					.select()
+					.single();
 
-		const { data, error } = await supabase.from('projects').insert(payload).select().single();
+				if (error) throw error;
 
-		isSaving = false;
+				projects = data ? [data, ...projects] : projects;
+				isSaving = false;
+				closeFormModal();
+				toast.success(`Project "${payload.project_name}" created successfully.`);
+			} else {
+				const id = selectedProject.id;
+				const { data, error } = await supabase
+					.from('projects')
+					.update(payload)
+					.eq('id', id)
+					.select('id');
 
-		if (error) {
-			errorMsg = error.message;
-			return;
+				if (error) throw error;
+				if (!data || data.length === 0) {
+					throw new Error('The project was not updated. You may not have permission to edit it.');
+				}
+
+				projects = projects.map((project) =>
+					project.id === id ? { ...project, ...payload } : project
+				);
+				isSaving = false;
+				closeFormModal();
+				toast.success(`Project "${payload.project_name}" updated successfully.`);
+			}
+		} catch (error) {
+			formError = error?.message ?? String(error);
+		} finally {
+			isSaving = false;
 		}
+	}
 
-		projects = data ? [data, ...projects] : projects;
-		closeCreateModal();
-	};
+	function openDeleteModal(project) {
+		deletingProject = project;
+		deleteError = '';
+		showDeleteModal = true;
+	}
+
+	function closeDeleteModal() {
+		if (isDeleting) return;
+		showDeleteModal = false;
+		deletingProject = null;
+	}
+
+	async function deleteProject() {
+		if (!deletingProject) return;
+		isDeleting = true;
+		deleteError = '';
+
+		const { id, project_name } = deletingProject;
+
+		try {
+			const { data, error } = await supabase.from('projects').delete().eq('id', id).select('id');
+
+			if (error) throw error;
+			if (!data || data.length === 0) {
+				throw new Error('The project was not deleted. You may not have permission to delete it.');
+			}
+
+			projects = projects.filter((project) => project.id !== id);
+			isDeleting = false;
+			closeDeleteModal();
+			toast.success(`Project "${project_name ?? ''}" deleted successfully.`);
+		} catch (error) {
+			deleteError = error?.message ?? String(error);
+		} finally {
+			isDeleting = false;
+		}
+	}
 </script>
 
 <svelte:head>
 	<title>Project Information Management | BME e-Safety App</title>
 </svelte:head>
 
+{#snippet dateInput(key)}
+	<input
+		type="date"
+		class="forms-date"
+		bind:value={form[key]}
+		onfocus={(e) => e.currentTarget.showPicker?.()}
+	/>
+{/snippet}
+
 <h1 class="title">Project Information Management</h1>
 
 <div class="filter-bar">
 	<div>
-		<p>Project Status</p>
-		<select bind:value={selectedStatus} class="status-select">
+		<label for="status-filter">Project Status</label>
+		<select id="status-filter" bind:value={selectedStatus} class="status-select">
 			<option value="All">Choose a Project Status</option>
 			<option value="Commissioning">Commissioning</option>
 			<option value="Delivery">Delivery</option>
@@ -256,8 +285,8 @@
 
 <div class="filter-bar">
 	<div>
-		<p>Data Option:</p>
-		<select bind:value={selectedDataOption} class="option-select">
+		<label for="data-option">Data Option:</label>
+		<select id="data-option" bind:value={selectedDataOption} class="option-select">
 			<option value="All">Choose a Data Option</option>
 			<option value="project-id">Project ID</option>
 			<option value="project-name">Project Name</option>
@@ -265,17 +294,14 @@
 		</select>
 	</div>
 	<div>
-		<p>Project ID/Project Name/Region</p>
+		<label for="project-search">Project ID/Project Name/Region</label>
 		<input
+			id="project-search"
 			type="text"
-			placeholder="Project ID/Project Name/Region"
+			placeholder="Search by project..."
 			bind:value={searchText}
 			class="filter-input"
 		/>
-	</div>
-	<div>
-		<p class="hidden">Search</p>
-		<button class="button-primary" id="button-search"><Search />Search Project</button>
 	</div>
 </div>
 
@@ -284,11 +310,19 @@
 {/if}
 
 <div class="button-modify">
-	<button class="button-assign" on:click={openCreateModal}>
+	<button class="button-assign" onclick={openCreateModal}>
 		<ListPlus /><span>New Project</span>
 	</button>
 	<button class="button-download"><CloudDownload /><span>Excel</span></button>
 </div>
+
+{#if loading}
+	<p class="status">Loading projects...</p>
+{:else if filteredProjects.length === 0}
+	<p class="status">
+		{projects.length === 0 ? 'No projects have been added yet.' : 'No projects match the filters.'}
+	</p>
+{/if}
 
 <div class="card-grid">
 	{#each filteredProjects as p (p.id)}
@@ -300,197 +334,130 @@
 				<p><b>Region:</b> {p.region ?? '-'}</p>
 				<p><b>Location:</b> {p.location ?? '-'}</p>
 				<p><b>Created By:</b> {p.created_by ?? '-'}</p>
-				<p><b>Start Date:</b> {formatDate(p.start_date) ?? '-'}</p>
-				<p><b>End Date:</b> {formatDate(p.end_date) ?? '-'}</p>
-				<br />
+				<p><b>Start Date:</b> {formatDate(p.start_date)}</p>
+				<p><b>End Date:</b> {formatDate(p.end_date)}</p>
 				<p class="pic">Person In Charge</p>
 				<p><b>Name:</b> {p.pic_name ?? '-'}</p>
 				<p><b>Position:</b> {p.pic_position ?? '-'}</p>
 			</div>
-			<div class="button-edit">
-				<button id="button-edit" on:click={() => openEditModal(p)}>Edit</button>
+			<div class="card-actions">
+				<button class="button-edit" onclick={() => openEditModal(p)}>
+					<Pencil size={16} /><span>Edit</span>
+				</button>
+				<button class="button-delete" onclick={() => openDeleteModal(p)}>
+					<Trash2 size={16} /><span>Delete</span>
+				</button>
 			</div>
 		</div>
 	{/each}
 </div>
 
-{#if showCreateModal}
-	<div class="modal-backdrop" role="presentation">
-		<div class="modal" role="dialog" aria-modal="true" aria-label="Create project">
-			<button class="modal-close" on:click={closeCreateModal} disabled={isSaving}>
-				<Close size={18} />
-			</button>
-			<h2>New Project</h2>
-			<div class="modal-body">
-				<label>
-					Project Name:
-					<input type="text" bind:value={createForm.project_name} />
-				</label>
-				<label>
-					Project ID:
-					<input type="text" bind:value={createForm.project_id} />
-				</label>
-				<label>
-					Status:
-					<input type="text" bind:value={createForm.status} />
-				</label>
-				<label>
-					Region:
-					<input type="text" bind:value={createForm.region} />
-				</label>
-				<label>
-					Location:
-					<input type="text" bind:value={createForm.location} />
-				</label>
-				<label>
-					Start Date:
-					<input
-						type="date"
-						class="forms-date"
-						bind:value={createForm.start_date}
-						on:focus={(e) => e.target.showPicker?.()}
-					/>
-				</label>
-				<label>
-					End Date:
-					<input
-						type="date"
-						class="forms-date"
-						bind:value={createForm.end_date}
-						on:focus={(e) => e.target.showPicker?.()}
-					/>
-				</label>
-			</div>
-			<br />
-			<h2>Person In Charge Information</h2>
-			<div class="modal-body">
-				<label>
-					Full Name:
-					<input type="text" bind:value={createForm.pic_name} />
-				</label>
-				<label>
-					Position:
-					<input type="text" bind:value={createForm.pic_position} />
-				</label>
-				<label>
-					Start Date:
-					<input
-						type="date"
-						class="forms-date"
-						bind:value={createForm.pic_start_date}
-						on:focus={(e) => e.target.showPicker?.()}
-					/>
-				</label>
-				<label>
-					End Date:
-					<input
-						type="date"
-						class="forms-date"
-						bind:value={createForm.pic_end_date}
-						on:focus={(e) => e.target.showPicker?.()}
-					/>
-				</label>
-			</div>
-			<div class="modal-actions">
-				<button class="button-inverted" on:click={closeCreateModal} disabled={isSaving}>
-					Cancel
-				</button>
-				<button on:click={createProject} disabled={isSaving}>
-					{isSaving ? 'Saving...' : 'Confirm'}
-				</button>
-			</div>
+<Modal
+	open={showFormModal}
+	title={formMode === 'create' ? 'New Project' : 'Edit Project Information'}
+	size="md"
+	busy={isSaving}
+	onclose={closeFormModal}
+>
+	<form id="project-form" class="project-form" onsubmit={saveProject} novalidate>
+		<div class="form-grid">
+			<label>
+				Project Name:
+				<input type="text" bind:value={form.project_name} />
+			</label>
+			<label>
+				Project ID:
+				<input type="text" bind:value={form.project_id} />
+			</label>
+			<label>
+				Status:
+				<input type="text" bind:value={form.status} />
+			</label>
+			<label>
+				Region:
+				<input type="text" bind:value={form.region} />
+			</label>
+			<label>
+				Location:
+				<input type="text" bind:value={form.location} />
+			</label>
+			<label>
+				Start Date:
+				{@render dateInput('start_date')}
+			</label>
+			<label>
+				End Date:
+				{@render dateInput('end_date')}
+			</label>
 		</div>
-	</div>
-{/if}
 
-{#if showEditModal}
-	<div class="modal-backdrop" role="presentation">
-		<div class="modal" role="dialog" aria-modal="true" aria-label="Edit project information">
-			<button class="modal-close" on:click={closeEditModal} disabled={isSaving}>
-				<Close size={18} />
-			</button>
-			<h2>Edit Project Information</h2>
-			<div class="modal-body">
-				<label>
-					Project Name:
-					<input type="text" bind:value={editForm.project_name} />
-				</label>
-				<label>
-					Project ID:
-					<input type="text" bind:value={editForm.project_id} />
-				</label>
-				<label>
-					Status:
-					<input type="text" bind:value={editForm.status} />
-				</label>
-				<label>
-					Region:
-					<input type="text" bind:value={editForm.region} />
-				</label>
-				<label>
-					Location:
-					<input type="text" bind:value={editForm.location} />
-				</label>
-				<label>
-					Start Date:
-					<input
-						type="date"
-						class="forms-date"
-						bind:value={editForm.start_date}
-						on:focus={(e) => e.target.showPicker?.()}
-					/>
-				</label>
-				<label>
-					End Date:
-					<input
-						type="date"
-						class="forms-date"
-						bind:value={editForm.end_date}
-						on:focus={(e) => e.target.showPicker?.()}
-					/>
-				</label>
-			</div>
-			<br />
-			<h2>Edit Person In Charge Information</h2>
-			<div class="modal-body">
-				<label>
-					Full Name:
-					<input type="text" bind:value={editForm.pic_name} />
-				</label>
-				<label>
-					Position:
-					<input type="text" bind:value={editForm.pic_position} />
-				</label>
-				<label>
-					Start Date:
-					<input
-						type="date"
-						class="forms-input"
-						bind:value={editForm.pic_start_date}
-						on:focus={(e) => e.target.showPicker?.()}
-					/>
-				</label>
-				<label>
-					End Date:
-					<input
-						type="date"
-						class="forms-input"
-						bind:value={editForm.pic_end_date}
-						on:focus={(e) => e.target.showPicker?.()}
-					/>
-				</label>
-			</div>
-			<div class="modal-actions">
-				<button class="button-inverted" on:click={closeEditModal} disabled={isSaving}>
-					Cancel
-				</button>
-				<button on:click={saveProject} disabled={isSaving}>
-					{isSaving ? 'Saving...' : 'Confirm'}
-				</button>
-			</div>
+		<h3 class="form-section">
+			{formMode === 'create' ? 'Person In Charge Information' : 'Edit Person In Charge Information'}
+		</h3>
+		<div class="form-grid">
+			<label>
+				Full Name:
+				<input type="text" bind:value={form.pic_name} />
+			</label>
+			<label>
+				Position:
+				<input type="text" bind:value={form.pic_position} />
+			</label>
+			<label>
+				Start Date:
+				{@render dateInput('pic_start_date')}
+			</label>
+			<label>
+				End Date:
+				{@render dateInput('pic_end_date')}
+			</label>
 		</div>
-	</div>
-{/if}
+
+		{#if formError}
+			<p class="error">{formError}</p>
+		{/if}
+	</form>
+
+	{#snippet footer()}
+		<button type="button" class="button-inverted" onclick={closeFormModal} disabled={isSaving}>
+			Cancel
+		</button>
+		<button type="submit" form="project-form" class="button-confirm" disabled={isSaving}>
+			{isSaving ? 'Saving...' : 'Confirm'}
+		</button>
+	{/snippet}
+</Modal>
+
+<Modal
+	open={showDeleteModal && !!deletingProject}
+	title="Delete Project"
+	size="sm"
+	busy={isDeleting}
+	onclose={closeDeleteModal}
+>
+	<p>Are you sure you want to delete this project?</p>
+	{#if deletingProject}
+		<div class="delete-summary">
+			<p><b>Project Name:</b> {deletingProject.project_name ?? '-'}</p>
+			<p><b>Project ID:</b> {deletingProject.project_id ?? '-'}</p>
+			<p><b>Status:</b> {deletingProject.status ?? '-'}</p>
+			<p><b>Region:</b> {deletingProject.region ?? '-'}</p>
+		</div>
+	{/if}
+	<p class="hint">This action cannot be undone.</p>
+	{#if deleteError}
+		<p class="error">{deleteError}</p>
+	{/if}
+
+	{#snippet footer()}
+		<button type="button" class="button-inverted" onclick={closeDeleteModal} disabled={isDeleting}>
+			Cancel
+		</button>
+		<button type="button" class="button-danger" onclick={deleteProject} disabled={isDeleting}>
+			{isDeleting ? 'Deleting...' : 'Delete'}
+		</button>
+	{/snippet}
+</Modal>
 
 <style>
 	* {
@@ -505,97 +472,112 @@
 		border: none;
 		font-size: small;
 		padding: 6px 14px;
-		border: 2px solid #ffffff;
 		border-radius: 4px;
 		cursor: pointer;
 	}
 
-	button:hover {
+	button:hover:not(:disabled) {
 		background-color: #064c6da4;
 	}
 
-	.button-assign {
+	button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	button span {
+		color: #ffffff;
+	}
+
+	.button-assign,
+	.button-download {
 		width: 150px;
 		height: 40px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		gap: 8px;
-	}
-
-	.button-assign span {
-		color: #ffffff;
 	}
 
 	.button-download {
 		background-color: #31b647;
-		width: 150px;
-		height: 40px;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 8px;
 	}
 
-	.button-download span {
-		color: #ffffff;
-	}
-
-	.button-download:hover {
+	.button-download:hover:not(:disabled) {
 		background-color: #31b647bd;
 	}
 
-	.button-edit {
+	.card-actions {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
 		width: 20%;
+		min-width: 96px;
 		align-self: flex-start;
 	}
 
-	#button-edit {
+	.button-edit,
+	.button-delete {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
 		width: 100%;
+		height: 34px;
+	}
+
+	.button-delete {
+		background-color: #c62828;
+	}
+
+	.button-delete:hover:not(:disabled) {
+		background-color: #c62828c7;
 	}
 
 	.button-inverted {
 		background-color: #ffffff;
 		color: #064c6dd7;
-		font-size: small;
-		padding: 6px 14px;
+		font-weight: bold;
+		padding: 8px 18px;
 		border: 2px solid #064c6dd7;
-		border-radius: 4px;
-		cursor: pointer;
 	}
 
-	.button-inverted:hover {
+	.button-inverted:hover:not(:disabled) {
 		background-color: #dedede;
+	}
+
+	.button-confirm {
+		background-color: #091747;
+		font-weight: bold;
+		padding: 10px 20px;
+	}
+
+	.button-confirm:hover:not(:disabled) {
+		background-color: #091747b9;
+	}
+
+	.button-danger {
+		background-color: #c62828;
+		font-weight: bold;
+		padding: 10px 20px;
+	}
+
+	.button-danger:hover:not(:disabled) {
+		background-color: #c62828c7;
 	}
 
 	.button-modify {
 		display: flex;
 		padding: 10px;
 		justify-content: space-between;
-	}
-
-	.button-primary {
-		background-color: #091747;
-		padding: 10px 20px;
-	}
-
-	.button-primary:hover {
-		background-color: #091747b9;
-	}
-
-	#button-search {
-		height: 40px;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 8px;
-		border: 1px;
+		gap: 10px;
 	}
 
 	.card-grid {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: 20px;
+		padding: 0 10px;
 	}
 
 	.filter-bar {
@@ -606,7 +588,8 @@
 		padding: 10px 0;
 	}
 
-	.filter-bar p {
+	.filter-bar label {
+		display: block;
 		margin: 0 0 6px 0;
 	}
 
@@ -625,14 +608,6 @@
 		cursor: pointer;
 	}
 
-	.hidden {
-		opacity: 0;
-	}
-
-	h2 {
-		font-weight: bold;
-	}
-
 	h3 {
 		margin-bottom: 10px;
 		font-size: 16px;
@@ -649,7 +624,7 @@
 	}
 
 	.pic {
-		margin-bottom: 10px;
+		margin: 10px 0;
 		font-weight: bold;
 	}
 
@@ -657,92 +632,81 @@
 		display: flex;
 		align-items: center;
 		gap: 16px;
+		min-width: 0;
 		background-color: #ffffff;
 		border: 1px solid #dcdcdc;
 		border-radius: 4px;
 		padding: 15px 20px;
-		margin: 10px 10px 0;
 		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 	}
 
 	.project-info {
-		width: 80%;
+		flex: 1;
+		min-width: 0;
+		overflow-wrap: anywhere;
 	}
 
 	.project-info p {
 		font-size: 14px;
 	}
 
-	.modal-backdrop {
-		position: fixed;
-		inset: 0;
-		background: rgba(9, 23, 71, 0.45);
-		display: flex;
-		align-items: flex-start;
-		justify-content: center;
-		padding: 32px 20px;
-		z-index: 10;
+	.status {
+		padding: 0 10px;
+		margin: 10px 0;
+		color: #5b6480;
 	}
 
-	.modal {
-		position: relative;
-		width: min(560px, 100%);
-		max-height: calc(100vh - 64px);
-		overflow: auto;
-		background: #ffffff;
-		border-radius: 8px;
-		padding: 20px;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+	.error {
+		color: #c62828;
+		font-weight: bold;
+		margin: 8px 10px;
 	}
 
-	.modal-close {
-		position: absolute;
-		top: 20px;
-		right: 12px;
-		background: transparent;
-		border: none;
-		cursor: pointer;
-		padding: 4px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: #091747;
+	.project-form .error {
+		margin: 12px 0 0;
 	}
 
-	.modal-close:hover {
-		background: rgba(0, 0, 0, 0.05);
-		border-radius: 50%;
-	}
-
-	.modal h2 {
-		margin: 0 0 16px;
-		font-size: 20px;
-	}
-
-	.modal-body {
+	.form-grid {
 		display: grid;
 		gap: 12px;
 	}
 
-	.modal-body label {
+	.form-section {
+		margin: 20px 0 12px;
+		font-size: 16px;
+	}
+
+	.form-grid label {
 		display: grid;
 		gap: 6px;
 		font-size: 13px;
 		font-weight: bold;
 	}
 
-	.modal-body input {
+	.form-grid input {
+		width: 100%;
 		border: 1px solid #dcdcdc;
 		border-radius: 4px;
 		padding: 8px 10px;
 		font-size: 14px;
+		font-weight: normal;
 	}
 
-	.modal-actions {
-		display: flex;
-		justify-content: flex-end;
-		gap: 10px;
-		margin-top: 18px;
+	.delete-summary {
+		margin: 12px 0;
+		padding: 10px 12px;
+		background-color: #f2f4f9;
+		border-radius: 4px;
+	}
+
+	.delete-summary p {
+		margin: 2px 0;
+	}
+
+	.hint {
+		font-size: 12px;
+		color: #5b6480;
+		margin: 8px 0 0;
 	}
 
 	.title {
@@ -760,12 +724,11 @@
 
 		.filter-bar {
 			flex-wrap: wrap;
-			gap: 12px;
 		}
 
 		.filter-bar > div {
 			flex: 1 1 220px;
-			min-width: 220px;
+			min-width: 0;
 		}
 
 		.status-select,
@@ -774,39 +737,18 @@
 			width: 100%;
 		}
 
-		.button-modify {
-			flex-direction: column;
-			gap: 10px;
-		}
-
-		.button-assign,
-		.button-download {
-			width: 100%;
-		}
-
 		.card-grid {
-			grid-template-columns: repeat(2, 1fr);
+			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
 
 		.project-card {
 			flex-direction: column;
-			align-items: flex-start;
+			align-items: stretch;
 		}
 
-		.project-info {
+		.card-actions {
+			flex-direction: row;
 			width: 100%;
-		}
-
-		.project-info h3,
-		.project-info p {
-			word-break: break-word;
-			overflow-wrap: anywhere;
-			white-space: normal;
-		}
-
-		.button-edit {
-			width: 100%;
-			margin-top: 10px;
 		}
 	}
 
@@ -816,72 +758,40 @@
 			margin-bottom: 14px;
 		}
 
-		.button-primary {
-			width: 100%;
-			justify-content: center;
-		}
-
 		.filter-bar {
-			flex-wrap: wrap;
-			gap: 12px;
-			padding: 0;
+			margin: 0 10px;
+			padding: 6px 0;
 		}
 
 		.filter-bar > div {
-			flex: 1 1 220px;
-			min-width: 220px;
+			flex-basis: 100%;
 		}
 
-		.status-select,
-		.option-select,
-		.filter-input {
+		.button-modify {
+			flex-direction: column;
+		}
+
+		.button-assign,
+		.button-download {
 			width: 100%;
 		}
 
 		.card-grid {
 			grid-template-columns: 1fr;
+			gap: 12px;
 		}
 
 		.project-card {
 			padding: 12px;
-			margin: 8px;
-		}
-
-		.project-info h3 {
-			font-size: 16px;
 		}
 
 		.project-info p {
 			font-size: 13px;
 		}
 
-		#button-edit {
-			width: 100%;
-		}
-
-		.modal {
-			padding: 16px;
-		}
-
-		.modal-actions {
-			flex-direction: column;
-			gap: 8px;
-		}
-
-		.modal-actions button {
-			width: 100%;
-		}
-
-		.modal-backdrop {
-			padding: 16px 12px;
-		}
-
-		.modal-body {
-			gap: 10px;
-		}
-
-		.modal-body input {
-			width: 100%;
+		.button-edit,
+		.button-delete {
+			height: 38px;
 		}
 	}
 </style>

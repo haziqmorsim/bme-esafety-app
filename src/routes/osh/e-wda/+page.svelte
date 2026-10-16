@@ -1,13 +1,16 @@
 <script>
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { getSupabase, supabase } from '$lib/supabase';
+	import { untrack } from 'svelte';
+	import { supabase } from '$lib/supabase';
 	import { requireUser } from '$lib/auth-guard';
+	import Pagination, { pageSlice } from '$lib/components/Pagination.svelte';
 
-	import ChevronsLeft from '@lucide/svelte/icons/chevrons-left';
-	import ChevronsRight from '@lucide/svelte/icons/chevrons-right';
+	function todayKey() {
+		const now = new Date();
+		const pad = (n) => String(n).padStart(2, '0');
+		return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+	}
 
-	let selectedDate = $state(new Date().toISOString().slice(0, 10));
+	let selectedDate = $state(todayKey());
 	let rows = $state([]);
 	let errorMsg = $state('');
 	let loading = $state(false);
@@ -16,11 +19,8 @@
 	const pageSize = 10;
 
 	const records = $derived.by(() => rows);
-	const totalPages = $derived.by(() => Math.max(1, Math.ceil(records.length / pageSize)));
-	const pages = $derived.by(() => Array.from({ length: totalPages }, (_, i) => i + 1));
-	const paginated = $derived.by(() =>
-		records.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-	);
+	const paginated = $derived(pageSlice(records, currentPage, pageSize));
+	let loadToken = 0;
 
 	function localDayRangeISO(dateStr) {
 		const start = new Date(dateStr + 'T00:00:00');
@@ -53,13 +53,15 @@
 	}
 
 	async function loadAttendance() {
+		const token = ++loadToken;
+		const date = selectedDate;
 		loading = true;
 		errorMsg = '';
 		rows = [];
 
 		try {
 			const user = await ensureSignedIn();
-			if (!user) return;
+			if (!user || token !== loadToken) return;
 
 			const { data: users, error: usersErr } = await supabase
 				.from('profiles')
@@ -69,7 +71,7 @@
 
 			if (usersErr) throw usersErr;
 
-			const { startISO, endISO } = localDayRangeISO(selectedDate);
+			const { startISO, endISO } = localDayRangeISO(date);
 
 			const [tbmRes, ppeRes, hkpRes] = await Promise.all([
 				supabase
@@ -91,6 +93,7 @@
 					.lte('created_at', endISO)
 			]);
 
+			if (token !== loadToken) return; // a newer date was picked meanwhile
 			if (tbmRes.error) throw tbmRes.error;
 			if (ppeRes.error) throw ppeRes.error;
 			if (hkpRes.error) throw hkpRes.error;
@@ -105,7 +108,8 @@
 				const ehkp = hkpSet.has(u.id);
 
 				return {
-					date: selectedDate,
+					id: u.id,
+					date,
 					name: displayName(u),
 					etbm: etbm ? 'Yes' : 'No',
 					eppe: eppe ? 'Yes' : 'No',
@@ -114,29 +118,17 @@
 				};
 			});
 		} catch (e) {
-			errorMsg = e?.message ?? String(e);
+			if (token === loadToken) errorMsg = e?.message ?? String(e);
 		} finally {
-			loading = false;
+			if (token === loadToken) loading = false;
 		}
 	}
 
-	onMount(loadAttendance);
-
 	$effect(() => {
-		selectedDate;
+		const date = selectedDate;
 		currentPage = 1;
-		if (selectedDate) loadAttendance();
+		if (date) untrack(() => loadAttendance());
 	});
-
-	function gotoPage(n) {
-		currentPage = Math.min(Math.max(1, n), totalPages);
-	}
-	function prev() {
-		gotoPage(currentPage - 1);
-	}
-	function next() {
-		gotoPage(currentPage + 1);
-	}
 </script>
 
 <h1 class="title">Working Day Attendance (e-WDA) Record</h1>
@@ -149,7 +141,6 @@
 				type="date"
 				class="filter-date"
 				bind:value={selectedDate}
-				onchange={loadAttendance}
 				onfocus={(e) => e.target.showPicker?.()}
 			/>
 		</div>
@@ -175,34 +166,60 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each paginated as r (r.name)}
+				{#each paginated as r (r.id)}
 					<tr>
-						<td style="text-align:center">{formatDate(r.date)}</td>
-						<td>{r.name}</td>
-						<td style="text-align:center">{r.etbm}</td>
-						<td style="text-align:center">{r.eppe}</td>
-						<td style="text-align:center">{r.ehkp}</td>
-						<td style="text-align:center">{r.status}</td>
+						<td class="center" data-label="Date">{formatDate(r.date)}</td>
+						<td data-label="Supervisor">{r.name}</td>
+						<td class="center" data-label="eTBM">{r.etbm}</td>
+						<td class="center" data-label="ePPE">{r.eppe}</td>
+						<td class="center" data-label="eHKP">{r.ehkp}</td>
+						<td
+							class="center"
+							class:present={r.status === 'Present'}
+							class:absent={r.status === 'Absent'}
+							data-label="Status">{r.status}</td
+						>
+					</tr>
+				{:else}
+					<tr>
+						<td colspan="6" class="empty">
+							{loading ? 'Loading attendance...' : 'No Site Safety Supervisors found.'}
+						</td>
 					</tr>
 				{/each}
 			</tbody>
 		</table>
 
-		<div class="pagination">
-			<button onclick={prev} disabled={currentPage === 1} aria-label="Previous"
-				><ChevronsLeft /></button
-			>
-			{#each pages as p}
-				<button class:active={p === currentPage} onclick={() => gotoPage(p)}>{p}</button>
-			{/each}
-			<button onclick={next} disabled={currentPage === totalPages} aria-label="Next"
-				><ChevronsRight /></button
-			>
-		</div>
+		<Pagination
+			bind:page={currentPage}
+			totalItems={records.length}
+			{pageSize}
+			showSummary={false}
+		/>
 	</div>
 </div>
 
 <style>
+	.wda-table .center {
+		text-align: center;
+	}
+
+	.wda-table .present {
+		color: #0f8f2f;
+		font-weight: bold;
+	}
+
+	.wda-table .absent {
+		color: #c62828;
+		font-weight: bold;
+	}
+
+	.empty {
+		text-align: center;
+		padding: 16px;
+		color: #5b6480;
+	}
+
 	* {
 		font-family: Arial, Helvetica, sans-serif;
 		font-size: 14px;
@@ -223,40 +240,6 @@
 
 	.filter-date::-webkit-calendar-picker-indicator {
 		cursor: pointer;
-	}
-
-	.pagination {
-		display: flex;
-		gap: 6px;
-		justify-content: flex-end;
-		margin-top: 12px;
-	}
-
-	.pagination button {
-		min-width: 34px;
-		height: 34px;
-		border-radius: 4px;
-		border: 1px solid #283a5a33;
-		background: white;
-		cursor: pointer;
-		padding: 0 8px;
-	}
-
-	.pagination button[disabled] {
-		opacity: 0.5;
-		cursor: default;
-	}
-
-	.pagination button.active,
-	.pagination button.active:focus {
-		background: #091747;
-		color: white;
-		border-color: #091747;
-	}
-
-	.pagination button:hover:not([disabled]) {
-		background: #091747b9;
-		color: white;
 	}
 
 	.project-box {
@@ -334,11 +317,6 @@
 			padding: 10px 12px;
 			font-size: 13px;
 		}
-
-		.pagination {
-			flex-wrap: wrap;
-			gap: 6px;
-		}
 	}
 
 	@media (max-width: 600px) {
@@ -372,28 +350,64 @@
 		}
 
 		.table-container {
-			overflow-x: auto;
-			-webkit-overflow-scrolling: touch;
+			overflow: visible;
 		}
 
 		.wda-table {
-			min-width: 720px;
+			min-width: 0;
 		}
 
-		.wda-table th,
+		.wda-table thead {
+			display: none;
+		}
+
+		.wda-table,
+		.wda-table tbody,
+		.wda-table tr,
 		.wda-table td {
-			padding: 8px 10px;
-			font-size: 12px;
-			white-space: nowrap;
+			display: block;
+			width: 100%;
 		}
 
-		.pagination {
-			flex-wrap: wrap;
+		.wda-table tbody tr {
+			margin-bottom: 10px;
+			padding: 8px 12px;
+			border: 1px solid #dcdcdc;
+			border-radius: 4px;
+			background-color: #ffffff;
+			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 		}
 
-		.pagination button {
-			min-width: 36px;
-			height: 36px;
+		.wda-table tbody tr:nth-child(even) {
+			background-color: #ffffff;
+		}
+
+		.wda-table td,
+		.wda-table .center {
+			display: grid;
+			grid-template-columns: 96px minmax(0, 1fr);
+			gap: 8px;
+			padding: 4px 0;
+			border: none;
+			font-size: 14px;
+			text-align: left;
+			white-space: normal;
+			overflow-wrap: anywhere;
+		}
+
+		.wda-table td::before {
+			content: attr(data-label);
+			font-weight: bold;
+			color: #091747;
+		}
+
+		.wda-table td.empty {
+			display: block;
+			text-align: center;
+		}
+
+		.wda-table td.empty::before {
+			content: none;
 		}
 	}
 </style>
