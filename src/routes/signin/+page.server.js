@@ -1,6 +1,6 @@
 export function load() {
 	return {
-		title: 'Sign In | BME Automation App'
+		title: 'Sign In | BME e-Safety App'
 	};
 }
 

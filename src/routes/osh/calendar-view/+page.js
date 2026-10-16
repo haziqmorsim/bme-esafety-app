@@ -1,5 +1,5 @@
 export function load() {
 	return {
-		title: 'Calendar View | BME Automation App'
+		title: 'Calendar View | BME e-Safety App'
 	};
 }

@@ -246,7 +246,7 @@
         </div>
         <div class="forms-p">
             <label for="induction-type" class="forms-label">Induction Type:</label>
-            <select bind:value={induction_type}>
+            <select class="type-select" bind:value={induction_type}>
                 <option value=""></option>
                 <option value="visitor">Visitor</option>
                 <option value="conductor">Contractor</option>
@@ -408,6 +408,14 @@
 		align-items: center;
 		gap: 10px;
 		margin: 10px 0;
+	}
+
+	.type-select {
+		height: 40px;
+		width: 150px;
+		padding: 0 10px;
+		font-size: 14px;
+		cursor: pointer;
 	}
 
 	.heading {

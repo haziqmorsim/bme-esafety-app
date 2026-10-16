@@ -70,14 +70,14 @@
 </script>
 
 <div class="container">
-	<div>
-		<a href="/"><img src="/images/bme_logo.jpg" alt="BME Logo" class="logo" /></a>
-		<a href="/" class="navigation"><House size={20} />Main Menu</a>
+	<div class="logo-column">
+		<a href="/"><img src="/images/bme-logo.png" alt="BME Logo" class="logo" /></a>
 	</div>
 	{#if !isAuthPage && hasUser}
 		<div class="welcome">
 			<p>Welcome, <span>{userName}</span>!</p>
 			<div class="calendar-history">
+				<a href="/" class="navigation"><House size={20} />Main Menu</a>
 				<a href="/osh/notifications" class="navigation"><Bell size={20} />Notifications</a>
 				<a href="/osh/calendar-view" class="navigation"><Calendar size={20} />Calendar</a>
 				<a href="/osh/submission-history" class="navigation"><History size={20} />History</a>
@@ -130,12 +130,17 @@
 
 	.container {
 		display: flex;
+		align-items: end;
 		margin-bottom: 15px;
 		padding: 0 10px;
 	}
 
+	.logo-column {
+		width: 30%;
+	}
+
 	.logo {
-		width: 70%;
+		width: 40%;
 	}
 
 	.navigation {
@@ -158,7 +163,6 @@
 		flex-direction: column;
 		align-items: flex-end;
 		position: absolute;
-		top: 80px;
 		right: 10px;
 		gap: 20px;
 	}
@@ -167,13 +171,12 @@
 		.container {
 			margin-top: 10px;
 			display: flex;
-			align-items: flex-start;
 			justify-content: space-between;
 			gap: 10px;
 		}
 
 		.logo {
-			width: 45%;
+			width: 70%;
 		}
 
 		p {

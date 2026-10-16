@@ -352,7 +352,7 @@
 							<input
 								type="checkbox"
 								name="item-status"
-								bind:value={subsections[sIndex].items[iIndex].checked}
+								bind:checked={subsections[sIndex].items[iIndex].checked}
 							/>
 							<span class="checkmark" aria-hidden="true"></span>
 						</label>

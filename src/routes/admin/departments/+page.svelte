@@ -107,7 +107,7 @@
 </script>
 
 <svelte:head>
-	<title>Departments and Employees List | BME Automation App</title>
+	<title>Departments and Employees List | BME e-Safety App</title>
 </svelte:head>
 
 <h1 class="title">Departments and Employees List</h1>

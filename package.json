@@ -1,5 +1,5 @@
 {
-	"name": "bme-automation-app",
+	"name": "bme-esafety-app",
 	"version": "0.0.1",
 	"scripts": {
 		"dev": "vite dev",

@@ -18,9 +18,32 @@
 				const items = (section.items ?? []).filter((item) => {
 					return allowedRoutes.has(item.route);
 				});
-				return { ...section, items };
+				return { ...section, items, groups: buildGroups(section, items) };
 			})
 			.filter((section) => section.items.length > 0);
+	}
+
+	function buildGroups(section, items) {
+		const categories = section.categories ?? [];
+		if (categories.length === 0) {
+			return [{ key: 'all', label: null, items }];
+		}
+
+		const known = new Set(categories.map((c) => c.key));
+		const groups = categories
+			.map((c) => ({
+				key: c.key,
+				label: c.label,
+				items: items.filter((item) => item.category === c.key)
+			}))
+			.filter((group) => group.items.length > 0);
+
+		const uncategorised = items.filter((item) => !known.has(item.category));
+		if (uncategorised.length > 0) {
+			groups.push({ key: 'other', label: null, items: uncategorised });
+		}
+
+		return groups;
 	}
 
 	async function loadMenu() {
@@ -80,21 +103,23 @@
 {#each visibleSections as section}
 	<h2 class="department">Department: <span class="item">{section.department}</span></h2>
 
-	{#each section.items as item}
-		<div class="menu-card">
-			<img src={item.icon} alt="icon" class="menu-icon" />
-			<div class="menu-info">
-				<h3>{item.title}</h3>
-				<p>{item.description}</p>
+	{#each section.groups as group (group.key)}
+		{#if group.label}
+			<h3 class="category-title">{group.label}</h3>
+		{/if}
+
+		{#each group.items as item}
+			<div class="menu-card">
+				<img src={item.icon} alt="icon" class="menu-icon" />
+				<div class="menu-info">
+					<h4>{item.title}</h4>
+					<p>{item.description}</p>
+				</div>
+				<button	type="button" disabled={item.disabled} on:click={() => !item.disabled && goto(item.route)}>
+					Open
+				</button>
 			</div>
-			<button
-				type="button"
-				disabled={item.disabled}
-				on:click={() => !item.disabled && goto(item.route)}
-			>
-				Go To
-			</button>
-		</div>
+		{/each}
 	{/each}
 {/each}
 
@@ -133,9 +158,18 @@
 		padding: 0 10px;
 	}
 
-	h3 {
+	h4 {
 		font-weight: bold;
 		font-size: 16px;
+	}
+
+	.category-title {
+		margin: 24px 10px 0;
+		padding: 0 0 6px 10px;
+		font-size: 16px;
+		font-weight: bold;
+		color: #064c6dd7;
+		border-left: 4px solid #064c6dd7;
 	}
 
 	.item {
@@ -172,7 +206,7 @@
 		flex-grow: 1;
 	}
 
-	.menu-info h3 {
+	.menu-info h4 {
 		margin: 0;
 	}
 

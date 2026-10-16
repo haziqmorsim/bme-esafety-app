@@ -144,7 +144,7 @@
 </script>
 
 <svelte:head>
-	<title>User Information Management | BME Automation App</title>
+	<title>User Information Management | BME e-Safety App</title>
 </svelte:head>
 
 <h1 class="title">User Information Management</h1>

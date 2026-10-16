@@ -36,7 +36,7 @@
 </script>
 
 <svelte:head>
-	<title>Forgot Password | BME Automation App</title>
+	<title>Forgot Password | BME e-Safety App</title>
 </svelte:head>
 
 <h1 class="title">Forgot Password</h1>

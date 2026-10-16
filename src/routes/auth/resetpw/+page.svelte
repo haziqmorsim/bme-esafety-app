@@ -81,7 +81,7 @@
 </script>
 
 <svelte:head>
-	<title>Reset Password | BME Automation App</title>
+	<title>Reset Password | BME e-Safety App</title>
 </svelte:head>
 
 <h1 class="title">Reset Password</h1>

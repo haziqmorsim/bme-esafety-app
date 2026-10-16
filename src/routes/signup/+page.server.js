@@ -49,7 +49,7 @@ export const actions = {
 
 export function load() {
 	return {
-		title: 'Sign Up | BME Automation App'
+		title: 'Sign Up | BME e-Safety App'
 	};
 }
 

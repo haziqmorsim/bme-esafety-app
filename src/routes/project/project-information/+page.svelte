@@ -234,7 +234,7 @@
 </script>
 
 <svelte:head>
-	<title>Project Information Management | BME Automation App</title>
+	<title>Project Information Management | BME e-Safety App</title>
 </svelte:head>
 
 <h1 class="title">Project Information Management</h1>

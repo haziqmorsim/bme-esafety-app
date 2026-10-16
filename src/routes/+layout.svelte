@@ -100,7 +100,7 @@
 </script>
 
 <svelte:head>
-	<title>{$page.data.title ?? 'BME Automation App'}</title>
+	<title>{$page.data.title ?? 'BME e-Safety App'}</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 </svelte:head>
 

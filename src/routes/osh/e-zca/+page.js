@@ -1,5 +1,5 @@
 export function load() {
     return {
-        title: "Zero Compromise Audit (e-ZCA) Submission | BME Automation App"
+        title: "Zero Compromise Audit (e-ZCA) Submission | BME e-Safety App"
     }
 }

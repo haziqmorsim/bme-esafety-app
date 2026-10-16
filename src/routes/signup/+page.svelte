@@ -86,6 +86,7 @@
 <div class="box">
 	<div class="form">
 		<form on:submit|preventDefault={signUp}>
+			<img src="/images/bme-logo.png" alt="BME Logo" class="logo" />
 			<h1 class="title">Sign Up</h1>
 			<p><label for="first_name">First Name</label></p>
 			<p>
@@ -290,6 +291,11 @@
 		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 		width: 100%;
 		max-width: 420px;
+	}
+
+	.logo {
+		width: 35%;
+		justify-self: center;
 	}
 
 	.input-box {
