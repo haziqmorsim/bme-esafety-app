@@ -6,6 +6,7 @@
 	import { requireUser } from '$lib/auth-guard';
 	import Modal from '$lib/components/Modal.svelte';
 	import { toast } from '$lib/stores/toast';
+	import { getSubmitLocation, sendToMake } from '$lib/make';
 
 	let showProjectModal = false;
 	let projects = [];
@@ -23,9 +24,9 @@
 	let conducted_by = '';
 	let conducted_position = '';
 	let attendance = {
-		bme_attendees: 0,
-		subcon_attendees: 0,
-		other_attendees: 0
+		bme: 0,
+		subcon: 0,
+		visitor: 0
 	};
 	let ppe_photo_path = '';
 	let remarks = '';
@@ -86,6 +87,8 @@
 		saving = true;
 
 		try {
+			const locationPromise = getSubmitLocation();
+
 			const auth = await requireUser();
 			if (!auth) return;
 
@@ -122,13 +125,17 @@
 				created_by_name: submitterName
 			};
 
-			const { error: insErr } = await withTimeout(
-				supabase.from('ppe_submissions').insert(payload),
+			const { data: saved, error: insErr } = await withTimeout(
+				supabase.from('ppe_submissions').insert(payload).select('id').single(),
 				15000
 			);
 			if (insErr) throw insErr;
 
-			toast.success('PPE Visual Inspections Report (e-PPE) submitted successfully.');
+			const sent = await sendToMake('ppe', saved.id, {
+				submitLocation: await locationPromise
+			});
+			if (sent.ok) toast.success('PPE Visual Inspections Report (e-PPE) submitted successfully.');
+			else toast.error(`e-PPE was saved, but it could not be sent to Make: ${sent.error}`);
 			goto('/');
 		} catch (error) {
 			errorMsg = error?.message ?? String(error);

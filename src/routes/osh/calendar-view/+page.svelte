@@ -4,6 +4,7 @@
 	import Mails from '@lucide/svelte/icons/mails';
 	import Files from '@lucide/svelte/icons/files';
 	import FileIcon from '@lucide/svelte/icons/file';
+	import Mail from '@lucide/svelte/icons/mail';
 	import ArrowDownToLine from '@lucide/svelte/icons/arrow-down-to-line';
 	import Download from '@lucide/svelte/icons/download';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -18,6 +19,7 @@
 	import { toast } from '$lib/stores/toast';
 	import Modal from '$lib/components/Modal.svelte';
 	import Pagination, { pageSlice } from '$lib/components/Pagination.svelte';
+	import { sendReport, downloadReport } from '$lib/make';
 
 	const startYear = 2026;
 	const endYear = 2028;
@@ -411,6 +413,51 @@
 		holidayFormError = '';
 	});
 
+	let reportBusy = $state('');
+
+	async function runReportAction(action, scope) {
+		if (reportBusy) return;
+		const userId = selectedUserId || currentUserId;
+		if (scope === 'one' && !userId) {
+			toast.error('Select a user first.');
+			return;
+		}
+
+		const year = months[index].year;
+		const month = months[index].month;
+		const period = `${monthNames[month]} ${year}`;
+		reportBusy = `${action}-${scope}`;
+
+		try {
+			if (action === 'download') {
+				toast.info('Preparing the Working Day Record...');
+				const res = await downloadReport('working-days', { year, month, userId: scope === 'one' ? userId : null });
+				if (res.ok) toast.success(`Downloaded ${res.fileName}`);
+				else toast.error(res.error);
+				return;
+			}
+
+			const res = await sendReport({
+				report: 'ot',
+				year,
+				month,
+				userId: scope === 'one' ? userId : null,
+				recipient: action // 'staff' | 'me'
+			});
+			if (!res.ok) {
+				toast.error(res.error);
+				return;
+			}
+
+			const count = res.data?.sent ?? 0;
+			const target = action === 'me' ? 'your e-mail' : count === 1 ? "the user's e-mail" : "each user's e-mail";
+			toast.success(`${count} OT claim report${count === 1 ? '' : 's'} for ${period} will be sent to ${target} shortly.`);
+			if (res.data?.skipped?.length) toast.info(`No e-mail address for: ${res.data.skipped.join(', ')}`);
+		} finally {
+			reportBusy = '';
+		}
+	}
+
 	function formatHolidayDate(key) {
 		if (!key) return '';
 		const [y, m, d] = key.split('-').map(Number);
@@ -714,33 +761,74 @@
 	</div>
 
 	<ul class="legend" aria-label="Calendar legend">
-		<li><span class="legend-swatch state-working"></span>Working</li>
-		<li><span class="legend-swatch state-incomplete"></span>Incomplete</li>
-		<li><span class="legend-swatch state-not-working"></span>Not Working</li>
-		<li><span class="legend-dot"></span>Public Holiday</li>
+		<li class="legend-state"><span class="legend-swatch state-working"></span>Working</li>
+		<li class="legend-state"><span class="legend-swatch state-incomplete"></span>Incomplete</li>
+		<li class="legend-state"><span class="legend-swatch state-not-working"></span>Not Working</li>
+		<li><span class="legend-dot"></span>Holiday</li>
 	</ul>
 
 	{#if isAdmin}
 		<div class="action-buttons">
-			<button class="action-button bg-teal" aria-label="Mails" title="Mails"><Mails /></button>
-			<button class="action-button bg-navy" aria-label="Files" title="Files"><Files /></button>
-			<button class="action-button bg-navy" aria-label="File" title="File"><FileIcon /></button>
+			<button
+				class="action-button bg-teal"
+				aria-label="Mails"
+				title="Send OT Claim Report to All Users' E-mails"
+				disabled={!!reportBusy}
+				onclick={() => runReportAction('staff', 'all')}
+			>
+				{#if reportBusy === 'staff-all'}<span class="busy-dot"></span>{:else}<Mails />{/if}
+			</button>
+			<button
+				class="action-button bg-navy"
+				aria-label="Files"
+				title="Send All OT Claim Reports to My E-mail"
+				disabled={!!reportBusy}
+				onclick={() => runReportAction('me', 'all')}
+			>
+				{#if reportBusy === 'me-all'}<span class="busy-dot"></span>{:else}<Files />{/if}
+			</button>
+			<button
+				class="action-button bg-green"
+				aria-label="Download"
+				title="Download All Users' Working Day Records in Excel"
+				disabled={!!reportBusy}
+				onclick={() => runReportAction('download', 'all')}
+			>
+				{#if reportBusy === 'download-all'}<span class="busy-dot"></span>{:else}<Download />{/if}
+			</button>
+			<button
+				class="action-button bg-teal"
+				aria-label="Mail"
+				title="Send OT Claim Report to This User's E-mail"
+				disabled={!!reportBusy}
+				onclick={() => runReportAction('staff', 'one')}
+			>
+				{#if reportBusy === 'staff-one'}<span class="busy-dot"></span>{:else}<Mail />{/if}
+			</button>
+			<button
+				class="action-button bg-navy"
+				aria-label="File"
+				title="Send This User's OT Claim Report to My E-mail"
+				disabled={!!reportBusy}
+				onclick={() => runReportAction('me', 'one')}
+			>
+				{#if reportBusy === 'me-one'}<span class="busy-dot"></span>{:else}<FileIcon />{/if}
+			</button>
 			<button
 				class="action-button bg-green"
 				aria-label="Arrow down to line"
-				title="Arrow down to line"
+				title="Download This User's Working Day Record in Excel"
+				disabled={!!reportBusy}
+				onclick={() => runReportAction('download', 'one')}
 			>
-				<ArrowDownToLine />
-			</button>
-			<button class="action-button bg-green" aria-label="Download" title="Download">
-				<Download />
+				{#if reportBusy === 'download-one'}<span class="busy-dot"></span>{:else}<ArrowDownToLine />{/if}
 			</button>
 		</div>
 	{/if}
 
 	<section class="holidays">
 		<div class="holidays-header">
-			<h2>Public Holidays ({viewYear})</h2>
+			<h2>Holidays ({viewYear})</h2>
 			{#if isAdmin}
 				<button class="button-create" onclick={openCreateHoliday}>
 					<Plus size={20} /><span>Create</span>
@@ -1057,9 +1145,57 @@
 		color: #064c6dd7;
 	}
 
-	.status-icon,
-	.legend {
+	.status-icon {
 		display: none;
+	}
+
+	.legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px 16px;
+		list-style: none;
+		margin: 10px 0 0;
+		padding: 0;
+	}
+
+	.legend li {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 12px;
+	}
+
+	.legend-swatch {
+		width: 14px;
+		height: 14px;
+		border-radius: 3px;
+		border: 1px solid #b0b0b0;
+	}
+
+	.legend-swatch.state-working {
+		background-color: #e6f4ea;
+		border-color: #0f8f2f;
+	}
+
+	.legend-swatch.state-incomplete {
+		background-color: #fff2e0;
+		border-color: #e67e00;
+	}
+
+	.legend-swatch.state-not-working {
+		background-color: #fdecec;
+		border-color: #c62828;
+	}
+
+	.legend-dot {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		background-color: #f57c00;
+	}
+
+	.legend-state {
+		display: none !important;
 	}
 
 	.status-full,
@@ -1215,6 +1351,26 @@
 	.icon-button:hover,
 	.button-create:hover {
 		opacity: 0.8;
+	}
+
+	.action-button:disabled {
+		opacity: 0.45;
+		cursor: not-allowed;
+	}
+
+	.busy-dot {
+		width: 18px;
+		height: 18px;
+		border: 2px solid #ffffff;
+		border-top-color: transparent;
+		border-radius: 50%;
+		animation: busy-spin 0.8s linear infinite;
+	}
+
+	@keyframes busy-spin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	.bg-teal {
@@ -1535,49 +1691,8 @@
 			background-color: #fdecec;
 		}
 
-		.legend {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 8px 16px;
-			list-style: none;
-			margin: 10px 0 0;
-			padding: 0;
-		}
-
-		.legend li {
-			display: inline-flex;
-			align-items: center;
-			gap: 6px;
-			font-size: 12px;
-		}
-
-		.legend-swatch {
-			width: 14px;
-			height: 14px;
-			border-radius: 3px;
-			border: 1px solid #b0b0b0;
-		}
-
-		.legend-swatch.state-working {
-			background-color: #e6f4ea;
-			border-color: #0f8f2f;
-		}
-
-		.legend-swatch.state-incomplete {
-			background-color: #fff2e0;
-			border-color: #e67e00;
-		}
-
-		.legend-swatch.state-not-working {
-			background-color: #fdecec;
-			border-color: #c62828;
-		}
-
-		.legend-dot {
-			width: 10px;
-			height: 10px;
-			border-radius: 50%;
-			background-color: #f57c00;
+		.legend-state {
+			display: inline-flex !important;
 		}
 
 		.day-num {

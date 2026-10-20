@@ -5,6 +5,7 @@
 	import Files from '@lucide/svelte/icons/files';
 	import Mail from '@lucide/svelte/icons/mail';
 	import FileIcon from '@lucide/svelte/icons/file';
+	import Download from '@lucide/svelte/icons/download';
 	import ArrowDownToLine from '@lucide/svelte/icons/arrow-down-to-line';
 	import Paperclip from '@lucide/svelte/icons/paperclip';
 	import { onMount } from 'svelte';
@@ -12,6 +13,8 @@
 	import { requireUser } from '$lib/auth-guard';
 	import Modal from '$lib/components/Modal.svelte';
 	import Pagination, { pageSlice } from '$lib/components/Pagination.svelte';
+	import { toast } from '$lib/stores/toast';
+	import { sendReport, downloadReport } from '$lib/make';
 
 	const BUCKET = 'scf_uploads';
 	const PAGE_SIZE = 20;
@@ -211,6 +214,51 @@
 		loadClaims(viewYear, viewMonth);
 	});
 
+	let reportBusy = $state('');
+
+	async function runReportAction(action, scope) {
+		if (reportBusy) return;
+		const userId = selectedUser;
+		if (scope === 'one' && !userId) {
+			toast.error('Select a user first.');
+			return;
+		}
+
+		const year = viewYear;
+		const month = viewMonth;
+		const period = `${monthNames[month]} ${year}`;
+		reportBusy = `${action}-${scope}`;
+
+		try {
+			if (action === 'download') {
+				toast.info('Preparing the Staff Claim Form(s) in Make. This can take a minute...');
+				const res = await downloadReport('claim-forms', { year, month, userId: scope === 'one' ? userId : null });
+				if (res.ok) toast.success(`Downloaded ${res.fileName}`);
+				else toast.error(res.error);
+				return;
+			}
+
+			const res = await sendReport({
+				report: 'claim',
+				year,
+				month,
+				userId: scope === 'one' ? userId : null,
+				recipient: action // 'staff' | 'me'
+			});
+			if (!res.ok) {
+				toast.error(res.error);
+				return;
+			}
+
+			const count = res.data?.sent ?? 0;
+			const target = action === 'me' ? 'your e-mail' : count === 1 ? "the user's e-mail" : "each user's e-mail";
+			toast.success(`${count} Staff Claim Form${count === 1 ? '' : 's'} for ${period} will be sent to ${target} shortly.`);
+			if (res.data?.skipped?.length) toast.info(`No e-mail address for: ${res.data.skipped.join(', ')}`);
+		} finally {
+			reportBusy = '';
+		}
+	}
+
 	function openDetails(claim) {
 		selectedClaim = claim;
 		showDetailsModal = true;
@@ -269,11 +317,60 @@
 	</div>
 
 	<div class="action-buttons">
-		<button class="action-button bg-teal" aria-label="Mails" title="Mails"><Mails /></button>
-		<button class="action-button bg-navy" aria-label="Files" title="Files"><Files /></button>
-		<button class="action-button bg-teal" aria-label="Mail" title="Mail"><Mail /></button>
-		<button class="action-button bg-navy" aria-label="File" title="File"><FileIcon /></button>
-		<button class="action-button bg-green" aria-label="Download" title="Download"><ArrowDownToLine /></button>
+		<button
+			class="action-button bg-teal"
+			aria-label="Mails"
+			title="Send Staff Claim Form to the Users' E-mails"
+			disabled={!!reportBusy}
+			onclick={() => runReportAction('staff', 'all')}
+		>
+			{#if reportBusy === 'staff-all'}<span class="busy-dot"></span>{:else}<Mails />{/if}
+		</button>
+		<button
+			class="action-button bg-navy"
+			aria-label="Files"
+			title="Send All Staff Claim Forms to My E-mail"
+			disabled={!!reportBusy}
+			onclick={() => runReportAction('me', 'all')}
+		>
+			{#if reportBusy === 'me-all'}<span class="busy-dot"></span>{:else}<Files />{/if}
+		</button>
+		<button
+			class="action-button bg-green"
+			aria-label="Download"
+			title="Download All Staff Claim Forms in Excel"
+			disabled={!!reportBusy}
+			onclick={() => runReportAction('download', 'all')}
+		>
+			{#if reportBusy === 'download-all'}<span class="busy-dot"></span>{:else}<Download />{/if}
+		</button>
+		<button
+			class="action-button bg-teal"
+			aria-label="Mail"
+			title="Send Staff Claim Form to This User's E-mail"
+			disabled={!!reportBusy || !selectedUser}
+			onclick={() => runReportAction('staff', 'one')}
+		>
+			{#if reportBusy === 'staff-one'}<span class="busy-dot"></span>{:else}<Mail />{/if}
+		</button>
+		<button
+			class="action-button bg-navy"
+			aria-label="File"
+			title="Send This User's Staff Claim Form to My E-mail"
+			disabled={!!reportBusy || !selectedUser}
+			onclick={() => runReportAction('me', 'one')}
+		>
+			{#if reportBusy === 'me-one'}<span class="busy-dot"></span>{:else}<FileIcon />{/if}
+		</button>
+		<button
+			class="action-button bg-green"
+			aria-label="Download"
+			title="Download This User's Staff Claim Form in Excel"
+			disabled={!!reportBusy || !selectedUser}
+			onclick={() => runReportAction('download', 'one')}
+		>
+			{#if reportBusy === 'download-one'}<span class="busy-dot"></span>{:else}<ArrowDownToLine />{/if}
+		</button>
 	</div>
 
 	{#if errorMsg}
@@ -573,6 +670,26 @@
 
 	.action-button:hover {
 		opacity: 0.8;
+	}
+
+	.action-button:disabled {
+		opacity: 0.45;
+		cursor: not-allowed;
+	}
+
+	.busy-dot {
+		width: 18px;
+		height: 18px;
+		border: 2px solid #ffffff;
+		border-top-color: transparent;
+		border-radius: 50%;
+		animation: busy-spin 0.8s linear infinite;
+	}
+
+	@keyframes busy-spin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	.bg-teal,

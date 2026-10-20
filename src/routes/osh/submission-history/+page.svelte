@@ -4,6 +4,9 @@
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
 	import { requireUser } from '$lib/auth-guard';
+	import Modal from '$lib/components/Modal.svelte';
+	import { toast } from '$lib/stores/toast';
+	import { sendToMake } from '$lib/make';
 
 	let submissions = $state([]);
 	let errorMsg = $state('');
@@ -123,6 +126,43 @@
 	const ppeRows = $derived.by(() => submissions.filter((s) => s.type === 'PPE'));
 	const hkpRows = $derived.by(() => submissions.filter((s) => s.type === 'HKP'));
 
+	const FORM_KEY = { TBM: 'tbm', PPE: 'ppe', HKP: 'hkp' };
+	let emailTarget = $state(null);
+	let emailAddress = $state('');
+	let emailSending = $state(false);
+
+	async function openEmail(type, row) {
+		emailTarget = { type, id: row.id, project_no: row.project_no };
+		if (!emailAddress) {
+			const auth = await requireUser();
+			emailAddress = auth?.user?.email ?? '';
+		}
+	}
+
+	function closeEmail() {
+		if (emailSending) return;
+		emailTarget = null;
+	}
+
+	async function sendEmailCopy(e) {
+		e.preventDefault();
+		if (!emailTarget || emailSending) return;
+
+		emailSending = true;
+		const res = await sendToMake(FORM_KEY[emailTarget.type], emailTarget.id, {
+			send: 'to',
+			emailTo: emailAddress.trim()
+		});
+		emailSending = false;
+
+		if (res.ok) {
+			toast.success(`The e-${emailTarget.type} PDF will be e-mailed to ${emailAddress.trim()} shortly.`);
+			emailTarget = null;
+		} else {
+			toast.error(res.error);
+		}
+	}
+
 	onMount(loadHistory);
 </script>
 
@@ -223,6 +263,9 @@
 											-
 										{/if}
 									</p>
+									<button type="button" class="button-email" onclick={() => openEmail('TBM', r)}>
+										E-mail PDF
+									</button>
 								</div>
 							{/each}
 						</div>
@@ -267,6 +310,9 @@
 											-
 										{/if}
 									</p>
+									<button type="button" class="button-email" onclick={() => openEmail('PPE', r)}>
+										E-mail PDF
+									</button>
 								</div>
 							{/each}
 						</div>
@@ -311,6 +357,9 @@
 											-
 										{/if}
 									</p>
+									<button type="button" class="button-email" onclick={() => openEmail('HKP', r)}>
+										E-mail PDF
+									</button>
 								</div>
 							{/each}
 						</div>
@@ -320,6 +369,27 @@
 		</div>
 	</div>
 </div>
+
+<Modal
+	open={!!emailTarget}
+	title="E-mail PDF Report"
+	subtitle={emailTarget ? `e-${emailTarget.type} · ${emailTarget.project_no ?? ''}` : ''}
+	busy={emailSending}
+	onclose={closeEmail}
+>
+	<form id="email-copy-form" class="email-form" onsubmit={sendEmailCopy}>
+		<label for="email-copy-to">Send the PDF to</label>
+		<input id="email-copy-to" type="email" bind:value={emailAddress} required />
+	</form>
+	{#snippet footer()}
+		<button type="button" class="button-secondary" onclick={closeEmail} disabled={emailSending}>
+			Cancel
+		</button>
+		<button type="submit" form="email-copy-form" class="button-primary" disabled={emailSending}>
+			{emailSending ? 'Sending...' : 'Send'}
+		</button>
+	{/snippet}
+</Modal>
 
 <style>
 	* {
@@ -416,6 +486,48 @@
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: 16px;
+	}
+
+	.button-email {
+		margin-top: 10px;
+		padding: 6px 14px;
+		background-color: #064c6dd7;
+		color: #ffffff;
+		font-weight: bold;
+	}
+
+	.button-primary {
+		background-color: #091747;
+		color: #ffffff;
+		font-weight: bold;
+		padding: 8px 18px;
+		border-radius: 6px;
+	}
+
+	.button-secondary {
+		background-color: #ffffff;
+		color: #091747;
+		border: 1px solid #091747;
+		padding: 8px 18px;
+		border-radius: 6px;
+		font-weight: bold;
+	}
+
+	.button-primary:disabled,
+	.button-secondary:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.email-form {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.email-form input {
+		padding: 8px;
+		border: 1px solid #8a8fa3;
 	}
 
 	.history-card {

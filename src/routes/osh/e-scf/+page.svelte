@@ -12,6 +12,7 @@
 	import { supabase } from '$lib/supabase';
 	import { requireUser } from '$lib/auth-guard';
 	import { toast } from '$lib/stores/toast';
+	import { sendToMake } from '$lib/make';
 	import Modal from '$lib/components/Modal.svelte';
 
 	const BUCKET = 'scf_uploads';
@@ -359,6 +360,7 @@
 
 		saving = true;
 		let successMessage = '';
+		let savedId = null;
 
 		try {
 			const auth = await requireUser();
@@ -401,6 +403,7 @@
 
 				if (error) throw error;
 				claims = [...claims, data];
+				savedId = data.id;
 				successMessage = `Claim for ${formatShortDate(fields.claim_date)} created successfully.`;
 			} else {
 				const { data, error } = await supabase
@@ -417,7 +420,15 @@
 					);
 				}
 				claims = claims.map((c) => (c.id === editingClaim.id ? data[0] : c));
+				savedId = data[0].id;
 				successMessage = `Claim for ${formatShortDate(fields.claim_date)} updated successfully.`;
+			}
+
+			if (fields.maps_screenshot_path && savedId) {
+				const sent = await sendToMake('scf', savedId);
+				if (!sent.ok) {
+					toast.error(`The claim was saved, but the attachment was not sent to Make: ${sent.error}`);
+				}
 			}
 
 			saving = false;

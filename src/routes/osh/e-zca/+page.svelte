@@ -12,6 +12,7 @@
 	import { requireUser } from '$lib/auth-guard';
 	import Modal from '$lib/components/Modal.svelte';
 	import { toast } from '$lib/stores/toast';
+	import { getSubmitLocation, sendToMake } from '$lib/make';
 
 	let showProjectModal = false;
 	let projects = [];
@@ -373,6 +374,8 @@
 		saving = true;
 
 		try {
+			const locationPromise = getSubmitLocation();
+
 			const auth = await requireUser();
 			if (!auth) return;
 
@@ -401,15 +404,23 @@
 				acknowledged,
 				created_by: user.id,
 				created_by_name: submitterName,
-				overall_total: calculateOverallTotal,
-				overall_max: calculateOverallMax,
-				overall_percent: calculateOverallPercentage
+				overall_total: calculateOverallTotal(subsections),
+				overall_max: calculateOverallMax(subsections),
+				overall_percent: calculateOverallPercentage(subsections)
 			};
 
-			const { error: insError } = await supabase.from('zca_submissions').insert(payload);
+			const { data: saved, error: insError } = await supabase
+				.from('zca_submissions')
+				.insert(payload)
+				.select('id')
+				.single();
 			if (insError) throw insError;
 
-			toast.success('Zero Compromise Audit Report (e-ZCA) submitted successfully.');
+			const sent = await sendToMake('zca', saved.id, {
+				submitLocation: await locationPromise
+			});
+			if (sent.ok) toast.success('Zero Compromise Audit Report (e-ZCA) submitted successfully.');
+			else toast.error(`e-ZCA was saved, but it could not be sent to Make: ${sent.error}`);
 			goto('/');
 		} catch (error) {
 			errorMsg = error?.message ?? String(error);

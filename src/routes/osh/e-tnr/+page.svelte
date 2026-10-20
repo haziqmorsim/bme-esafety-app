@@ -6,6 +6,7 @@
 	import { requireUser } from '$lib/auth-guard';
 	import Modal from '$lib/components/Modal.svelte';
 	import { toast } from '$lib/stores/toast';
+	import { getSubmitLocation, sendToMake } from '$lib/make';
 
 	let showProjectModal = false;
 	let projects = [];
@@ -72,6 +73,8 @@
 		saving = true;
 
 		try {
+			const locationPromise = getSubmitLocation();
+
 			const auth = await requireUser();
 			if (!auth) return;
 
@@ -112,13 +115,17 @@
 				created_by_name: submitterName
 			};
 
-			const { error: insErr } = await withTimeout(
-				supabase.from('tnr_submissions').insert(payload),
+			const { data: saved, error: insErr } = await withTimeout(
+				supabase.from('tnr_submissions').insert(payload).select('id').single(),
 				15000
 			);
 			if (insErr) throw insErr;
 
-			toast.success('Training Record (e-TNR) submitted successfully.');
+			const sent = await sendToMake('tnr', saved.id, {
+				submitLocation: await locationPromise
+			});
+			if (sent.ok) toast.success('Training Record (e-TNR) submitted successfully.');
+			else toast.error(`e-TNR was saved, but it could not be sent to Make: ${sent.error}`);
 			goto('/');
 		} catch (error) {
 			errorMsg = error?.message ?? String(error);
