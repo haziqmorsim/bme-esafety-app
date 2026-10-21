@@ -1,10 +1,24 @@
 <script>
-	export let active = false;
+	export let active = true;
+	export let inline = false;
+	export let size = 120;
+	export let label = 'Loading';
+
+	$: dotSize = Math.max(3, Math.round(size / 13.75));
+	$: showLogo = !inline || size >= 90;
 </script>
 
 {#if active}
-	<div class="spinner-overlay" role="status" aria-live="polite">
-		<div class="spinner">
+	<div
+		class={inline ? 'spinner-inline' : 'spinner-overlay'}
+		role="status"
+		aria-live="polite"
+		aria-label={label}
+	>
+		<div
+			class="spinner"
+			style={inline ? `--spinner-size:${size}px; --dot-size:${dotSize}px;` : undefined}
+		>
 			<div class="dots" aria-hidden="true">
 				<span class="dot" style="--angle:-150deg; --i:0"></span>
 				<span class="dot" style="--angle:-120deg; --i:1"></span>
@@ -19,7 +33,9 @@
 				<span class="dot" style="--angle:150deg; --i:10"></span>
 				<span class="dot" style="--angle:180deg; --i:11"></span>
 			</div>
-			<img src="/images/bme_logo.jpg" alt="BME" class="spinner-logo" />
+			{#if showLogo}
+				<img src="/images/bme-logo.png" alt="" class="spinner-logo" />
+			{/if}
 		</div>
 	</div>
 {/if}
@@ -33,6 +49,14 @@
 		justify-content: center;
 		background: #ffffff;
 		z-index: 9999;
+	}
+
+	.spinner-inline {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 16px 0;
+		isolation: isolate;
 	}
 
 	.spinner {
@@ -61,7 +85,7 @@
 		position: absolute;
 		left: 50%;
 		top: 50%;
-		--radius: calc(var(--spinner-size) / 2 - 18px);
+		--radius: calc(var(--spinner-size) / 2 - var(--dot-size) * 1.125);
 		transform: rotate(var(--angle)) translateY(calc(-1 * var(--radius))) translateX(-50%)
 			scale(0.35);
 		opacity: 0.25;

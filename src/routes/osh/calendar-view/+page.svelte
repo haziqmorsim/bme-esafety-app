@@ -1,5 +1,6 @@
 <script>
 	import ChevronsLeft from '@lucide/svelte/icons/chevrons-left';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import ChevronsRight from '@lucide/svelte/icons/chevrons-right';
 	import Mails from '@lucide/svelte/icons/mails';
 	import Files from '@lucide/svelte/icons/files';
@@ -69,6 +70,7 @@
 	let monthLoadToken = 0;
 
 	let users = $state([]);
+	let usersLoading = $state(false);
 	let selectedUserId = $state('');
 	let usersError = $state('');
 
@@ -360,19 +362,25 @@
 	async function loadUsers() {
 		if (!isAdmin) return;
 		usersError = '';
-		const { data, error } = await supabase
-			.from('profiles')
-			.select('id, first_name, last_name, email')
-			.order('first_name');
+		usersLoading = true;
 
-		if (error) {
-			usersError = error.message;
-			users = [];
-			return;
+		try {
+			const { data, error } = await supabase
+				.from('profiles')
+				.select('id, first_name, last_name, email')
+				.order('first_name');
+
+			if (error) {
+				usersError = error.message;
+				users = [];
+				return;
+			}
+
+			users = data ?? [];
+			if (!selectedUserId) selectedUserId = currentUserId;
+		} finally {
+			usersLoading = false;
 		}
-
-		users = data ?? [];
-		if (!selectedUserId) selectedUserId = currentUserId;
 	}
 
 	onMount(async () => {
@@ -671,14 +679,19 @@
 		<div class="user-filter">
 			<div>
 				<p class="filter-label">User</p>
-				<select bind:value={selectedUserId} class="user-select">
-					{#if users.length === 0}
-						<option value={selectedUserId}>Loading users...</option>
+				<div class="user-select-row">
+					<select bind:value={selectedUserId} class="user-select">
+						{#if users.length === 0}
+							<option value={selectedUserId}>{usersLoading ? '' : 'No users found'}</option>
+						{/if}
+						{#each users as item (item.id)}
+							<option value={item.id}>{getUserName(item)}</option>
+						{/each}
+					</select>
+					{#if usersLoading}
+						<Spinner inline size={140} label="Loading users" />
 					{/if}
-					{#each users as item (item.id)}
-						<option value={item.id}>{getUserName(item)}</option>
-					{/each}
-				</select>
+				</div>
 			</div>
 		</div>
 	{/if}
@@ -831,7 +844,7 @@
 			<h2>Holidays ({viewYear})</h2>
 			{#if isAdmin}
 				<button class="button-create" onclick={openCreateHoliday}>
-					<Plus size={20} /><span>Create</span>
+					<Plus size={20} /><span>New Holiday</span>
 				</button>
 			{/if}
 		</div>
@@ -876,9 +889,11 @@
 					</div>
 				</div>
 			{:else}
-				<p class="holiday-empty">
-					{holidaysLoading ? 'Loading holidays...' : `No public holidays recorded for ${viewYear}.`}
-				</p>
+				{#if holidaysLoading}
+					<Spinner inline size={140} label="Loading holidays" />
+				{:else}
+					<p class="holiday-empty">No public holidays recorded for {viewYear}.</p>
+				{/if}
 			{/each}
 		</div>
 
@@ -900,7 +915,7 @@
 		{#if submissionsError}
 			<p class="status-error">{submissionsError}</p>
 		{:else if submissionsLoading}
-			<p>Loading...</p>
+			<Spinner inline size={140} label="Loading submissions" />
 		{:else}
 			<div class="submissions-info">
 				<p>Tool Box Meeting (e-TBM):</p>
@@ -1047,7 +1062,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;
@@ -1073,10 +1088,10 @@
 
 	.button-inverted {
 		background-color: #ffffff;
-		color: #064c6dd7;
+		color: #093d85;
 		font-weight: bold;
 		padding: 8px 18px;
-		border: 2px solid #064c6dd7;
+		border: 2px solid #093d85;
 	}
 
 	.button-inverted:hover {
@@ -1142,7 +1157,7 @@
 		bottom: 6px;
 		right: 8px;
 		font-weight: bold;
-		color: #064c6dd7;
+		color: #093d85;
 	}
 
 	.status-icon {
@@ -1222,7 +1237,7 @@
 
 	.nav {
 		background: none;
-		color: #064c6dd7;
+		color: #093d85;
 		border: none;
 		font-size: 18px;
 		cursor: pointer;
@@ -1315,6 +1330,16 @@
 		margin: 0 0 6px 0;
 	}
 
+	.user-select-row {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.user-select-row :global(.spinner-inline) {
+		padding: 0;
+	}
+
 	.user-select {
 		height: 40px;
 		width: 350px;
@@ -1374,7 +1399,7 @@
 	}
 
 	.bg-teal {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 	}
 
 	.bg-navy {
@@ -1411,7 +1436,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 8px;
-		background-color: #091747;
+		background-color: #093d85;
 		font-weight: bold;
 		padding: 8px 16px;
 		color: #ffffff;

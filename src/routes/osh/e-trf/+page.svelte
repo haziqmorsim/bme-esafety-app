@@ -1,5 +1,6 @@
 <script>
 	import FileText from '@lucide/svelte/icons/file-text';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import Search from '@lucide/svelte/icons/search';
 	import { supabase } from '$lib/supabase';
 	import { goto } from '$app/navigation';
@@ -48,6 +49,21 @@
 	let errorMsg = '';
 	let saving = false;
 
+	function withTimeout(promise, ms = 20000) {
+		return Promise.race([
+			promise,
+			new Promise((_, reject) =>
+				setTimeout(() => reject(new Error('The request timed out. Please try again.')), ms)
+			)
+		]);
+	}
+
+	function toMalaysiaTimestamp(value) {
+		if (!value) return null;
+		const withSeconds = value.length === 16 ? `${value}:00` : value;
+		return `${withSeconds}+08:00`;
+	}
+
 	async function handleSubmit(e) {
 		e.preventDefault();
 		errorMsg = '';
@@ -88,7 +104,7 @@
 				fare_to_be_borne_by,
 				travel_origin,
 				travel_destination,
-				travel_date_time,
+				travel_date_time: toMalaysiaTimestamp(travel_date_time),
 				travel_purpose,
 				project_no,
 				travel_airline,
@@ -106,7 +122,7 @@
 			);
 			if (insErr) throw insErr;
 
-			toast.success('Travel Requisition Form Report (e-TRF) submitted successfully.');
+			toast.success('e-TRF submitted successfully.');
 			goto('/');
 		} catch (error) {
 			errorMsg = error?.message ?? String(error);
@@ -255,14 +271,20 @@
 		</div>
 		<div class="forms-p">
 			<label for="travel-date-time" class="forms-label">Departure Date & Time:</label>
-			<input type="datetime-local" class="forms-input" bind:value={travel_date_time} required />
+			<input
+				type="datetime-local"
+				id="travel-date-time"
+				class="forms-input"
+				bind:value={travel_date_time}
+				required
+			/>
 		</div>
 		<div class="forms-p">
 			<label for="travel-purpose" class="forms-label">Purpose of Travel:</label>
 			<input type="text" class="forms-input" bind:value={travel_purpose} required />
 		</div>
 		<div class="forms-p">
-			<label for="project-id" class="forms-label">Project ID:</label>
+			<label for="project-id" class="forms-label">Project No.:</label>
 			<input type="text" class="forms-input" bind:value={project_no} disabled />
 			<button type="button" class="button-primary" onclick={openProjectModal} id="button-search"
 				><Search size={16} />Search Project</button
@@ -303,7 +325,7 @@
 			<div class="project-search">
 				<input
 					type="text"
-					placeholder="Project Name/Project ID"
+					placeholder="Project Name/Project No."
 					class="project-search-input"
 					bind:value={projectSearch}
 					oninput={filterProjects}
@@ -315,10 +337,12 @@
 			<div class="project-list">
 				<div class="project-list-header">
 					<span>Project Name</span>
-					<span>Project ID</span>
+					<span>Project No.</span>
 				</div>
 				{#if projectLoading}
-					<p class="project-status">Loading projects...</p>
+					<div class="project-status">
+						<Spinner inline size={140} label="Loading projects" />
+					</div>
 				{:else if projectError}
 					<p class="project-status error">{projectError}</p>
 				{:else if filteredProjects.length === 0}
@@ -397,7 +421,7 @@
 				<input type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} />
 			</div>
 			<div class="declaration">
-				<p>The declaration for the Staff Claim Form Report as below:</p>
+				<p>The declaration for the Travel Requisition Form as below:</p>
 				<p>
 					I hereby acknowledge that I have conducted a thorough check and confirm the following:
 				</p>
@@ -434,7 +458,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;

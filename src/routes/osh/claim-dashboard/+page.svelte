@@ -1,5 +1,6 @@
 <script>
 	import ChevronsLeft from '@lucide/svelte/icons/chevrons-left';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import ChevronsRight from '@lucide/svelte/icons/chevrons-right';
 	import Mails from '@lucide/svelte/icons/mails';
 	import Files from '@lucide/svelte/icons/files';
@@ -410,7 +411,11 @@
 				{:else}
 					<tr>
 						<td colspan="6" class="empty">
-							{loading ? 'Loading claims...' : 'No claims submitted for this month.'}
+							{#if loading}
+								<Spinner inline size={140} label="Loading claims" />
+							{:else}
+								No claims submitted for this month.
+							{/if}
 						</td>
 					</tr>
 				{/each}
@@ -518,7 +523,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;
@@ -528,7 +533,7 @@
 	}
 
 	button:hover {
-		background-color: #064c6da4;
+		background-color: #093d85a4;
 	}
 
 	button:disabled {
@@ -622,7 +627,7 @@
 
 	.nav {
 		background: none;
-		color: #064c6dd7;
+		color: #093d85;
 		padding: 6px 10px;
 		display: flex;
 		align-items: center;
@@ -694,7 +699,7 @@
 
 	.bg-teal,
 	.bg-teal:hover {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 	}
 
 	.bg-navy,
@@ -787,7 +792,7 @@
 
 	.link-button {
 		background: none;
-		color: #064c6dd7;
+		color: #093d85;
 		padding: 0;
 		display: inline-flex;
 		align-items: center;

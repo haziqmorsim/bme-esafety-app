@@ -300,7 +300,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;
@@ -310,7 +310,7 @@
 	}
 
 	button:hover {
-		background-color: #064c6da4;
+		background-color: #093d85a4;
 	}
 
 	button span {
@@ -319,11 +319,11 @@
 
 	.button-inverted {
 		background-color: #ffffff;
-		color: #064c6dd7;
+		color: #093d85;
 		font-size: small;
 		margin-top: 5px;
 		padding: 6px 14px;
-		border: 2px solid #064c6dd7;
+		border: 2px solid #093d85;
 		border-radius: 4px;
 		cursor: pointer;
 	}

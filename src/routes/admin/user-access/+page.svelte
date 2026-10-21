@@ -227,7 +227,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;
@@ -237,7 +237,7 @@
 	}
 
 	button:hover {
-		background-color: #064c6da4;
+		background-color: #093d85a4;
 	}
 
 	.button-assign {
@@ -247,12 +247,12 @@
 
 	.button-inverted {
 		background-color: #ffffff;
-		color: #064c6dd7;
+		color: #093d85;
 		width: 250px;
 		height: 40px;
 		font-size: small;
 		padding: 6px 14px;
-		border: 2px solid #064c6dd7;
+		border: 2px solid #093d85;
 		border-radius: 4px;
 		cursor: pointer;
 	}

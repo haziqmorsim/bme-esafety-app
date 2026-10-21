@@ -1,5 +1,6 @@
 <script>
 	import ChevronsLeft from '@lucide/svelte/icons/chevrons-left';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import ChevronsRight from '@lucide/svelte/icons/chevrons-right';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import CircleAlert from '@lucide/svelte/icons/circle-alert';
@@ -826,7 +827,7 @@
 	<div class="project-search">
 		<input
 			type="text"
-			placeholder="Project Name/Project ID"
+			placeholder="Project Name/Project No."
 			class="project-search-input"
 			bind:value={projectSearch}
 		/>
@@ -834,10 +835,12 @@
 	<div class="project-list">
 		<div class="project-list-header">
 			<span>Project Name</span>
-			<span>Project ID</span>
+			<span>Project No.</span>
 		</div>
 		{#if projectLoading}
-			<p class="project-status">Loading projects...</p>
+			<div class="project-status">
+				<Spinner inline size={140} label="Loading projects" />
+			</div>
 		{:else if projectError}
 			<p class="project-status error">{projectError}</p>
 		{:else if filteredProjects.length === 0}
@@ -895,7 +898,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;
@@ -905,7 +908,7 @@
 	}
 
 	button:hover {
-		background-color: #064c6da4;
+		background-color: #093d85a4;
 	}
 
 	button:disabled {
@@ -925,10 +928,10 @@
 
 	.button-inverted {
 		background-color: #ffffff;
-		color: #064c6dd7;
+		color: #093d85;
 		font-weight: bold;
 		padding: 8px 18px;
-		border: 2px solid #064c6dd7;
+		border: 2px solid #093d85;
 		border-radius: 4px;
 	}
 
@@ -985,11 +988,11 @@
 		gap: 6px;
 		margin: 0 0 4px;
 		font-weight: bold;
-		color: #064c6dd7;
+		color: #093d85;
 	}
 
 	.note-title span {
-		color: #064c6dd7;
+		color: #093d85;
 		font-weight: bold;
 	}
 
@@ -1022,7 +1025,7 @@
 
 	.nav {
 		background: none;
-		color: #064c6dd7;
+		color: #093d85;
 		border: none;
 		padding: 6px 12px;
 		display: flex;
@@ -1067,7 +1070,7 @@
 
 	.day.today .day-label,
 	.day.today .day-icon {
-		color: #064c6dd7;
+		color: #093d85;
 	}
 
 	.button-add {
@@ -1075,8 +1078,8 @@
 		height: 40px;
 		padding: 0;
 		border-radius: 50%;
-		background-color: #064c6d1f;
-		color: #064c6dd7;
+		background-color: #093d851f;
+		color: #093d85;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -1084,7 +1087,7 @@
 	}
 
 	.button-add:hover {
-		background-color: #064c6d3d;
+		background-color: #093d853d;
 	}
 
 	.claim-card {
@@ -1137,7 +1140,7 @@
 	}
 
 	.icon-edit {
-		color: #064c6dd7;
+		color: #093d85;
 	}
 
 	.icon-delete {
@@ -1170,7 +1173,7 @@
 
 	.link-button {
 		background: none;
-		color: #064c6dd7;
+		color: #093d85;
 		padding: 0;
 		display: inline-flex;
 		align-items: center;

@@ -1,6 +1,7 @@
 <script>
-	import ListPlus from '@lucide/svelte/icons/list-plus';
-	import CloudDownload from '@lucide/svelte/icons/cloud-download';
+	import Plus from '@lucide/svelte/icons/plus';
+	import Spinner from '$lib/components/Spinner.svelte';
+	import ArrowDownToLine from '@lucide/svelte/icons/arrow-down-to-line';
 	import Search from '@lucide/svelte/icons/search';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
@@ -109,7 +110,7 @@
 			.select(
 				'id, project_name, project_id, status, region, location, start_date, end_date, pic_name, pic_position, pic_start_date, pic_end_date, created_at, created_by'
 			)
-			.order('created_at', { ascending: false });
+			.order('project_name', { ascending: true });
 
 		loading = false;
 
@@ -288,13 +289,13 @@
 		<label for="data-option">Data Option:</label>
 		<select id="data-option" bind:value={selectedDataOption} class="option-select">
 			<option value="All">Choose a Data Option</option>
-			<option value="project-id">Project ID</option>
+			<option value="project-id">Project No.</option>
 			<option value="project-name">Project Name</option>
 			<option value="region">Region</option>
 		</select>
 	</div>
 	<div>
-		<label for="project-search">Project ID/Project Name/Region</label>
+		<label for="project-search">Project No./Project Name/Region</label>
 		<input
 			id="project-search"
 			type="text"
@@ -311,13 +312,13 @@
 
 <div class="button-modify">
 	<button class="button-assign" onclick={openCreateModal}>
-		<ListPlus /><span>New Project</span>
+		<Plus size={20} /><span>New Project</span>
 	</button>
-	<button class="button-download"><CloudDownload /><span>Excel</span></button>
+	<button class="button-download"><ArrowDownToLine size={20} /><span>Excel</span></button>
 </div>
 
 {#if loading}
-	<p class="status">Loading projects...</p>
+	<Spinner inline size={140} label="Loading projects" />
 {:else if filteredProjects.length === 0}
 	<p class="status">
 		{projects.length === 0 ? 'No projects have been added yet.' : 'No projects match the filters.'}
@@ -329,7 +330,7 @@
 		<div class="project-card">
 			<div class="project-info">
 				<h3>{p.project_name ?? '-'}</h3>
-				<p><b>Project ID:</b> {p.project_id ?? '-'}</p>
+				<p><b>Project No.:</b> {p.project_id ?? '-'}</p>
 				<p><b>Status:</b> {p.status ?? '-'}</p>
 				<p><b>Region:</b> {p.region ?? '-'}</p>
 				<p><b>Location:</b> {p.location ?? '-'}</p>
@@ -366,7 +367,7 @@
 				<input type="text" bind:value={form.project_name} />
 			</label>
 			<label>
-				Project ID:
+				Project No.:
 				<input type="text" bind:value={form.project_id} />
 			</label>
 			<label>
@@ -439,7 +440,7 @@
 	{#if deletingProject}
 		<div class="delete-summary">
 			<p><b>Project Name:</b> {deletingProject.project_name ?? '-'}</p>
-			<p><b>Project ID:</b> {deletingProject.project_id ?? '-'}</p>
+			<p><b>Project No.:</b> {deletingProject.project_id ?? '-'}</p>
 			<p><b>Status:</b> {deletingProject.status ?? '-'}</p>
 			<p><b>Region:</b> {deletingProject.region ?? '-'}</p>
 		</div>
@@ -467,7 +468,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;
@@ -477,7 +478,7 @@
 	}
 
 	button:hover:not(:disabled) {
-		background-color: #064c6da4;
+		background-color: #093d85a4;
 	}
 
 	button:disabled {
@@ -491,7 +492,6 @@
 
 	.button-assign,
 	.button-download {
-		width: 150px;
 		height: 40px;
 		display: inline-flex;
 		align-items: center;
@@ -499,7 +499,12 @@
 		gap: 8px;
 	}
 
+	.button-assign {
+		width: 150px;
+	}
+
 	.button-download {
+		width: 100px;
 		background-color: #31b647;
 	}
 
@@ -536,10 +541,10 @@
 
 	.button-inverted {
 		background-color: #ffffff;
-		color: #064c6dd7;
+		color: #093d85;
 		font-weight: bold;
 		padding: 8px 18px;
-		border: 2px solid #064c6dd7;
+		border: 2px solid #093d85;
 	}
 
 	.button-inverted:hover:not(:disabled) {

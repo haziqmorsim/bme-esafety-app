@@ -1,5 +1,6 @@
 <script>
 	import { untrack } from 'svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import { supabase } from '$lib/supabase';
 	import { requireUser } from '$lib/auth-guard';
 	import Pagination, { pageSlice } from '$lib/components/Pagination.svelte';
@@ -93,7 +94,7 @@
 					.lte('created_at', endISO)
 			]);
 
-			if (token !== loadToken) return; // a newer date was picked meanwhile
+			if (token !== loadToken) return;
 			if (tbmRes.error) throw tbmRes.error;
 			if (ppeRes.error) throw ppeRes.error;
 			if (hkpRes.error) throw hkpRes.error;
@@ -183,7 +184,11 @@
 				{:else}
 					<tr>
 						<td colspan="6" class="empty">
-							{loading ? 'Loading attendance...' : 'No Site Safety Supervisors found.'}
+							{#if loading}
+								<Spinner inline size={140} label="Loading attendance" />
+							{:else}
+								No Site Safety Supervisors found.
+							{/if}
 						</td>
 					</tr>
 				{/each}

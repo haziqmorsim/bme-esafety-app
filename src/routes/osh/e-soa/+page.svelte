@@ -1,5 +1,6 @@
 <script>
 	import Search from '@lucide/svelte/icons/search';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import FileText from '@lucide/svelte/icons/file-text';
 	import { supabase } from '$lib/supabase';
 	import { goto } from '$app/navigation';
@@ -109,6 +110,15 @@
 	let errorMsg = '';
 	let saving = false;
 
+	function withTimeout(promise, ms = 20000) {
+		return Promise.race([
+			promise,
+			new Promise((_, reject) =>
+				setTimeout(() => reject(new Error('The request timed out. Please try again.')), ms)
+			)
+		]);
+	}
+
 	const processedSubsections = subsections.map((s) => {
 		const items = [];
 		for (let i = 0; i < s.items.length; i++) {
@@ -183,7 +193,7 @@
 			);
 			if (insErr) throw insErr;
 
-			toast.success('Safety Officer Audit Report (e-SOA) submitted successfully.');
+			toast.success('e-SOA submitted successfully.');
 			goto('/');
 		} catch (error) {
 			errorMsg = error?.message ?? String(error);
@@ -281,7 +291,7 @@
 			<div class="project-search">
 				<input
 					type="text"
-					placeholder="Project Name/Project ID"
+					placeholder="Project Name/Project No."
 					class="project-search-input"
 					bind:value={projectSearch}
 					oninput={filterProjects}
@@ -293,10 +303,12 @@
 			<div class="project-list">
 				<div class="project-list-header">
 					<span>Project Name</span>
-					<span>Project ID</span>
+					<span>Project No.</span>
 				</div>
 				{#if projectLoading}
-					<p class="project-status">Loading projects...</p>
+					<div class="project-status">
+						<Spinner inline size={140} label="Loading projects" />
+					</div>
 				{:else if projectError}
 					<p class="project-status error">{projectError}</p>
 				{:else if filteredProjects.length === 0}
@@ -492,7 +504,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;

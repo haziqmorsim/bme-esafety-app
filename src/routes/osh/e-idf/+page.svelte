@@ -1,5 +1,6 @@
 <script>
     import Search from '@lucide/svelte/icons/search';
+    import Spinner from '$lib/components/Spinner.svelte';
     import FileText from '@lucide/svelte/icons/file-text';
     import { supabase } from '$lib/supabase';
     import { goto } from '$app/navigation';
@@ -121,7 +122,7 @@
             const sent = await sendToMake('idf', saved.id, {
                 submitLocation: await locationPromise
             });
-            if (sent.ok) toast.success('Induction Form (e-IDF) submitted successfully.');
+            if (sent.ok) toast.success('e-IDF submitted successfully.');
             else toast.error(`e-IDF was saved, but it could not be sent to Make: ${sent.error}`);
 			goto('/');
         } catch (error) {
@@ -202,7 +203,7 @@
         </div>
         <Modal open={showProjectModal} title="Select a Project" onclose={closeProjectModal}>
             <div class="project-search">
-                <input type="text" class="project-search-input" placeholder="Project Name/Project ID" bind:value={projectSearch} oninput={filterProjects} />
+                <input type="text" class="project-search-input" placeholder="Project Name/Project No." bind:value={projectSearch} oninput={filterProjects} />
                 <button type="button" class="project-search-button" onclick={filterProjects}>
                     <Search />
                 </button>
@@ -210,10 +211,12 @@
             <div class="project-list">
                 <div class="project-list-header">
                     <span>Project Name</span>
-                    <span>Project ID</span>
+                    <span>Project No.</span>
                 </div>
                 {#if projectLoading}
-                    <p class="project-status">Loading projects...</p>
+                    <div class="project-status">
+                        <Spinner inline size={140} label="Loading projects" />
+                    </div>
                 {:else if projectError}
                     <p class="project-status error">{projectError}</p>
                 {:else if filteredProjects.length === 0}
@@ -272,7 +275,7 @@
                 <input type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} required />
             </div>
             <div class="declaration">
-                <p>The declaration for the Inspection Record as below:</p>
+                <p>The declaration for the Induction Form as below:</p>
 				<p>
 					I hereby acknowledge that I have conducted a thorough check and confirm the following:
 				</p>
@@ -303,7 +306,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;

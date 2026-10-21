@@ -1,8 +1,8 @@
 <script>
-	import Search from '@lucide/svelte/icons/search';
-	import CloudDownload from '@lucide/svelte/icons/cloud-download';
+	import ArrowDownToLine from '@lucide/svelte/icons/arrow-down-to-line';
 	import { supabase } from '$lib/supabase';
 	import Modal from '$lib/components/Modal.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
 
 	let formType = '';
 	let fromDate = '';
@@ -11,7 +11,7 @@
 
 	let loading = false;
 	let errorMsg = '';
-	let rows = [];
+	let allRows = [];
 
 	let showDetailsModal = false;
 	let modalLoading = false;
@@ -19,52 +19,353 @@
 	let details = null;
 	let activeRow = null;
 
-	const tableMap = {
-		eTBM: 'tbm_submissions',
-		ePPE: 'ppe_submissions',
-		eHKP: 'hkp_submissions',
-		eZCA: 'zca_submissions'
+	let loadToken = 0;
+
+	const FORMS = {
+		eTBM: {
+			label: 'e-TBM',
+			table: 'tbm_submissions',
+			bucket: 'tbm_uploads',
+			projectNo: true,
+			projectName: true,
+			submittedBy: true,
+			summary: [{ label: 'Meeting Date', key: 'meeting_date', type: 'date' }],
+			files: [
+				{ label: 'TBM Form', key: 'tbm_form_path' },
+				{ label: 'TBM Photo', key: 'tbm_photo_path' },
+				{ label: 'PTW Form', key: 'ptw_form_path' }
+			],
+			details: [
+				{ label: 'Meeting Topics', key: 'meeting_topics', type: 'array' },
+				{ label: 'Competency', key: 'competency', type: 'competency' },
+				{ label: 'Attendance', key: 'attendance', type: 'attendance' }
+			]
+		},
+		ePPE: {
+			label: 'e-PPE',
+			table: 'ppe_submissions',
+			bucket: 'ppe_uploads',
+			projectNo: true,
+			projectName: true,
+			submittedBy: true,
+			summary: [{ label: 'Activity Date', key: 'activity_date', type: 'date' }],
+			files: [{ label: 'PPE Photo', key: 'ppe_photo_path' }],
+			details: [{ label: 'Attendance', key: 'attendance', type: 'attendance' }]
+		},
+		eHKP: {
+			label: 'e-HKP',
+			table: 'hkp_submissions',
+			bucket: 'hkp_uploads',
+			projectNo: true,
+			projectName: true,
+			submittedBy: true,
+			summary: [{ label: 'Activity Date', key: 'activity_date', type: 'date' }],
+			files: [{ label: 'HKP Photo', key: 'hkp_photo_path' }],
+			details: [{ label: 'Report Day', key: 'report_day', type: 'reportday' }]
+		},
+		eZCA: {
+			label: 'e-ZCA',
+			table: 'zca_submissions',
+			bucket: 'zca_uploads',
+			projectNo: true,
+			projectName: true,
+			submittedBy: true,
+			summary: [{ label: 'Audit Date', key: 'audit_date', type: 'date' }],
+			files: [],
+			details: [{ label: 'Subsections', key: 'subsections', type: 'subsections' }]
+		},
+		eCAR: {
+			label: 'e-CAR',
+			table: 'car_submissions',
+			projectNo: true,
+			projectName: true,
+			submittedBy: true,
+			summary: [
+				{ label: 'Date', key: 'date', type: 'date' },
+				{ label: 'Form No.', key: 'form_no' },
+				{ label: 'Assigned To', key: 'assigned_to' }
+			],
+			files: [],
+			details: [
+				{ label: 'Region', key: 'region' },
+				{ label: 'Location', key: 'location' },
+				{ label: 'Weather', key: 'weather' },
+				{ label: 'Form Description', key: 'form_description' },
+				{ label: 'Action Taken', key: 'action_taken' },
+				{ label: 'Remarks', key: 'remarks' }
+			],
+			search: ['form_no', 'assigned_to']
+		},
+		eCTR: {
+			label: 'e-CTR',
+			table: 'ctr_submissions',
+			projectNo: true,
+			projectName: true,
+			submittedBy: true,
+			summary: [
+				{ label: 'Kickoff Date', key: 'kickoff_date', type: 'date' },
+				{ label: 'Supervisor', key: 'supervisor_name' },
+				{ label: 'Contractor', key: 'contractor_name' }
+			],
+			files: [],
+			details: [
+				{ label: 'Region', key: 'region' },
+				{ label: 'Location', key: 'location' },
+				{ label: 'Weather', key: 'weather' },
+				{ label: 'Start Date', key: 'start_date', type: 'date' },
+				{ label: 'End Date', key: 'end_date', type: 'date' },
+				{ label: 'Staff Name', key: 'staff_name' },
+				{ label: 'Workday Date', key: 'workday_date', type: 'date' },
+				{ label: 'Workday Day', key: 'workday_day' },
+				{ label: 'Hours Worked', key: 'hours_worked' },
+				{ label: 'Actual Hours Worked', key: 'actual_hours_worked' },
+				{ label: 'Travel Date', key: 'travel_date', type: 'date' },
+				{ label: 'Travel Origin', key: 'travel_origin' },
+				{ label: 'Travel Destination', key: 'travel_destination' },
+				{ label: 'Travel Allowance', key: 'travel_allowance', type: 'money' },
+				{ label: 'Contractor Company', key: 'contractor_company' },
+				{ label: 'Contractor Phone No.', key: 'contractor_phone_no' },
+				{ label: 'Contractor E-mail', key: 'contractor_email' },
+				{ label: 'Contractor Certification', key: 'contractor_certification', type: 'date' },
+				{ label: 'Remarks', key: 'remarks' }
+			],
+			search: ['contractor_name', 'supervisor_name']
+		},
+		eHWA: {
+			label: 'e-HWA',
+			table: 'hwa_submissions',
+			titleKey: 'contractor_name',
+			submittedBy: true,
+			summary: [
+				{ label: 'Permit Date', key: 'permit_date', type: 'date' },
+				{ label: 'Location Allowed', key: 'location_allowed' },
+				{ label: 'Contractor', key: 'contractor_name' },
+				{ label: 'Company', key: 'company_name' }
+			],
+			files: [],
+			details: [
+				{ label: 'Contractor Employees', key: 'contractor_employees' },
+				{ label: 'Emergency Number', key: 'emergency_number' },
+				{ label: 'Contractor ID', key: 'contractor_id' },
+				{ label: 'Phone No.', key: 'phone_no' },
+				{ label: 'Coordinator Name', key: 'coordinator_name' },
+				{ label: 'Officer Name', key: 'officer_name' },
+				{ label: 'Hot Work Checklist', key: 'subsections', type: 'subsections' }
+			],
+			search: ['contractor_name', 'company_name', 'location_allowed']
+		},
+		eIDF: {
+			label: 'e-IDF',
+			table: 'idf_submissions',
+			bucket: 'idf_uploads',
+			projectNo: true,
+			projectName: true,
+			submittedBy: true,
+			report: true,
+			summary: [
+				{ label: 'Activity Date', key: 'activity_date', type: 'date' },
+				{ label: 'Induction Type', key: 'induction_type' }
+			],
+			files: [
+				{ label: 'IDF Form', key: 'idr_form_path' },
+				{ label: 'IDF Activity', key: 'idr_activity_path' }
+			],
+			details: [
+				{ label: 'Contractors', key: 'contractors' },
+				{ label: 'Remarks', key: 'remarks' },
+				{ label: 'Submit Location', key: 'submit_location' },
+				{ label: 'Report ID', key: 'report_id' }
+			],
+			search: ['induction_type']
+		},
+		eIPR: {
+			label: 'e-IPR',
+			table: 'ipr_submissions',
+			bucket: 'ipr_uploads',
+			projectNo: true,
+			projectName: true,
+			submittedBy: true,
+			report: true,
+			summary: [{ label: 'Activity Date', key: 'activity_date', type: 'date' }],
+			files: [
+				{ label: 'IPR Checklist', key: 'ipr_checklist_path' },
+				{ label: 'IPR Activity', key: 'ipr_activity_path' }
+			],
+			details: [
+				{ label: 'Observations', key: 'observations' },
+				{ label: 'Submit Location', key: 'submit_location' },
+				{ label: 'Report ID', key: 'report_id' }
+			]
+		},
+		eORA: {
+			label: 'e-ORA',
+			table: 'ora_submissions',
+			titleKey: 'employee_name',
+			submittedBy: true,
+			summary: [
+				{ label: 'Employee Name', key: 'employee_name' },
+				{ label: 'Employee No.', key: 'employee_no' },
+				{ label: 'Department', key: 'department' },
+				{ label: 'Claim Type', key: 'claim_type' },
+				{ label: 'Overtime Date', key: 'overtime_date', type: 'date' }
+			],
+			files: [],
+			details: [
+				{ label: 'Overtime Day', key: 'overtime_day' },
+				{ label: 'Overtime Hours', key: 'overtime_hours' },
+				{ label: 'Actual Date', key: 'actual_date', type: 'date' },
+				{ label: 'Actual Day', key: 'actual_day' },
+				{ label: 'Actual In Time', key: 'actual_in_time' },
+				{ label: 'Actual Out Time', key: 'actual_out_time' },
+				{ label: 'Actual Hours', key: 'actual_hours' },
+				{ label: 'Reason', key: 'reason' },
+				{ label: 'Remarks', key: 'remarks' }
+			],
+			search: ['employee_name', 'employee_no', 'department', 'claim_type']
+		},
+		eSAC: {
+			label: 'e-SAC',
+			table: 'sac_submissions',
+			bucket: 'sac_uploads',
+			projectNo: true,
+			projectName: true,
+			summary: [{ label: 'Activity Date', key: 'activity_date', type: 'date' }],
+			files: [{ label: 'SAC Image', key: 'sac_image_path' }],
+			details: [{ label: 'Remarks', key: 'remarks' }]
+		},
+		eSCF: {
+			label: 'e-SCF',
+			table: 'scf_submissions',
+			bucket: 'scf_uploads',
+			projectNo: true,
+			report: true,
+			summary: [
+				{ label: 'Staff Name', key: 'staff_name' },
+				{ label: 'Department', key: 'department' },
+				{ label: 'Claim Date', key: 'claim_date', type: 'date' },
+				{ label: 'Description', key: 'description' }
+			],
+			files: [{ label: 'Maps Screenshot', key: 'maps_screenshot_path' }],
+			details: [
+				{ label: 'Staff Position', key: 'staff_position' },
+				{ label: 'Site Allowance', key: 'site_allowance', type: 'money' },
+				{ label: 'Accommodation', key: 'accommodation', type: 'money' },
+				{ label: 'Toll Fare', key: 'toll_fare', type: 'money' },
+				{ label: 'Fuel Cost', key: 'fuel_cost', type: 'money' },
+				{ label: 'Claim Mileage', key: 'claim_mileage', type: 'km' },
+				{ label: 'Site Purchase', key: 'site_purchase', type: 'money' },
+				{ label: 'Other Claim', key: 'claim_other', type: 'money' },
+				{ label: 'Claim Remarks', key: 'claim_remarks' },
+				{ label: 'Submit Location', key: 'submit_location' },
+				{ label: 'Report ID', key: 'report_id' }
+			],
+			search: ['staff_name', 'department', 'description']
+		},
+		eSOA: {
+			label: 'e-SOA',
+			table: 'soa_submissions',
+			projectNo: true,
+			projectName: true,
+			submittedBy: true,
+			summary: [
+				{ label: 'Date', key: 'date', type: 'date' },
+				{ label: 'Weather', key: 'weather' }
+			],
+			files: [],
+			details: [
+				{ label: 'Remarks', key: 'remarks' },
+				{ label: 'Subsections', key: 'subsections', type: 'subsections' }
+			]
+		},
+		eTNR: {
+			label: 'e-TNR',
+			table: 'tnr_submissions',
+			bucket: 'tnr_uploads',
+			projectNo: true,
+			projectName: true,
+			submittedBy: true,
+			report: true,
+			summary: [
+				{ label: 'Activity Date', key: 'activity_date', type: 'date' },
+				{ label: 'Topic', key: 'topic' }
+			],
+			files: [
+				{ label: 'TNR Attendance', key: 'tnr_attendance_path' },
+				{ label: 'TNR Activity', key: 'tnr_activity_path' }
+			],
+			details: [
+				{ label: 'Description', key: 'description' },
+				{ label: 'Remarks', key: 'remarks' },
+				{ label: 'Submit Location', key: 'submit_location' },
+				{ label: 'Report ID', key: 'report_id' }
+			],
+			search: ['topic']
+		},
+		eTRF: {
+			label: 'e-TRF',
+			table: 'trf_submissions',
+			projectNo: true,
+			submittedBy: true,
+			summary: [
+				{ label: 'Requestor', key: 'requestor_name' },
+				{ label: 'Traveller', key: 'traveller_name' },
+				{ label: 'Mode of Travel', key: 'mode_of_travel' },
+				{ label: 'Travel Date & Time', key: 'travel_date_time', type: 'datetime' },
+				{ label: 'Origin', key: 'travel_origin' },
+				{ label: 'Destination', key: 'travel_destination' }
+			],
+			files: [],
+			details: [
+				{ label: 'Requestor Position', key: 'requestor_position' },
+				{ label: 'Requestor Department', key: 'requestor_department' },
+				{ label: 'Traveller ID', key: 'traveller_id' },
+				{ label: 'Traveller Company', key: 'traveller_company' },
+				{ label: 'Traveller Position', key: 'traveller_position' },
+				{ label: 'Traveller Department', key: 'traveller_department' },
+				{ label: 'Traveller Phone No.', key: 'traveller_phone_no' },
+				{ label: 'Fare To Be Borne By', key: 'fare_to_be_borne_by' },
+				{ label: 'Purpose of Travel', key: 'travel_purpose' },
+				{ label: 'Airline', key: 'travel_airline' },
+				{ label: 'Flight No.', key: 'travel_flight_no' },
+				{ label: 'Baggage Required', key: 'travel_baggage_required' },
+				{ label: 'Meal Onboard Required', key: 'meal_onboard_required' }
+			],
+			search: ['requestor_name', 'traveller_name']
+		}
 	};
 
-	const selectMap = {
-		eTBM: `
-			id, created_at, created_by_name,
-			project_no, project_name,
-			meeting_date,
-			tbm_form_path, tbm_photo_path, ptw_form_path
-		`,
-		ePPE: `
-			id, created_at, created_by_name,
-			project_no, project_name,
-			activity_date,
-			ppe_photo_path
-		`,
-		eHKP: `
-			id, created_at, created_by_name,
-			project_no, project_name,
-			activity_date,
-			hkp_photo_path
-		`,
-		eZCA: `
-			id, created_at, created_by_name,
-			project_no, project_name,
-			audit_date
-		`
+	const formOptions = Object.entries(FORMS).map(([key, form]) => ({ key, label: form.label }));
+
+	const REPORT_STATUS = {
+		pending: 'Pending',
+		sent: 'Processing',
+		done: 'Ready',
+		failed: 'Failed'
 	};
 
-	const detailsSelectMap = {
-		eTBM: 'meeting_topics, competency, attendance',
-		ePPE: 'attendance',
-		eHKP: 'report_day',
-		eZCA: 'subsections'
-	};
+	function listColumns(form) {
+		const cols = new Set(['id', 'created_at']);
+		if (form.submittedBy) cols.add('created_by_name');
+		if (form.projectNo) cols.add('project_no');
+		if (form.projectName) cols.add('project_name');
+		if (form.titleKey) cols.add(form.titleKey);
+		if (form.report) {
+			cols.add('report_url');
+			cols.add('make_status');
+		}
+		for (const f of form.summary) cols.add(f.key);
+		for (const f of form.files) cols.add(f.key);
+		for (const c of searchColumns(form)) cols.add(c);
+		return [...cols].join(', ');
+	}
 
-	const searchCols = {
-		eTBM: ['project_no', 'project_name', 'created_by_name'],
-		ePPE: ['project_no', 'project_name', 'created_by_name'],
-		eHKP: ['project_no', 'project_name', 'created_by_name'],
-		eZCA: ['project_no', 'project_name', 'created_by_name']
-	};
+	function searchColumns(form) {
+		const cols = [];
+		if (form.projectNo) cols.push('project_no');
+		if (form.projectName) cols.push('project_name');
+		if (form.submittedBy) cols.push('created_by_name');
+		return [...cols, ...(form.search ?? [])];
+	}
 
 	function formatDateTime(iso) {
 		if (!iso) return '';
@@ -104,18 +405,31 @@
 		return dateStr ? new Date(dateStr + 'T23:59:59.999').toISOString() : null;
 	}
 
-	const bucketMap = {
-		eTBM: { tbm_form_path: 'tbm_form', tbm_photo_path: 'tbm_session', ptw_form_path: 'ptw_form' },
-		ePPE: { ppe_photo_path: 'ppe_photo' },
-		eHKP: { hkp_photo_path: 'hkp_photo' }
-	};
-
-	function fileUrlFor(type, colName, path) {
-		if (!path) return '';
-		const bucket = bucketMap[type]?.[colName];
-		if (!bucket) return '';
+	function publicFileUrl(bucket, path) {
+		if (!bucket || !path) return '';
 		const { data } = supabase.storage.from(bucket).getPublicUrl(path);
 		return data?.publicUrl ?? '';
+	}
+
+	async function openFile(event, bucket, path) {
+		event.preventDefault();
+		const fallbackUrl = event.currentTarget.href;
+		const tab = window.open('', '_blank');
+
+		let url = fallbackUrl;
+		try {
+			const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 10);
+			if (!error && data?.signedUrl) url = data.signedUrl;
+		} catch {
+			// fall back to the public URL
+		}
+
+		if (tab) {
+			tab.opener = null;
+			tab.location.href = url;
+		} else {
+			window.open(url, '_blank');
+		}
 	}
 
 	function fileName(path) {
@@ -124,21 +438,47 @@
 		return p.split('/').pop() || p;
 	}
 
+	function cardTitle(row) {
+		const form = FORMS[formType];
+		const head = form.projectNo ? (row.project_no ?? '-') : (row[form.titleKey] ?? '-');
+		return `${head} ${formType}`;
+	}
+
+	function filterRows(list, text, type) {
+		const form = FORMS[type];
+		const s = text.trim().toLowerCase();
+		if (!form || !s) return list;
+
+		const cols = searchColumns(form);
+		return list.filter((r) =>
+			cols.some((c) =>
+				String(r?.[c] ?? '')
+					.toLowerCase()
+					.includes(s)
+			)
+		);
+	}
+
+	$: rows = filterRows(allRows, searchText, formType);
+
 	async function loadForms() {
+		const token = ++loadToken;
+		const form = FORMS[formType];
+
 		loading = true;
 		errorMsg = '';
-		rows = [];
+		allRows = [];
+
+		if (!form) {
+			loading = false;
+			return;
+		}
 
 		try {
-			const table = tableMap[formType];
-			const selectCols = selectMap[formType];
-
-			if (!table || !selectCols) {
-				loading = false;
-				return;
-			}
-
-			let q = supabase.from(table).select(selectCols).order('created_at', { ascending: false });
+			let q = supabase
+				.from(form.table)
+				.select(listColumns(form))
+				.order('created_at', { ascending: false });
 
 			const startISO = toISOStart(fromDate);
 			const endISO = toISOEnd(toDate);
@@ -146,26 +486,14 @@
 			if (endISO) q = q.lte('created_at', endISO);
 
 			const { data, error } = await q;
+			if (token !== loadToken) return;
 			if (error) throw error;
 
-			let list = data ?? [];
-			const s = searchText.trim().toLowerCase();
-			if (s) {
-				const cols = searchCols[formType];
-				list = list.filter((r) =>
-					cols.some((c) =>
-						String(r?.[c] ?? '')
-							.toLowerCase()
-							.includes(s)
-					)
-				);
-			}
-
-			rows = list;
+			allRows = data ?? [];
 		} catch (e) {
-			errorMsg = e?.message ?? String(e);
+			if (token === loadToken) errorMsg = e?.message ?? String(e);
 		} finally {
-			loading = false;
+			if (token === loadToken) loading = false;
 		}
 	}
 
@@ -177,8 +505,8 @@
 		activeRow = row;
 
 		try {
-			const table = tableMap[formType];
-			const detailsSelect = detailsSelectMap[formType] || '';
+			const form = FORMS[formType];
+			const detailsSelect = form.details.map((d) => d.key).join(', ');
 
 			if (!detailsSelect) {
 				details = {};
@@ -186,7 +514,7 @@
 			}
 
 			const { data, error } = await supabase
-				.from(table)
+				.from(form.table)
 				.select(detailsSelect)
 				.eq('id', row.id)
 				.single();
@@ -258,6 +586,17 @@
 		return parts.length ? parts.join(', ') : 'None';
 	}
 
+	function itemResult(item) {
+		if (item?.score !== undefined && item?.score !== null && item?.score !== '') {
+			return `Score: ${item.score}`;
+		}
+		if (typeof item?.checked === 'boolean') return item.checked ? 'Checked' : 'Not checked';
+		if (item?.value !== undefined && item?.value !== null && item?.value !== '') {
+			return `Answer: ${item.value}`;
+		}
+		return '';
+	}
+
 	function formatSubsections(subsections) {
 		if (!Array.isArray(subsections) || subsections.length === 0) return '-';
 
@@ -268,17 +607,55 @@
 
 				const lines = items.map((item) => {
 					const label = (item?.label ?? '').trim();
-					const score = item?.score ?? '';
+					const result = itemResult(item);
 					const remarks = (item?.remarks ?? '').trim();
 
-					return `• ${label} — Score: ${score}`;
+					return ['•', label, result && `— ${result}`, remarks && `— Remarks: ${remarks}`]
+						.filter(Boolean)
+						.join(' ');
 				});
 
 				return [title, ...lines].filter(Boolean).join('\n');
 			})
 			.filter(Boolean);
 
-		return sectionText.join('\n\n');
+		return sectionText.length ? sectionText.join('\n\n') : '-';
+	}
+
+	function formatMoney(value) {
+		if (value === null || value === undefined || value === '') return '-';
+		const n = Number(value);
+		return Number.isFinite(n) ? `RM ${n.toFixed(2)}` : String(value);
+	}
+
+	function formatKm(value) {
+		if (value === null || value === undefined || value === '') return '-';
+		return `${value} km`;
+	}
+
+	function formatValue(value, type) {
+		switch (type) {
+			case 'date':
+				return formatDate(value) || '-';
+			case 'datetime':
+				return formatDateTime(value) || '-';
+			case 'array':
+				return formatArray(value);
+			case 'money':
+				return formatMoney(value);
+			case 'km':
+				return formatKm(value);
+			case 'attendance':
+				return formatAttendance(value);
+			case 'competency':
+				return formatCompetency(value);
+			case 'reportday':
+				return formatReportDay(value);
+			case 'subsections':
+				return formatSubsections(value);
+			default:
+				return value === null || value === undefined || value === '' ? '-' : String(value);
+		}
 	}
 
 	loadForms();
@@ -286,31 +663,18 @@
 
 <h1 class="title">Site Safety eForm Information</h1>
 
-<div class="container">
-	<label class="radio-item">
-		<input type="radio" name="eForm-type" value="eTBM" bind:group={formType} onchange={loadForms} />
-		<span>e-TBM Data</span>
-	</label>
-
-	<label class="radio-item">
-		<input type="radio" name="eForm-type" value="ePPE" bind:group={formType} onchange={loadForms} />
-		<span>e-PPE Data</span>
-	</label>
-
-	<label class="radio-item">
-		<input type="radio" name="eForm-type" value="eHKP" bind:group={formType} onchange={loadForms} />
-		<span>e-HKP Data</span>
-	</label>
-
-	<label class="radio-item">
-		<input type="radio" name="eForm-type" value="eZCA" bind:group={formType} onchange={loadForms} />
-		<span>e-ZCA Data</span>
-	</label>
-</div>
-
 <div class="filter-bar">
 	<div>
-		<p>Project ID/Project Name</p>
+		<p>eForm Type</p>
+		<select id="eform-type" class="form-select" bind:value={formType} onchange={loadForms}>
+			<option value="">Select eForm</option>
+			{#each formOptions as option (option.key)}
+				<option value={option.key}>{option.label} Data</option>
+			{/each}
+		</select>
+	</div>
+	<div>
+		<p>Project No./Project Name</p>
 		<input type="text" placeholder="MP1234" class="filter-input" bind:value={searchText} />
 	</div>
 	<div>
@@ -340,22 +704,23 @@
 </div>
 
 <div class="site-safety-download">
-	<button class="button-download"><CloudDownload /><span>Excel</span></button>
+	<button class="button-download"><ArrowDownToLine size={20} /><span>Excel</span></button>
 </div>
 
 {#if !formType}
 	<p class="hint">Please choose an eForm data.</p>
 {:else if loading}
-	<p>Loading...</p>
+	<Spinner inline size={140} label="Loading eForm data" />
 {:else if errorMsg}
 	<p class="error">{errorMsg}</p>
 {:else if rows.length === 0}
-	<p>No records found.</p>
+	<p class="hint">No records found.</p>
 {:else}
 	{#each rows as r (r.id)}
+		{@const form = FORMS[formType]}
 		<div class="project-box">
 			<div class="project-box-top">
-				<p class="project-name">{r.project_no ?? '-'} {formType}</p>
+				<p class="project-name">{cardTitle(r)}</p>
 				<button
 					class="button-primary"
 					id="button-details"
@@ -365,115 +730,59 @@
 					View Details
 				</button>
 			</div>
-			<p><b>Project Name:&nbsp;</b>{r.project_name ?? '-'}</p>
-			<p><b>Project ID:&nbsp;</b>{r.project_no ?? '-'}</p>
-			<p><b>Submitted By:&nbsp;</b>{r.created_by_name ?? '-'}</p>
+			{#if form.projectName}
+				<p><b>Project Name:&nbsp;</b>{r.project_name ?? '-'}</p>
+			{/if}
+			{#if form.projectNo}
+				<p><b>Project No.:&nbsp;</b>{r.project_no ?? '-'}</p>
+			{/if}
+			{#if form.submittedBy}
+				<p><b>Submitted By:&nbsp;</b>{r.created_by_name ?? '-'}</p>
+			{/if}
 			<p><b>Created Date:&nbsp;</b>{formatDateTime(r.created_at)}</p>
-			{#if formType === 'eTBM'}
-				<p><b>Meeting Date:&nbsp;</b>{formatDate(r.meeting_date)}</p>
-
+			{#each form.summary as field (field.key)}
+				<p><b>{field.label}:&nbsp;</b>{formatValue(r[field.key], field.type)}</p>
+			{/each}
+			{#each form.files as file (file.key)}
 				<p class="doc-line">
-					<b>TBM Form:&nbsp;</b>
-					{#if r.tbm_form_path}
+					<b>{file.label}:&nbsp;</b>
+					{#if r[file.key]}
 						<a
-							href={fileUrlFor('eTBM', 'tbm_form_path', r.tbm_form_path)}
+							href={publicFileUrl(form.bucket, r[file.key])}
 							target="_blank"
+							rel="noopener"
 							class="file-url"
+							onclick={(e) => openFile(e, form.bucket, r[file.key])}
 						>
-							{fileName(r.tbm_form_path)}
+							{fileName(r[file.key])}
 						</a>
 					{:else}
 						-
 					{/if}
 				</p>
+			{/each}
+			{#if form.report}
 				<p class="doc-line">
-					<b>TBM Photo:&nbsp;</b>
-					{#if r.tbm_photo_path}
-						<a
-							href={fileUrlFor('eTBM', 'tbm_photo_path', r.tbm_photo_path)}
-							target="_blank"
-							class="file-url"
-						>
-							{fileName(r.tbm_photo_path)}
-						</a>
+					<b>Report:&nbsp;</b>
+					{#if r.report_url}
+						<a href={r.report_url} target="_blank" rel="noopener" class="file-url">View report</a>
 					{:else}
-						-
+						{REPORT_STATUS[r.make_status] ?? '-'}
 					{/if}
 				</p>
-				<p class="doc-line">
-					<b>PTW Form:&nbsp;</b>
-					{#if r.ptw_form_path}
-						<a
-							href={fileUrlFor('eTBM', 'ptw_form_path', r.ptw_form_path)}
-							target="_blank"
-							class="file-url"
-						>
-							{fileName(r.ptw_form_path)}
-						</a>
-					{:else}
-						-
-					{/if}
-				</p>
-			{:else if formType === 'ePPE'}
-				<p><b>Activity Date:&nbsp;</b>{formatDate(r.activity_date)}</p>
-				<p class="doc-line">
-					<b>PPE Photo:&nbsp;</b>
-					{#if r.ppe_photo_path}
-						<a
-							href={fileUrlFor('ePPE', 'ppe_photo_path', r.ppe_photo_path)}
-							target="_blank"
-							class="file-url"
-						>
-							{fileName(r.ppe_photo_path)}
-						</a>
-					{:else}
-						-
-					{/if}
-				</p>
-			{:else if formType === 'eHKP'}
-				<p><b>Activity Date:&nbsp;</b>{formatDate(r.activity_date)}</p>
-				<p class="doc-line">
-					<b>HKP Photo:&nbsp;</b>
-					{#if r.hkp_photo_path}
-						<a
-							href={fileUrlFor('eHKP', 'hkp_photo_path', r.hkp_photo_path)}
-							target="_blank"
-							class="file-url"
-						>
-							{fileName(r.hkp_photo_path)}
-						</a>
-					{:else}
-						-
-					{/if}
-				</p>
-			{:else if formType === 'eZCA'}
-				<p><b>Audit Date:&nbsp;</b>{formatDate(r.audit_date)}</p>
 			{/if}
 		</div>
 	{/each}
 	<Modal open={showDetailsModal} title="eForm Details" onclose={closeDetailsModal} closeOnBackdrop>
 		{#if modalLoading}
-			<p>Loading...</p>
+			<Spinner inline size={140} label="Loading details" />
 		{:else if modalError}
 			<p class="error">{modalError}</p>
-		{:else if formType === 'eTBM'}
-			<p><b>Meeting Topics:</b></p>
-			<p class="form-details">{formatArray(details?.meeting_topics ?? '-')}</p>
-			<p><b>Competency:</b></p>
-			<p class="form-details">{formatCompetency(details?.competency ?? '-')}</p>
-			<p><b>Attendance:</b></p>
-			<p class="form-details">{formatAttendance(details?.attendance ?? '-')}</p>
-		{:else if formType === 'ePPE'}
-			<p><b>Attendance:</b></p>
-			<p class="form-details">{formatAttendance(details?.attendance ?? '-')}</p>
-		{:else if formType === 'eHKP'}
-			<p><b>Report Day:</b></p>
-			<p class="form-details">{formatReportDay(details?.report_day ?? '-')}</p>
-		{:else if formType === 'eZCA'}
-			<p><b>Subsections:</b></p>
-			<p class="form-details subsections-text">
-				{formatSubsections(details?.subsections ?? '-')}
-			</p>
+		{:else}
+			{#each FORMS[formType].details as field (field.key)}
+				<p><b>{field.label}:</b></p>
+				<p class="form-details">{formatValue(details?.[field.key], field.type)}</p>
+			{/each}
 		{/if}
 
 		{#snippet footer()}
@@ -490,7 +799,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;
@@ -500,12 +809,12 @@
 	}
 
 	button:hover {
-		background-color: #064c6da4;
+		background-color: #093d85a4;
 	}
 
 	.button-download {
 		background-color: #31b647;
-		width: 150px;
+		width: 100px;
 		height: 40px;
 		display: inline-flex;
 		align-items: center;
@@ -531,12 +840,12 @@
 		background-color: #091747b9;
 	}
 
-	.container {
-		display: flex;
-		flex-wrap: wrap;
-		margin: 0 10px 20px 10px;
-		gap: 10px 16px;
-		align-items: center;
+	.form-select {
+		width: 220px;
+		height: 40px;
+		padding: 0 10px;
+		font-size: 14px;
+		cursor: pointer;
 	}
 
 	.date-from,
@@ -548,11 +857,11 @@
 
 	.file-url {
 		text-decoration: underline;
-		color: #064c6dd7;
+		color: #093d85;
 	}
 
 	.file-url:hover {
-		color: #064c6da4;
+		color: #093d85a4;
 	}
 
 	.filter-bar {
@@ -575,6 +884,7 @@
 
 	.form-details {
 		margin-bottom: 10px;
+		white-space: pre-wrap;
 	}
 
 	.forms-date {
@@ -610,24 +920,9 @@
 		font-weight: bold;
 	}
 
-	.radio-item {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		white-space: nowrap;
-	}
-
-	.radio-item input[type='radio'] {
-		margin: 0;
-	}
-
 	.site-safety-download {
 		display: flex;
 		margin: 10px;
-	}
-
-	.subsections-text {
-		white-space: pre-wrap;
 	}
 
 	.title {
@@ -658,15 +953,6 @@
 			width: 100%;
 		}
 
-		.container {
-			flex-wrap: wrap;
-			gap: 8px 12px;
-		}
-
-		.radio-item {
-			flex: 0 0 calc(33.333% - 16px);
-		}
-
 		.filter-bar {
 			display: flex;
 			flex-direction: column;
@@ -677,6 +963,7 @@
 			width: 100%;
 		}
 
+		.form-select,
 		.date-from,
 		.date-to {
 			width: 100%;
@@ -737,29 +1024,10 @@
 		}
 
 		.filter-input,
+		.form-select,
 		.date-from,
 		.date-to {
 			width: 100%;
-		}
-
-		.container {
-			display: grid;
-			grid-template-columns: repeat(3, 1fr);
-			gap: 8px 12px;
-			align-items: center;
-		}
-
-		.container input[type='radio'] {
-			margin: 0;
-			grid-column: span 1;
-		}
-
-		.radio-item {
-			flex: 0 0 calc(33.333% - 16px);
-		}
-
-		.container label {
-			margin-left: 4px;
 		}
 
 		.filter-input {

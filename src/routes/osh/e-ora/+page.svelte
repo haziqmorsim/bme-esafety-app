@@ -32,6 +32,15 @@
 	let errorMsg = '';
 	let saving = false;
 
+	function withTimeout(promise, ms = 20000) {
+		return Promise.race([
+			promise,
+			new Promise((_, reject) =>
+				setTimeout(() => reject(new Error('The request timed out. Please try again.')), ms)
+			)
+		]);
+	}
+
 	async function handleSubmit(e) {
 		e.preventDefault();
 		errorMsg = '';
@@ -81,7 +90,7 @@
 			);
 			if (insError) throw insError;
 
-			toast.success('Overtime Requisition Approval Form (e-ORA) submitted successfully.');
+			toast.success('e-ORA submitted successfully.');
 			goto('/');
 		} catch (error) {
 			errorMsg = error?.message ?? String(error);
@@ -188,7 +197,7 @@
 				<input type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} required />
 			</div>
 			<div class="declaration">
-				<p>The declaration for the Housekeeping Report as below:</p>
+				<p>The declaration for the Overtime Requisition and Aprroval Form as below:</p>
 				<p>
 					I hereby acknowledge that I have conducted a thorough check and confirm the following:
 				</p>
@@ -225,7 +234,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;

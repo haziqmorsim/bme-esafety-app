@@ -65,6 +65,15 @@
 	let errorMsg = '';
 	let saving = false;
 
+	function withTimeout(promise, ms = 20000) {
+		return Promise.race([
+			promise,
+			new Promise((_, reject) =>
+				setTimeout(() => reject(new Error('The request timed out. Please try again.')), ms)
+			)
+		]);
+	}
+
 	async function handleSubmit(e) {
 		e.preventDefault();
 		errorMsg = '';
@@ -111,7 +120,7 @@
 			);
 			if (insError) throw insError;
 
-			toast.success('Hot Work Activities Report (e-HWA) submitted successfully.');
+			toast.success('e-HWA submitted successfully.');
 			goto('/');
 		} catch (error) {
 			errorMsg = error?.message ?? String(error);
@@ -161,18 +170,20 @@
 					<p class="checklist-radio">
 						<input
 							type="radio"
-							name="checklist-boolean"
-							id="checklist-yes"
-							bind:value={subsections[sIndex].items[iIndex].value}
+							name={`checklist-${sIndex}-${iIndex}`}
+							id={`checklist-${sIndex}-${iIndex}-yes`}
+							value="Yes"
+							bind:group={subsections[sIndex].items[iIndex].value}
 						/>
-						<label for="checklist-yes" class="label">Yes</label>
+						<label for={`checklist-${sIndex}-${iIndex}-yes`} class="label">Yes</label>
 						<input
 							type="radio"
-							name="checklist-boolean"
-							id="checklist-no"
-							bind:value={subsections[sIndex].items[iIndex].value}
+							name={`checklist-${sIndex}-${iIndex}`}
+							id={`checklist-${sIndex}-${iIndex}-no`}
+							value="No"
+							bind:group={subsections[sIndex].items[iIndex].value}
 						/>
-						<label for="checklist-no" class="label">No</label>
+						<label for={`checklist-${sIndex}-${iIndex}-no`} class="label">No</label>
 					</p>
 					<input
 						type="text"
@@ -265,7 +276,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;

@@ -1,5 +1,6 @@
 <script>
 	import { requireUser } from '$lib/auth-guard';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import { goto } from '$app/navigation';
 	import { menuSections } from '$lib/data/menu';
 	import { onDestroy, onMount } from 'svelte';
@@ -103,7 +104,7 @@
 <h1 class="title">Main Menu</h1>
 
 {#if loading}
-	<p class="status">Loading menu...</p>
+	<Spinner inline size={140} label="Loading menu" />
 {:else if !errorMsg && visibleSections.length === 0}
 	<p class="status">No menu items have been assigned to your account yet.</p>
 {/if}
@@ -143,7 +144,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;
@@ -160,7 +161,7 @@
 	}
 
 	button:hover {
-		background-color: #064c6da4;
+		background-color: #093d85a4;
 	}
 
 	.department {
@@ -180,13 +181,13 @@
 		padding: 0 0 6px 10px;
 		font-size: 16px;
 		font-weight: bold;
-		color: #064c6dd7;
-		border-left: 4px solid #064c6dd7;
+		color: #093d85;
+		border-left: 4px solid #093d85;
 	}
 
 	.item {
 		font-size: large;
-		color: #064c6dd7;
+		color: #093d85;
 	}
 
 	.title {

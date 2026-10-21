@@ -1,5 +1,6 @@
 <script>
 	import Search from '@lucide/svelte/icons/search';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import FileText from '@lucide/svelte/icons/file-text';
 	import FileClock from '@lucide/svelte/icons/file-clock';
 	import { supabase } from '$lib/supabase';
@@ -40,6 +41,15 @@
 
 	let errorMsg = '';
 	let saving = false;
+
+	function withTimeout(promise, ms = 20000) {
+		return Promise.race([
+			promise,
+			new Promise((_, reject) =>
+				setTimeout(() => reject(new Error('The request timed out. Please try again.')), ms)
+			)
+		]);
+	}
 
 	const getUserName = (user) => {
 		const name = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim();
@@ -91,7 +101,7 @@
 			);
 			if (insErr) throw insErr;
 
-			toast.success('Corrective Action Report (e-CAR) submitted successfully.');
+			toast.success('e-CAR submitted successfully.');
 			goto('/');
 		} catch (error) {
 			errorMsg = error?.message ?? String(error);
@@ -177,7 +187,7 @@
 
 <div class="history">
 	<button class="button-primary" id="button-history" onclick={() => goto('/osh/e-car-history')}
-		><FileClock /><span>History</span></button
+		><FileClock size={20} /><span>History</span></button
 	>
 </div>
 
@@ -221,7 +231,7 @@
 			<div class="project-search">
 				<input
 					type="text"
-					placeholder="Project Name/Project ID"
+					placeholder="Project Name/Project No."
 					class="project-search-input"
 					bind:value={projectSearch}
 					oninput={filterProjects}
@@ -233,10 +243,12 @@
 			<div class="project-list">
 				<div class="project-list-header">
 					<span>Project Name</span>
-					<span>Project ID</span>
+					<span>Project No.</span>
 				</div>
 				{#if projectLoading}
-					<p class="project-status">Loading projects...</p>
+					<div class="project-status">
+						<Spinner inline size={140} label="Loading projects" />
+					</div>
 				{:else if projectError}
 					<p class="project-status error">{projectError}</p>
 				{:else if filteredProjects.length === 0}
@@ -358,7 +370,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;
@@ -368,7 +380,7 @@
 	}
 
 	#button-history {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		width: 200px;
 		height: 40px;
@@ -380,7 +392,7 @@
 	}
 
 	#button-history:hover {
-		background-color: #064c6da4;
+		background-color: #093d85a4;
 	}
 
 	#button-history span {

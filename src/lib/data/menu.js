@@ -30,7 +30,7 @@ export const menuSections = [
 			{
 				icon: '/icons/project_info.png',
 				title: 'Project Information Management',
-				description: 'For users to create and update project information',
+				description: 'For admins to create and update project information',
 				route: '/project/project-information'
 			}
 		]
@@ -100,16 +100,9 @@ export const menuSections = [
 				category: 'submission'
 			},
 			{
-				icon: '/icons/eIPR.png',
-				title: 'Inspection Record (e-IPR) Submission',
-				description: 'For OSH engineers to submit safety inspection record',
-				route: '/osh/e-ipr',
-				category: 'submission'
-			},
-			{
 				icon: '/icons/eORA.png',
 				title: 'Overtime Requisition and Approval Form (e-ORA) Submission',
-				description: 'For OSH engineers to submit overtime requisition and approval report',
+				description: 'For OSH engineers to submit overtime requisition and approval form',
 				route: '/osh/e-ora',
 				category: 'submission'
 			},
@@ -123,8 +116,15 @@ export const menuSections = [
 			{
 				icon: '/icons/eSAC.png',
 				title: 'Safety Audit Checklist (e-SAC) Submission',
-				description: 'For OSH engineers to submit safety audit checklist document',
+				description: 'For OSH engineers to submit safety audit checklist form',
 				route: '/osh/e-sac',
+				category: 'submission'
+			},
+			{
+				icon: '/icons/eIPR.png',
+				title: 'Safety Inspection Record (e-IPR) Submission',
+				description: 'For OSH engineers to submit safety inspection record',
+				route: '/osh/e-ipr',
 				category: 'submission'
 			},
 			{
@@ -132,6 +132,13 @@ export const menuSections = [
 				title: 'Safety Officer Audit (e-SOA) Submission',
 				description: 'For OSH engineers to submit safety officer audit report',
 				route: '/osh/e-soa',
+				category: 'submission'
+			},
+			{
+				icon: '/icons/eTNR.png',
+				title: 'Safety Training Record (e-TNR) Submission',
+				description: 'For OSH engineers to submit safety training record',
+				route: '/osh/e-tnr',
 				category: 'submission'
 			},
 			{
@@ -146,13 +153,6 @@ export const menuSections = [
 				title: 'Tool Box Meeting (e-TBM) Submission',
 				description: 'For OSH engineers to submit tool box meeting report',
 				route: '/osh/e-tbm',
-				category: 'submission'
-			},
-			{
-				icon: '/icons/eTNR.png',
-				title: 'Training Record (e-TNR) Submission',
-				description: 'For OSH engineers to submit safety training record',
-				route: '/osh/e-tnr',
 				category: 'submission'
 			},
 			{

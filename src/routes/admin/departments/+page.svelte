@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import { getSupabase } from '$lib/supabase';
 	import Search from '@lucide/svelte/icons/search';
 	import Pagination, { pageSlice } from '$lib/components/Pagination.svelte';
@@ -124,7 +125,9 @@
 			<tbody>
 				{#if loading}
 					<tr>
-						<td colspan="4" class="empty">Loading employees…</td>
+						<td colspan="4" class="empty">
+							<Spinner inline size={140} label="Loading employees" />
+						</td>
 					</tr>
 				{:else if loadError}
 					<tr>
@@ -164,7 +167,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;
@@ -174,7 +177,7 @@
 	}
 
 	button:hover {
-		background-color: #064c6da4;
+		background-color: #093d85a4;
 	}
 
 	.button-primary {

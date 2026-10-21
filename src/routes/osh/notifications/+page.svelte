@@ -1,6 +1,7 @@
 <script>
 	/** @type {Array<{ items: Array<any>}>} */
 	import Plus from '@lucide/svelte/icons/plus';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import Search from '@lucide/svelte/icons/search';
 	import { supabase } from '$lib/supabase';
 	import { onMount } from 'svelte';
@@ -275,7 +276,7 @@
 <div class="notifications-create">
 	{#if isAdmin}
 		<button class="button-create" on:click={openCreateModal}
-			><Plus /><span>New Notification</span></button
+			><Plus size={20} /><span>New Notification</span></button
 		>
 	{/if}
 </div>
@@ -307,13 +308,13 @@
 			</div>
 		</div>
 	{:else}
-		<p class="empty">
-			{loading
-				? 'Loading notifications...'
-				: notifications.length === 0
-					? 'No notifications yet.'
-					: 'No notifications match the filters.'}
-		</p>
+		{#if loading}
+			<Spinner inline size={140} label="Loading notifications" />
+		{:else}
+			<p class="empty">
+				{notifications.length === 0 ? 'No notifications yet.' : 'No notifications match the filters.'}
+			</p>
+		{/if}
 	{/each}
 </div>
 
@@ -389,18 +390,17 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;
-		padding: 6px 14px;
-		border: 2px solid #ffffff;
+		padding: 8px 16px;
 		border-radius: 4px;
 		cursor: pointer;
 	}
 
 	button:hover {
-		background-color: #064c6da4;
+		background-color: #093d85a4;
 	}
 
 	.button-create {
@@ -419,10 +419,10 @@
 
 	.button-inverted {
 		background-color: #ffffff;
-		color: #064c6dd7;
+		color: #093d85;
 		font-size: small;
 		padding: 6px 14px;
-		border: 2px solid #064c6dd7;
+		border: 2px solid #093d85;
 		border-radius: 4px;
 		cursor: pointer;
 	}
@@ -550,7 +550,7 @@
 	}
 
 	.priority-badge.normal {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 	}
 
 	.priority-badge.important {

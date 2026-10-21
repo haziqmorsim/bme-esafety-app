@@ -5,6 +5,7 @@
 	import { onMount } from 'svelte';
 	import { requireUser } from '$lib/auth-guard';
 	import Modal from '$lib/components/Modal.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import { toast } from '$lib/stores/toast';
 	import { sendToMake } from '$lib/make';
 
@@ -196,7 +197,11 @@
 		<p class="error">{errorMsg}</p>
 	{/if}
 
-	<div class="accordion">
+	{#if loading}
+		<Spinner inline size={140} label="Loading submissions" />
+	{/if}
+
+	<div class="accordion" class:is-loading={loading}>
 		<!-- TBM -->
 		<div class="acc-section">
 			<button type="button" class="acc-header" onclick={() => toggle('TBM')}>
@@ -399,7 +404,7 @@
 	}
 
 	button {
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		border: none;
 		font-size: small;
@@ -450,6 +455,10 @@
 		gap: 10px;
 	}
 
+	.accordion.is-loading {
+		display: none;
+	}
+
 	.acc-section {
 		width: 100%;
 	}
@@ -491,7 +500,7 @@
 	.button-email {
 		margin-top: 10px;
 		padding: 6px 14px;
-		background-color: #064c6dd7;
+		background-color: #093d85;
 		color: #ffffff;
 		font-weight: bold;
 	}
