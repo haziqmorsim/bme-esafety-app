@@ -33,7 +33,14 @@
 	let lastActivity = Date.now();
 	let signingOut = false;
 
-	const AUTH_PATHS = ['/signin', '/signup', '/auth/forgotpw', '/auth/resetpw', '/confirmation'];
+	const AUTH_PATHS = [
+		'/signin',
+		'/signup',
+		'/auth/forgotpw',
+		'/auth/forgotpw/confirm',
+		'/auth/resetpw',
+		'/confirmation'
+	];
 
 	const isAuthPage = $derived(AUTH_PATHS.includes($page.url.pathname));
 
@@ -155,7 +162,7 @@
 		<Header />
 	{/if}
 
-	<main class="app-main">
+	<main class="app-main" class:auth={isAuthPage}>
 		{@render children()}
 	</main>
 
@@ -178,5 +185,21 @@
 		flex: 1;
 		width: 100%;
 		min-width: 0;
+		max-width: 1320px;
+		margin: 0 auto;
+		padding: 28px 14px 0;
+		box-sizing: border-box;
+	}
+
+	.app-main.auth {
+		max-width: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	@media (max-width: 600px) {
+		.app-main {
+			padding-top: 20px;
+		}
 	}
 </style>

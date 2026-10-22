@@ -1,4 +1,5 @@
 <script>
+	import AuthShell from '$lib/components/AuthShell.svelte';
 	import { supabase } from '$lib/supabase';
 	import { goto } from '$app/navigation';
 	import { toast } from '$lib/stores/toast';
@@ -98,13 +99,14 @@
 	}
 </script>
 
-<div class="background">
-	<div class="box">
-		<div class="form">
+<svelte:head>
+	<title>Sign up | BME e-Safety App</title>
+</svelte:head>
+
+<AuthShell wide>
 			<form on:submit|preventDefault={signUp}>
-				<img src="/images/bme-logo.png" alt="BME Logo" class="logo" />
-				<h1 class="title">BME e-Safety App</h1>
-				<p class="sub">Sign Up</p>
+				<h1 class="auth-title">Create your account</h1>
+				<p class="auth-sub">Fill in your details. You will confirm your e-mail before signing in.</p>
 				<p><label for="first_name">First Name</label></p>
 				<p>
 					<input
@@ -345,228 +347,10 @@
 					<p class="error">{error}</p>
 				{/if}
 				<button type="submit" class="button-primary" disabled={submitting}>
-					{submitting ? 'Signing up...' : 'Sign Up'}
+					{submitting ? 'Creating account…' : 'Create account'}
 				</button>
 				<p class="have-account">
-					Already have an account? Sign in <a href="/signin" class="signup">here</a>.
+					Already have an account? <a href="/signin">Sign in</a>
 				</p>
 			</form>
-		</div>
-	</div>
-</div>
-
-<style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
-	.background {
-		background-color: #09174723;
-	}
-
-	.box {
-		display: grid;
-		align-items: center;
-		justify-content: center;
-		min-height: 100vh;
-		min-height: 100dvh;
-		box-sizing: border-box;
-		padding: 30px 15px;
-	}
-
-	.logo {
-		width: 35%;
-		justify-self: center;
-	}
-
-	button {
-		background-color: #093d85;
-		color: #ffffff;
-		border: none;
-		font-size: small;
-		padding: 6px 14px;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	button:hover {
-		background-color: #093d85a4;
-	}
-
-	.button-primary {
-		width: 100%;
-		background-color: #091747;
-		font-weight: bold;
-		margin-top: 10px;
-		padding: 10px 20px;
-	}
-
-	button:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.button-primary:hover {
-		background-color: #091747b9;
-	}
-
-	.error {
-		font-size: 12px;
-		color: #ff0000;
-	}
-
-	.form {
-		background-color: #ffffff;
-		border: 1px solid #091747b7;
-		border-radius: 4px;
-		padding: 30px;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-		width: 100%;
-		max-width: 420px;
-	}
-
-	.input-box {
-		width: 100%;
-		margin-bottom: 10px;
-	}
-
-	.input-error {
-		color: #d32f2f;
-		font-size: 12px;
-		margin-top: -6px;
-		margin-bottom: 10px;
-	}
-
-	.input-mismatch {
-		border-color: #d32f2f;
-	}
-
-	.match-ok {
-		color: #4caf50;
-		font-size: 12px;
-		margin-top: -6px;
-		margin-bottom: 10px;
-	}
-
-	.password-wrapper {
-		position: relative;
-		margin-bottom: 10px;
-	}
-
-	.password-wrapper .input-box {
-		margin-bottom: 0;
-		padding-right: 44px;
-	}
-
-	.toggle-password {
-		position: absolute;
-		top: 50%;
-		right: 6px;
-		transform: translateY(-50%);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 32px;
-		height: 32px;
-		padding: 0;
-		background: transparent;
-		color: #091747;
-		border-radius: 4px;
-	}
-
-	.toggle-password:hover {
-		background: #09174714;
-	}
-
-	.toggle-password:focus-visible {
-		outline: 2px solid #091747;
-		outline-offset: 1px;
-	}
-
-	.toggle-password svg {
-		color: currentColor;
-		pointer-events: none;
-	}
-
-	label {
-		font-weight: bold;
-	}
-
-	.have-account {
-		font-size: 14px;
-		text-align: right;
-		margin-top: 10px;
-	}
-
-	.password-rules {
-		list-style: none;
-		padding-left: 0;
-		margin-top: 2px;
-		font-size: 14px;
-	}
-
-	.password-rules li {
-		color: #8f8f8f;
-		margin: 4px 0;
-		display: flex;
-		align-items: center;
-		gap: 8px;
-	}
-
-	.password-rules li::before {
-		content: '○';
-		color: #777;
-		font-weight: bold;
-	}
-
-	.password-rules li.valid {
-		color: #4caf50;
-	}
-
-	.password-rules li.valid::before {
-		content: '✔';
-		color: #4caf50;
-	}
-
-	.select-box {
-		cursor: pointer;
-	}
-
-	.signup {
-		font-size: 14px;
-		text-decoration: underline;
-	}
-
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		text-align: center;
-		margin-bottom: 10px;
-	}
-
-	.sub {
-		font-size: 20px;
-		font-weight: bold;
-		margin-bottom: 10px;
-	}
-
-	@media (max-width: 600px) {
-		.box {
-			padding-left: 15px;
-			padding-right: 15px;
-		}
-
-		.form {
-			width: 100%;
-			max-width: 100%;
-			margin: 0;
-			padding: 20px;
-		}
-
-		.input-box {
-			width: 100%;
-		}
-	}
-</style>
+</AuthShell>

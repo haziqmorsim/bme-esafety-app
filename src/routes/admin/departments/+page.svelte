@@ -160,35 +160,6 @@
 </div>
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
-	button {
-		background-color: #093d85;
-		color: #ffffff;
-		border: none;
-		font-size: small;
-		padding: 6px 14px;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	button:hover {
-		background-color: #093d85a4;
-	}
-
-	.button-primary {
-		background-color: #091747;
-		padding: 10px 20px;
-	}
-
-	.button-primary:hover {
-		background-color: #091747b9;
-	}
-
 	#button-search {
 		height: 40px;
 		display: inline-flex;
@@ -231,97 +202,19 @@
 		gap: 12px;
 	}
 
-	.filter-bar {
-		display: flex;
-		align-items: flex-end;
-		gap: 12px;
-		padding: 10px 0;
-	}
-
-	.filter-bar p {
-		margin: 0 0 6px 0;
-	}
-
-	.filter-input {
-		width: 350px;
-		height: 40px;
-		padding: 0 10px;
-		font-size: 14px;
-	}
-
 	.hidden {
 		opacity: 0;
-	}
-
-	.project-box {
-		margin: 10px;
-		font-size: 14px;
-	}
-
-	.table-container {
-		margin-top: 12px;
 	}
 
 	.records {
 		font-size: 12px;
 	}
 
-	.dept-table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-
-	.dept-table th,
-	.dept-table td {
-		border: 1px solid #091747b9;
-		padding: 12px 16px;
-		font-size: 14px;
-	}
-
-	.dept-table thead th {
-		background-color: #091747;
-		color: #ffffff;
-		font-weight: 700;
-		text-align: center;
-	}
-
-	.dept-table tbody tr:nth-child(even) {
-		background-color: #ececec;
-	}
-
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		margin-bottom: 20px;
-		padding: 0 10px;
-	}
-
 	@media (max-width: 1024px) {
-		.title {
-			font-size: 24px;
-			margin-bottom: 15px;
-			padding: 0 8px;
-		}
-
-		.project-box {
-			margin: 8px;
-		}
-
 		.employee-records {
 			flex-direction: column;
 			align-items: stretch;
 			gap: 10px;
-		}
-
-		.filter-bar {
-			flex-wrap: wrap;
-			align-items: flex-end;
-			gap: 12px;
-			padding: 8px 0;
-		}
-
-		.filter-bar > div {
-			min-width: 220px;
 		}
 
 		.department-select,
@@ -354,27 +247,6 @@
 	}
 
 	@media (max-width: 600px) {
-		.title {
-			font-size: 22px;
-			margin-bottom: 14px;
-			padding: 0 6px;
-		}
-
-		.project-box {
-			margin: 6px;
-		}
-
-		.filter-bar {
-			flex-direction: column;
-			align-items: stretch;
-			gap: 8px;
-		}
-
-		.filter-bar > div {
-			width: 100%;
-			min-width: 0;
-		}
-
 		.department-select,
 		.filter-input,
 		#button-search {
@@ -419,8 +291,8 @@
 		.dept-table tbody tr {
 			margin-bottom: 10px;
 			padding: 8px 12px;
-			border: 1px solid #dcdcdc;
-			border-radius: 4px;
+			border: 1px solid var(--line);
+			border-radius: var(--r-md);
 			background-color: #ffffff;
 			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 		}
@@ -442,7 +314,7 @@
 
 		.dept-table td::before {
 			content: attr(data-label);
-			font-weight: bold;
+			font-weight: 600;
 		}
 
 		.dept-table td.empty {

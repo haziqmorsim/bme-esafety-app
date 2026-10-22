@@ -82,22 +82,16 @@
 </div>
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
 	.approval-timeline,
 	.report-overview {
 		width: 50%;
 		padding: 10px;
-		border: 1px solid #09174762;
+		border: 1px solid var(--line-strong);
 	}
 
 	h2 {
 		font-size: 20px;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.info {
@@ -107,15 +101,7 @@
 
 	.label {
 		margin-top: 10px;
-		font-weight: bold;
-	}
-
-	.project-box {
-		margin: 10px;
-		border: 1px solid #091747;
-		border-radius: 4px;
-		padding: 10px;
-		font-size: 14px;
+		font-weight: 600;
 	}
 
 	.profile {
@@ -130,24 +116,7 @@
 		margin-top: 15px;
 	}
 
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		margin-bottom: 20px;
-		padding: 0 10px;
-	}
-
 	@media (max-width: 1024px) {
-		.title {
-			font-size: 24px;
-			margin-bottom: 15px;
-		}
-
-		.project-box {
-			margin: 8px;
-			padding: 10px;
-		}
-
 		.info {
 			flex-direction: column;
 			gap: 12px;
@@ -166,7 +135,7 @@
 			flex-direction: column;
 			gap: 6px;
 			padding: 8px;
-			border-bottom: 1px solid #09174733;
+			border-bottom: 1px solid var(--line-strong);
 		}
 
 		.profile {
@@ -181,16 +150,6 @@
 	}
 
 	@media (max-width: 600px) {
-		.title {
-			font-size: 22px;
-			margin-bottom: 14px;
-		}
-
-		.project-box {
-			margin: 6px;
-			padding: 8px;
-		}
-
 		h2 {
 			font-size: 17px;
 		}

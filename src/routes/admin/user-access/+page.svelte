@@ -208,12 +208,6 @@
 {/if}
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
 	.access-check {
 		display: flex;
 		align-items: center;
@@ -226,39 +220,14 @@
 		padding: 10px 0;
 	}
 
-	button {
-		background-color: #093d85;
-		color: #ffffff;
-		border: none;
-		font-size: small;
-		padding: 6px 14px;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	button:hover {
-		background-color: #093d85a4;
-	}
-
 	.button-assign {
 		width: 250px;
 		height: 40px;
 	}
 
 	.button-inverted {
-		background-color: #ffffff;
-		color: #093d85;
 		width: 250px;
 		height: 40px;
-		font-size: small;
-		padding: 6px 14px;
-		border: 2px solid #093d85;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	.button-inverted:hover {
-		background-color: #dedede;
 	}
 
 	.button-modify {
@@ -290,7 +259,7 @@
 		width: 30px;
 		height: 30px;
 		border-radius: 50%;
-		border: 2px solid #091747;
+		border: 2px solid var(--line-strong);
 		background: #ffffff;
 		box-sizing: border-box;
 		position: relative;
@@ -315,7 +284,7 @@
 		pointer-events: none;
 	}
 	.circle-checkbox input:checked + .checkmark {
-		background: #091747;
+		background: var(--ink);
 	}
 
 	.circle-checkbox input:checked + .checkmark::after {
@@ -347,24 +316,12 @@
 		font-size: 14px;
 		cursor: pointer;
 		background-color: #ffffff;
-		color: #091747;
+		color: var(--ink);
 	}
 
 	.user-select option {
 		background-color: #ffffff;
-		color: #091747;
-	}
-
-	.filter-bar {
-		display: flex;
-		align-items: flex-end;
-		gap: 12px;
-		margin: 10px;
-		padding: 10px 0;
-	}
-
-	.filter-bar p {
-		margin: 0 0 6px 0;
+		color: var(--ink);
 	}
 
 	.menu-access {
@@ -376,11 +333,11 @@
 		align-items: center;
 		gap: 16px;
 		background-color: #ffffff;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-lg);
 		padding: 15px 10px;
 		margin: 10px 0;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.menu-info {
@@ -390,28 +347,10 @@
 	.menu-info p {
 		margin: 4px 0 0;
 		font-size: 14px;
-		color: #091747;
-	}
-
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		margin-bottom: 20px;
-		padding: 0 10px;
+		color: var(--ink);
 	}
 
 	@media (max-width: 1024px) {
-		.title {
-			font-size: 24px;
-			margin-bottom: 15px;
-		}
-
-		.filter-bar {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 10px;
-		}
-
 		.access-grid {
 			display: flex;
 			flex-direction: column;
@@ -455,22 +394,6 @@
 	}
 
 	@media (max-width: 600px) {
-		.title {
-			font-size: 22px;
-		}
-
-		.filter-bar {
-			flex-direction: column;
-			align-items: stretch;
-			margin: 8px;
-			padding: 8px 0;
-			gap: 12px;
-		}
-
-		.filter-bar > div {
-			width: 100%;
-		}
-
 		.department-select,
 		.user-select {
 			width: 100%;
@@ -502,10 +425,6 @@
 
 		.button-modify {
 			flex-direction: column;
-		}
-
-		button {
-			width: 100%;
 		}
 	}
 </style>

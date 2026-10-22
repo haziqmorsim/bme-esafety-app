@@ -397,22 +397,6 @@
 </Modal>
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
-	button {
-		background-color: #093d85;
-		color: #ffffff;
-		border: none;
-		font-size: small;
-		padding: 6px 14px;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
 	.submissions-filter {
 		display: flex;
 		align-items: flex-end;
@@ -421,32 +405,11 @@
 		padding: 10px 0;
 	}
 
-	.submissions-filter p {
-		margin: 0 0 6px 0;
-	}
-
-	.forms-date {
-		cursor: pointer;
-	}
-
-	.forms-date::-webkit-calendar-picker-indicator {
-		cursor: pointer;
-	}
-
 	.photo-link {
+		color: var(--brand);
+		font-weight: 600;
 		text-decoration: underline;
-	}
-
-	.project-box {
-		margin: 10px;
-		font-size: 14px;
-	}
-
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		margin-bottom: 20px;
-		padding: 0 10px;
+		text-underline-offset: 3px;
 	}
 
 	.accordion {
@@ -465,16 +428,23 @@
 
 	.acc-header {
 		width: 100%;
-		border: 1px solid #091747;
-		border-radius: 2px;
-		padding: 10px 14px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-md);
+		padding: 13px 16px;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		background: #fff;
-		color: #091747;
-		font-weight: 700;
+		background: var(--mist);
+		color: var(--ink);
+		font-size: 15px;
+		font-weight: 600;
 		cursor: pointer;
+		text-align: left;
+	}
+
+	.acc-header:hover:not(:disabled) {
+		background: var(--mist-2);
+		border-color: var(--line-strong);
 	}
 
 	.acc-icon :global(svg) {
@@ -498,28 +468,7 @@
 	}
 
 	.button-email {
-		margin-top: 10px;
-		padding: 6px 14px;
-		background-color: #093d85;
-		color: #ffffff;
-		font-weight: bold;
-	}
-
-	.button-primary {
-		background-color: #091747;
-		color: #ffffff;
-		font-weight: bold;
-		padding: 8px 18px;
-		border-radius: 6px;
-	}
-
-	.button-secondary {
-		background-color: #ffffff;
-		color: #091747;
-		border: 1px solid #091747;
-		padding: 8px 18px;
-		border-radius: 6px;
-		font-weight: bold;
+		margin-top: 12px;
 	}
 
 	.button-primary:disabled,
@@ -535,21 +484,22 @@
 	}
 
 	.email-form input {
-		padding: 8px;
-		border: 1px solid #8a8fa3;
+		width: 100%;
 	}
 
 	.history-card {
-		border: 1px solid #8a8fa3;
-		background: #fff;
-		padding: 14px;
+		border: 1px solid var(--line-soft);
+		border-radius: var(--r-lg);
+		background: var(--surface);
+		box-shadow: var(--shadow-sm);
+		padding: 18px;
 		min-height: 240px;
 	}
 
 	.card-title {
 		font-size: 18px;
-		font-weight: bold;
-		color: #091747;
+		font-weight: 600;
+		color: var(--ink);
 		margin: 0 0 10px;
 	}
 
@@ -570,11 +520,6 @@
 	}
 
 	@media (max-width: 768px) {
-		.title {
-			font-size: 22px;
-			margin-bottom: 14px;
-		}
-
 		.submissions-filter {
 			gap: 8px;
 		}
@@ -589,8 +534,185 @@
 			padding: 0;
 		}
 
-		.project-box {
-			margin: 8px;
+		.date-from,
+		.date-to {
+			width: 100%;
+		}
+
+		.acc-header {
+			padding: 10px;
+			font-size: 14px;
+			gap: 10px;
+		}
+
+		.acc-body {
+			padding: 10px 0 0;
+		}
+
+		.card-grid {
+			grid-template-columns: 1fr;
+			gap: 12px;
+		}
+
+		.history-card {
+			min-height: auto;
+			padding: 12px;
+		}
+
+		.card-title {
+			font-size: 16px;
+			word-break: break-word;
+		}
+
+		.history-card p {
+			word-break: break-word;
+			overflow-wrap: anywhere;
+		}
+
+		.doc-line {
+			word-break: break-word;
+			overflow-wrap: anywhere;
+		}
+
+		.photo-link {
+			display: inline-block;
+			max-width: 100%;
+			word-break: break-all;
+		}
+
+		.acc-icon :global(svg) {
+			width: 16px;
+			height: 16px;
+		}
+	}
+
+	.photo-link {
+		color: var(--brand);
+		font-weight: 600;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.accordion {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.accordion.is-loading {
+		display: none;
+	}
+
+	.acc-section {
+		width: 100%;
+	}
+
+	.acc-header {
+		width: 100%;
+		border: 1px solid var(--line);
+		border-radius: var(--r-md);
+		padding: 13px 16px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		background: var(--mist);
+		color: var(--ink);
+		font-size: 15px;
+		font-weight: 600;
+		cursor: pointer;
+		text-align: left;
+	}
+
+	.acc-header:hover:not(:disabled) {
+		background: var(--mist-2);
+		border-color: var(--line-strong);
+	}
+
+	.acc-icon :global(svg) {
+		width: 18px;
+		height: 18px;
+	}
+
+	.acc-body {
+		padding: 14px 0 0;
+	}
+
+	.empty {
+		color: #555;
+		padding: 10px 2px;
+	}
+
+	.card-grid {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 16px;
+	}
+
+	.button-email {
+		margin-top: 12px;
+	}
+
+	.button-primary:disabled,
+	.button-secondary:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.email-form {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.email-form input {
+		width: 100%;
+	}
+
+	.history-card {
+		border: 1px solid var(--line-soft);
+		border-radius: var(--r-lg);
+		background: var(--surface);
+		box-shadow: var(--shadow-sm);
+		padding: 18px;
+		min-height: 240px;
+	}
+
+	.card-title {
+		font-size: 18px;
+		font-weight: 600;
+		color: var(--ink);
+		margin: 0 0 10px;
+	}
+
+	.doc-line {
+		margin: 8px 0;
+	}
+
+	@media (max-width: 1024px) {
+		.submissions-filter {
+			flex-wrap: wrap;
+			gap: 12px;
+		}
+
+		.submissions-filter > div {
+			min-width: 220px;
+			flex: 1 1 220px;
+		}
+	}
+
+	@media (max-width: 768px) {
+		.submissions-filter {
+			gap: 8px;
+		}
+
+		.submissions-filter p {
+			margin: 0 0 4px 0;
+			line-height: 1.2;
+		}
+
+		.submissions-filter > div {
+			margin: 0;
+			padding: 0;
 		}
 
 		.date-from,

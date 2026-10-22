@@ -1,3 +1,818 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+
+/* ==========================================================================
+   BME e-Safety design system
+   Palette is unchanged from the original app:
+   navy #091747 · blue #093d85 · mist #f2f4f9 · line #cfd6e4 · slate #5b6480
+   ========================================================================== */
+
+:root {
+	/* Core palette */
+	--ink: #091747;
+	--brand: #093d85;
+	--brand-deep: #072f69;
+	--muted: #5b6480;
+	--mist: #f2f4f9;
+	--mist-2: #e8ecf4;
+	--line: #cfd6e4;
+	--line-soft: #e3e8f0;
+	--line-strong: #b4bfd6;
+	--surface: #ffffff;
+
+	/* Status colours (already used in the app) */
+	--danger: #c62828;
+	--danger-bg: #fdecec;
+	--success: #0f8f2f;
+	--success-bg: #e6f4ea;
+	--warn: #e67e00;
+	--warn-bg: #fff2e0;
+
+	/* Shape + depth */
+	--r-sm: 6px;
+	--r-md: 8px;
+	--r-lg: 12px;
+	--r-xl: 16px;
+	--shadow-sm: 0 1px 2px rgba(9, 23, 71, 0.06), 0 1px 3px rgba(9, 23, 71, 0.05);
+	--shadow-md: 0 4px 12px rgba(9, 23, 71, 0.08), 0 2px 4px rgba(9, 23, 71, 0.04);
+	--shadow-lg: 0 16px 40px rgba(9, 23, 71, 0.18);
+	--ring: 0 0 0 3px rgba(9, 61, 133, 0.22);
+
+	--font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+
+	--control-h: 40px;
+	--header-h: 68px;
+
+	/* The logo's diagonal stripes, reused as a quiet signature */
+	--stripes: var(--brand);
+}
+
+/* ---------- Base ---------- */
+
+html {
+	-webkit-text-size-adjust: 100%;
+	scroll-behavior: smooth;
+}
+
+body {
+	margin: 0;
+	background-color: var(--mist);
+	color: var(--ink);
+	font-family: var(--font-sans);
+	font-size: 14px;
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+	background: rgba(9, 61, 133, 0.18);
+}
+
+a {
+	color: var(--brand);
+	text-decoration: none;
+	text-underline-offset: 3px;
+}
+
+a:hover {
+	color: var(--brand-deep);
+	text-decoration: underline;
+}
+
+h1,
+h2,
+h3,
+h4 {
+	color: var(--ink);
+	letter-spacing: -0.01em;
+}
+
+td,
+th,
+.tabular {
+	font-variant-numeric: tabular-nums;
+}
+
+hr {
+	border: 0;
+	border-top: 1px solid var(--line-soft);
+}
+
+:focus-visible {
+	outline: 2px solid var(--brand);
+	outline-offset: 2px;
+}
+
+* {
+	scrollbar-color: var(--line-strong) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+/* ---------- Form controls ---------- */
+
+/* :where() keeps these defaults at zero specificity so any component class can refine them */
+:where(
+		input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not(
+				[type='color']
+			),
+		select,
+		textarea
+	) {
+	min-height: var(--control-h);
+	padding: 0 12px;
+	border: 1px solid var(--line);
+	border-radius: var(--r-md);
+	background-color: var(--surface);
+	color: var(--ink);
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 1.4;
+	box-shadow: none;
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease,
+		background-color 0.15s ease;
+}
+
+:where(select) {
+	padding-right: 2.4rem;
+	cursor: pointer;
+}
+
+:where(textarea) {
+	padding: 10px 12px;
+	resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+	color: #8a93ad;
+	opacity: 1;
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='file']):hover:not(:disabled):not(:focus),
+select:hover:not(:disabled):not(:focus),
+textarea:hover:not(:disabled):not(:focus) {
+	border-color: var(--line-strong);
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='file']):focus,
+select:focus,
+textarea:focus {
+	border-color: var(--brand);
+	box-shadow: var(--ring);
+	outline: none;
+}
+
+:where(input:disabled, select:disabled, textarea:disabled, input[readonly]) {
+	background-color: var(--mist);
+	color: var(--muted);
+	cursor: not-allowed;
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+	border: 1.5px solid var(--line-strong);
+	color: var(--brand);
+	background-color: var(--surface);
+	cursor: pointer;
+	transition:
+		box-shadow 0.15s ease,
+		border-color 0.15s ease;
+}
+
+input[type='checkbox'] {
+	border-radius: 5px;
+}
+
+input[type='checkbox']:focus,
+input[type='radio']:focus {
+	box-shadow: var(--ring);
+	outline: none;
+	border-color: var(--brand);
+}
+
+input[type='date'],
+input[type='time'],
+input[type='datetime-local'],
+input[type='month'] {
+	cursor: pointer;
+}
+
+label {
+	color: var(--ink);
+}
+
+/* ---------- Buttons ---------- */
+
+button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 8px 16px;
+	border: 1px solid transparent;
+	border-radius: var(--r-md);
+	background-color: var(--brand);
+	color: #ffffff;
+	font-family: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.3;
+	cursor: pointer;
+	transition:
+		background-color 0.15s ease,
+		border-color 0.15s ease,
+		color 0.15s ease,
+		box-shadow 0.15s ease,
+		transform 0.1s ease;
+}
+
+/* :where() keeps these low-specificity so any component class can still override them */
+:where(button:enabled):hover {
+	background-color: var(--brand-deep);
+}
+
+:where(button:enabled):active {
+	transform: translateY(1px);
+}
+
+button:focus-visible {
+	outline: none;
+	box-shadow: var(--ring);
+}
+
+button:disabled,
+button[disabled] {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+button svg {
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+}
+
+.button-primary,
+.button-submit {
+	min-height: var(--control-h);
+	padding: 0 20px;
+	background-color: var(--ink);
+	font-size: 14px;
+	box-shadow: var(--shadow-sm);
+}
+
+.button-primary {
+	margin: 10px 0 20px;
+}
+
+.button-submit {
+	margin: 0;
+}
+
+.button-primary:hover:not(:disabled),
+.button-submit:hover:not(:disabled) {
+	background-color: var(--brand);
+	box-shadow: var(--shadow-md);
+}
+
+.button-secondary,
+.button-inverted {
+	min-height: var(--control-h);
+	padding: 0 18px;
+	border-color: var(--line-strong);
+	background-color: var(--surface);
+	color: var(--ink);
+}
+
+.button-secondary:hover:not(:disabled),
+.button-inverted:hover:not(:disabled) {
+	background-color: var(--mist);
+	border-color: var(--ink);
+}
+
+.button-danger {
+	min-height: var(--control-h);
+	padding: 0 20px;
+	background-color: var(--danger);
+}
+
+.button-danger:hover:not(:disabled) {
+	background-color: #a71f1f;
+}
+
+/* ---------- Page structure ---------- */
+
+.title {
+	margin: 4px 0 28px;
+	padding: 0 10px;
+	font-size: 28px;
+	font-weight: 700;
+	line-height: 1.2;
+	letter-spacing: -0.02em;
+}
+
+.title::after {
+	content: '';
+	display: block;
+	width: 64px;
+	height: 5px;
+	margin-top: 12px;
+	border-radius: 2px;
+	background: var(--stripes);
+}
+
+/* The main white panel that holds a form or a list */
+.project-box {
+	margin: 0 10px 24px;
+	padding: 28px 32px 32px;
+	border: 1px solid var(--line-soft);
+	border-radius: var(--r-xl);
+	background-color: var(--surface);
+	box-shadow: var(--shadow-sm);
+	font-size: 14px;
+}
+
+.forms {
+	margin: 0;
+	position: relative;
+}
+
+.heading {
+	margin: 32px 0 14px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid var(--line-soft);
+	font-size: 17px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.forms > .heading:first-child,
+.forms > .heading:first-of-type {
+	margin-top: 0;
+}
+
+.forms hr {
+	display: none;
+}
+
+.forms-p {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 6px 20px;
+	margin: 14px 0;
+}
+
+.forms-label {
+	width: 170px;
+	flex: none;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.forms-input {
+	height: var(--control-h);
+	width: min(100%, 520px);
+	font-size: 14px;
+}
+
+.forms-date,
+.forms-date::-webkit-calendar-picker-indicator {
+	cursor: pointer;
+}
+
+.remarks {
+	width: 100%;
+	height: auto;
+	min-height: 160px;
+}
+
+.note {
+	margin: 0 0 12px;
+	color: var(--muted);
+	font-size: 13px;
+}
+
+.hint {
+	margin: 8px 0 0;
+	color: var(--muted);
+	font-size: 12px;
+}
+
+.container:has(> .declaration) {
+	align-items: flex-start;
+	gap: 14px;
+}
+
+.container > .declaration {
+	flex: 1;
+}
+
+.declaration {
+	padding: 14px 18px;
+	border-left: 3px solid var(--brand);
+	border-radius: 0 var(--r-lg) var(--r-lg) 0;
+	background-color: var(--mist);
+	font-weight: 500;
+}
+
+.declaration p {
+	margin-bottom: 8px;
+}
+
+.declaration p:last-child {
+	margin-bottom: 0;
+}
+
+.submit {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: 28px;
+	padding-top: 20px;
+	border-top: 1px solid var(--line-soft);
+}
+
+.delete-summary {
+	margin: 12px 0;
+	padding: 12px 14px;
+	border-radius: var(--r-md);
+	background-color: var(--mist);
+}
+
+/* ---------- File upload ---------- */
+
+.upload {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 200px;
+	padding: 16px;
+	border: 2px dashed var(--line-strong);
+	border-radius: var(--r-lg);
+	background-color: var(--mist);
+	text-align: center;
+	transition:
+		border-color 0.15s ease,
+		background-color 0.15s ease;
+}
+
+.upload:hover {
+	border-color: var(--brand);
+	background-color: #eaf0fa;
+}
+
+.upload-text {
+	width: fit-content;
+}
+
+.upload-text input[type='file'] {
+	font-size: 14px;
+	color: var(--muted);
+}
+
+.upload-text input[type='file']::file-selector-button,
+input[type='file']::file-selector-button {
+	margin-right: 12px;
+	padding: 8px 16px;
+	border: none;
+	border-radius: var(--r-md);
+	background-color: var(--ink);
+	color: #ffffff;
+	font-family: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background-color 0.15s ease;
+}
+
+.upload-text input[type='file']::file-selector-button:hover,
+input[type='file']::file-selector-button:hover {
+	background-color: var(--brand);
+}
+
+/* ---------- Project picker (inside modals) ---------- */
+
+.project-search {
+	display: flex;
+	gap: 10px;
+	margin-bottom: 16px;
+}
+
+.project-search-input {
+	flex: 1;
+	height: 40px;
+	font-size: 14px;
+}
+
+.project-search-button {
+	width: 44px;
+	height: 40px;
+	padding: 0;
+	background-color: var(--ink);
+}
+
+.project-search-button:hover:not(:disabled) {
+	background-color: var(--brand);
+}
+
+.project-list {
+	max-height: 340px;
+	overflow: hidden;
+	overflow-y: auto;
+	border: 1px solid var(--line);
+	border-radius: var(--r-lg);
+}
+
+.project-list-header,
+.project-row {
+	display: grid;
+	grid-template-columns: 1.5fr 1fr;
+	gap: 10px;
+	padding: 11px 16px;
+}
+
+.project-list-header {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	border-bottom: 1px solid var(--line);
+	background-color: var(--mist);
+	color: var(--muted);
+	font-size: 13px;
+	font-weight: 600;
+	text-align: left;
+}
+
+.project-row {
+	width: 100%;
+	border: none;
+	border-bottom: 1px solid var(--line-soft);
+	border-radius: 0;
+	background: var(--surface);
+	color: var(--ink);
+	font-size: 14px;
+	font-weight: 400;
+	text-align: left;
+}
+
+.project-row:hover:not(:disabled) {
+	background-color: var(--mist);
+	color: var(--ink);
+}
+
+.project-row:last-child {
+	border-bottom: none;
+}
+
+.project-row-id {
+	color: var(--muted);
+	text-align: left;
+	font-variant-numeric: tabular-nums;
+}
+
+.project-status {
+	margin: 0;
+	padding: 20px 16px;
+	color: var(--muted);
+	text-align: center;
+}
+
+/* ---------- Filters ---------- */
+
+.filter-bar,
+.notifications-filter,
+.submissions-filter {
+	display: flex;
+	align-items: flex-end;
+	flex-wrap: wrap;
+	gap: 14px;
+	margin: 0 10px 20px;
+	padding: 16px 20px;
+	border: 1px solid var(--line-soft);
+	border-radius: var(--r-lg);
+	background-color: var(--surface);
+	box-shadow: var(--shadow-sm);
+}
+
+.filter-bar p,
+.notifications-filter p,
+.submissions-filter p {
+	margin: 0 0 6px;
+	font-weight: 600;
+}
+
+.filter-input {
+	width: 320px;
+	max-width: 100%;
+	height: var(--control-h);
+}
+
+.user-select,
+.department-select,
+.option-select,
+.status-select {
+	height: var(--control-h);
+	max-width: 100%;
+}
+
+/* ---------- Data tables ---------- */
+
+.table-container {
+	margin: 12px 10px 0;
+	overflow-x: auto;
+	border: 1px solid var(--line-soft);
+	border-radius: var(--r-lg);
+	background-color: var(--surface);
+	box-shadow: var(--shadow-sm);
+}
+
+.table-container.is-loading {
+	opacity: 0.6;
+}
+
+:is(.claim-table, .dept-table, .wda-table) {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+
+:is(.claim-table, .dept-table, .wda-table) thead th {
+	position: sticky;
+	top: 0;
+	padding: 12px 16px;
+	border: none;
+	border-bottom: 1px solid var(--line);
+	background-color: var(--mist);
+	color: var(--ink);
+	font-size: 13px;
+	font-weight: 600;
+	text-align: left;
+	white-space: nowrap;
+}
+
+:is(.claim-table, .dept-table, .wda-table) td {
+	padding: 12px 16px;
+	border: none;
+	border-bottom: 1px solid var(--line-soft);
+	font-size: 14px;
+	text-align: left;
+}
+
+:is(.claim-table, .dept-table, .wda-table) tbody tr {
+	background-color: var(--surface);
+	transition: background-color 0.12s ease;
+}
+
+:is(.claim-table, .dept-table, .wda-table) tbody tr:hover {
+	background-color: #f7f9fc;
+}
+
+:is(.claim-table, .dept-table, .wda-table) tbody tr:last-child td {
+	border-bottom: none;
+}
+
+/* ---------- Cards used across lists ---------- */
+
+.total-card {
+	display: inline-block;
+	min-width: 250px;
+	padding: 14px 28px;
+	border: 1px solid var(--line-soft);
+	border-radius: var(--r-lg);
+	background-color: var(--surface);
+	box-shadow: var(--shadow-sm);
+	text-align: center;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1024px) {
+	.title {
+		margin-bottom: 22px;
+		font-size: 24px;
+	}
+
+	.project-box {
+		margin: 0 8px 20px;
+		padding: 22px 22px 26px;
+	}
+
+	.forms-label {
+		width: 180px;
+	}
+
+	.forms-input {
+		width: 100%;
+		max-width: 100%;
+	}
+
+	.heading {
+		font-size: 16px;
+	}
+
+	.project-list-header,
+	.project-row {
+		grid-template-columns: 1.4fr 1fr;
+	}
+
+	.filter-input {
+		width: 100%;
+	}
+
+	.upload {
+		height: 180px;
+	}
+
+	.declaration p {
+		overflow-wrap: anywhere;
+	}
+}
+
+@media (max-width: 700px) {
+	.forms-p {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 6px;
+	}
+
+	.forms-label {
+		width: 100%;
+		font-size: 13px;
+	}
+
+	.forms-input {
+		height: 42px;
+		font-size: 15px;
+	}
+}
+
+@media (max-width: 600px) {
+	.title {
+		margin-bottom: 18px;
+		font-size: 22px;
+	}
+
+	.project-box {
+		margin: 0 4px 16px;
+		padding: 16px 14px 20px;
+		border-radius: var(--r-lg);
+	}
+
+	.heading {
+		font-size: 16px;
+	}
+
+	.button-primary,
+	.button-submit {
+		width: 100%;
+	}
+
+	.submit {
+		justify-content: stretch;
+	}
+
+	.declaration {
+		padding: 12px 14px;
+		font-size: 13px;
+	}
+
+	.declaration p {
+		font-size: 13px;
+	}
+
+	.filter-bar,
+	.notifications-filter,
+	.submissions-filter {
+		flex-direction: column;
+		align-items: stretch;
+		margin: 0 4px 16px;
+		padding: 14px;
+	}
+
+	.filter-bar > div,
+	.notifications-filter > div,
+	.submissions-filter > div {
+		width: 100%;
+	}
+
+	.table-container {
+		margin: 12px 4px 0;
+	}
+}

@@ -383,28 +383,8 @@
 </Modal>
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
-	button {
-		background-color: #093d85;
-		color: #ffffff;
-		border: none;
-		font-size: small;
-		padding: 8px 16px;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	button:hover {
-		background-color: #093d85a4;
-	}
-
 	.button-create {
-		width: 200px;
+		width: fit-content;
 		height: 40px;
 		display: inline-flex;
 		align-items: center;
@@ -417,36 +397,9 @@
 		color: #ffffff;
 	}
 
-	.button-inverted {
-		background-color: #ffffff;
-		color: #093d85;
-		font-size: small;
-		padding: 6px 14px;
-		border: 2px solid #093d85;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	.button-inverted:hover {
-		background-color: #dedede;
-	}
-
-	.filter-input {
-		width: 350px;
-		font-size: 14px;
-	}
-
-	.forms-date {
-		cursor: pointer;
-	}
-
-	.forms-date::-webkit-calendar-picker-indicator {
-		cursor: pointer;
-	}
-
 	h3 {
 		font-size: 18px;
-		font-weight: bold;
+		font-weight: 600;
 		margin-bottom: 5px;
 	}
 
@@ -459,33 +412,33 @@
 		display: grid;
 		gap: 6px;
 		font-size: 13px;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.create-form input[type='text'],
 	.create-form textarea,
 	.create-form select {
 		width: 100%;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-md);
 		padding: 8px 10px;
 		font-size: 14px;
 		font-weight: normal;
 	}
 
 	.button-confirm {
-		background-color: #091747;
-		font-weight: bold;
+		background-color: var(--ink);
+		font-weight: 600;
 		padding: 8px 20px;
 	}
 
 	.button-confirm:hover:not(:disabled) {
-		background-color: #091747b9;
+		background-color: var(--brand);
 	}
 
 	.error {
-		color: #c62828;
-		font-weight: bold;
+		color: var(--danger);
+		font-weight: 600;
 		margin: 12px 0 0;
 	}
 
@@ -496,33 +449,26 @@
 	.empty {
 		padding: 16px;
 		text-align: center;
-		color: #5b6480;
+		color: var(--muted);
 	}
 
 	.notification-card {
 		align-items: center;
-		background-color: #ffffff;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
-		padding: 15px;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+		background-color: var(--surface);
+		border: 1px solid var(--line-soft);
+		border-left: 4px solid var(--brand);
+		border-radius: var(--r-lg);
+		padding: 16px 20px;
+		box-shadow: var(--shadow-sm);
+	}
+
+	.notification-card + .notification-card {
+		margin-top: 12px;
 	}
 
 	.notifications-create {
 		display: flex;
 		margin: 10px;
-	}
-
-	.notifications-filter {
-		display: flex;
-		align-items: flex-end;
-		gap: 12px;
-		margin: 10px;
-		padding: 10px 0;
-	}
-
-	.notifications-filter p {
-		margin: 0 0 6px 0;
 	}
 
 	.priority-select,
@@ -541,16 +487,16 @@
 	}
 
 	.priority-badge {
-		padding: 4px 10px;
-		border-radius: 12px;
+		padding: 3px 10px;
+		border-radius: 999px;
 		font-size: 12px;
-		font-weight: bold;
+		font-weight: 600;
 		color: #fff;
 		display: inline-block;
 	}
 
 	.priority-badge.normal {
-		background-color: #093d85;
+		background-color: var(--brand);
 	}
 
 	.priority-badge.important {
@@ -566,56 +512,10 @@
 		cursor: pointer;
 	}
 
-	.project-box {
-		margin: 10px;
-		border-radius: 4px;
-		font-size: 14px;
-	}
-
 	.summary {
 		font-size: 16px;
-		font-weight: bold;
+		font-weight: 600;
 		text-decoration: underline;
-	}
-
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		margin-bottom: 20px;
-		padding: 0 10px;
-	}
-
-	.upload {
-		height: 200px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		text-align: center;
-		padding: 10px;
-		border: 1px solid #091747;
-		border-radius: 2px;
-	}
-
-	.upload-text {
-		width: fit-content;
-	}
-
-	.upload-text input[type='file'] {
-		font-size: 14px;
-	}
-
-	.upload-text input[type='file']::file-selector-button {
-		background-color: #091747;
-		color: #ffffff;
-		border: none;
-		padding: 6px 12px;
-		border-radius: 4px;
-		cursor: pointer;
-		margin-right: 10px;
-	}
-
-	.upload-text input[type='file']::file-selector-button:hover {
-		background-color: #091747b9;
 	}
 
 	@media (max-width: 1024px) {
@@ -629,10 +529,6 @@
 			flex: 1 1 220px;
 		}
 
-		.filter-input {
-			width: 100%;
-		}
-
 		.notification-card {
 			padding: 12px;
 		}
@@ -644,11 +540,6 @@
 	}
 
 	@media (max-width: 768px) {
-		.title {
-			font-size: 22px;
-			margin-bottom: 14px;
-		}
-
 		.notifications-filter {
 			gap: 8px;
 		}
@@ -679,10 +570,6 @@
 			margin-right: 0;
 		}
 
-		.project-box {
-			margin: 8px;
-		}
-
 		.notification-card {
 			padding: 12px;
 		}
@@ -705,14 +592,6 @@
 
 		.summary {
 			font-size: 14px;
-		}
-
-		.upload-text {
-			width: 100%;
-		}
-
-		.upload-text input[type='file'] {
-			width: 100%;
 		}
 	}
 </style>

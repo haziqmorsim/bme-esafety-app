@@ -269,36 +269,6 @@
 </div>
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
-	button {
-		background-color: #093d85;
-		color: #ffffff;
-		border: none;
-		font-size: small;
-		padding: 6px 14px;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	.button-submit {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		background-color: #091747;
-		font-weight: bold;
-		margin: 5px;
-		padding: 10px 20px;
-	}
-
-	.button-submit:hover {
-		background-color: #091747b9;
-	}
-
 	.checklist-grid {
 		margin-top: 15px;
 		display: grid;
@@ -326,106 +296,17 @@
 		margin: 10px 0;
 	}
 
-	.declaration {
-		padding: 0 10px;
-		font-weight: bold;
-	}
-
-	.declaration p {
-		margin-bottom: 10px;
-	}
-
-	.forms {
-		margin: 0;
-		position: relative;
-	}
-
-	.forms-date {
-		cursor: pointer;
-	}
-
-	.forms-date::-webkit-calendar-picker-indicator {
-		cursor: pointer;
-	}
-
-	.forms-input {
-		height: 30px;
-		width: 500px;
-		font-size: 14px;
-	}
-
-	.forms-label {
-		width: 200px;
-		font-size: 14px;
-	}
-
-	.forms-p {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		margin: 10px 0;
-	}
-
-	.heading {
-		margin: 10px 0;
-		font-size: 20px;
-		font-weight: bold;
-	}
-
 	.index {
 		text-align: center;
-	}
-
-	.project-box {
-		margin: 10px;
-		border: 1px solid #091747;
-		border-radius: 4px;
-		padding: 10px;
-		font-size: 14px;
 	}
 
 	.subheading {
 		margin: 10px 0;
 		font-size: 16px;
-		font-weight: bold;
-	}
-
-	.submit {
-		display: flex;
-		justify-content: flex-end;
-	}
-
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		margin-bottom: 20px;
-		padding: 0 10px;
+		font-weight: 600;
 	}
 
 	@media (max-width: 1024px) {
-		.title {
-			font-size: 24px;
-			margin-bottom: 15px;
-		}
-
-		.project-box {
-			margin: 8px;
-			padding: 10px;
-		}
-
-		.forms-input {
-			width: 100%;
-			max-width: 100%;
-		}
-
-		.forms-label {
-			width: 180px;
-		}
-
-		.forms-p {
-			align-items: flex-start;
-		}
-
 		.checklist-grid {
 			grid-template-columns: 30px 1fr 90px 1.5fr;
 			gap: 8px;
@@ -434,51 +315,11 @@
 		.checklist-remarks {
 			height: 36px;
 		}
-
-		.declaration {
-			padding-left: 8px;
-		}
-
-		.declaration p {
-			word-break: break-word;
-			overflow-wrap: anywhere;
-		}
 	}
 
 	@media (max-width: 600px) {
-		.title {
-			font-size: 22px;
-			margin-bottom: 14px;
-		}
-
-		.project-box {
-			margin: 6px;
-			padding: 8px;
-		}
-
-		.heading {
-			font-size: 18px;
-		}
-
 		.subheading {
 			margin: 0;
-		}
-
-		.forms-p {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 4px;
-		}
-
-		.forms-label {
-			width: 100%;
-			font-size: 13px;
-		}
-
-		.forms-input {
-			width: 100%;
-			height: 34px;
-			font-size: 13px;
 		}
 
 		.checklist-grid {
@@ -508,30 +349,12 @@
 			width: 100%;
 			height: 40px;
 			padding: 8px;
-			border-radius: 6px;
-			border: 1px solid #ccc;
+			border-radius: var(--r-md);
+			border: 1px solid var(--line-strong);
 		}
 
 		.container {
 			gap: 10px;
-		}
-
-		.declaration {
-			padding: 0;
-			font-size: 13px;
-		}
-
-		.declaration p {
-			font-size: 13px;
-		}
-
-		.submit {
-			justify-content: center;
-		}
-
-		.button-submit {
-			width: 100%;
-			justify-content: center;
 		}
 	}
 </style>

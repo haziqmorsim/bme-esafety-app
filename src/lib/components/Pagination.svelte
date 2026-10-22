@@ -84,13 +84,13 @@
 		flex-wrap: wrap;
 		gap: 10px 16px;
 		margin-top: 14px;
-		font-family: Arial, Helvetica, sans-serif;
+		font-family: var(--font-sans);
 	}
  
 	.pagination-summary {
 		margin: 0;
 		font-size: 13px;
-		color: #5b6480;
+		color: var(--muted);
 	}
  
 	.pagination-buttons {
@@ -107,23 +107,25 @@
 		min-width: 34px;
 		height: 34px;
 		padding: 0 8px;
-		border: 1px solid #283a5a33;
-		border-radius: 4px;
-		background: #ffffff;
-		color: #091747;
+		border: 1px solid var(--line);
+		border-radius: var(--r-md);
+		background: var(--surface);
+		color: var(--ink);
 		font-size: 14px;
+		font-weight: 500;
 		cursor: pointer;
 	}
  
 	.page-button:hover:not(:disabled):not(.active) {
-		background: #eef1f8;
+		background: var(--mist);
+		border-color: var(--line-strong);
 	}
  
 	.page-button.active {
-		background: #091747;
-		border-color: #091747;
+		background: var(--ink);
+		border-color: var(--ink);
 		color: #ffffff;
-		font-weight: bold;
+		font-weight: 600;
 	}
  
 	.page-button:disabled {
@@ -133,7 +135,7 @@
  
 	.page-gap {
 		padding: 0 2px;
-		color: #5b6480;
+		color: var(--muted);
 	}
  
 	@media (max-width: 600px) {

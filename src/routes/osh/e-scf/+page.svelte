@@ -891,95 +891,28 @@
 </Modal>
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
-	button {
-		background-color: #093d85;
-		color: #ffffff;
-		border: none;
-		font-size: small;
-		padding: 6px 14px;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	button:hover {
-		background-color: #093d85a4;
-	}
-
-	button:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.button-primary {
-		background-color: #091747;
-		font-weight: bold;
-		padding: 10px 20px;
-	}
-
-	.button-primary:hover {
-		background-color: #091747b9;
-	}
-
-	.button-inverted {
-		background-color: #ffffff;
-		color: #093d85;
-		font-weight: bold;
-		padding: 8px 18px;
-		border: 2px solid #093d85;
-		border-radius: 4px;
-	}
-
-	.button-inverted:hover {
-		background-color: #dedede;
-	}
-
-	.button-danger {
-		background-color: #c62828;
-		font-weight: bold;
-		padding: 10px 20px;
-	}
-
 	.button-danger:hover {
 		background-color: #c62828c7;
 	}
 
 	.error {
-		color: #c62828;
-		font-weight: bold;
+		color: var(--danger);
+		font-weight: 600;
 		margin: 8px 0;
 	}
 
 	.hint {
 		font-size: 12px;
-		color: #5b6480;
+		color: var(--muted);
 		margin: 4px 0 0;
-	}
-
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		margin-bottom: 20px;
-		padding: 0 10px;
-	}
-
-	.project-box {
-		margin: 10px;
-		padding: 10px;
-		font-size: 14px;
 	}
 
 	.note {
 		background-color: #ffffff;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-md);
 		padding: 10px 14px;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.note-title {
@@ -987,13 +920,13 @@
 		align-items: center;
 		gap: 6px;
 		margin: 0 0 4px;
-		font-weight: bold;
-		color: #093d85;
+		font-weight: 600;
+		color: var(--brand);
 	}
 
 	.note-title span {
-		color: #093d85;
-		font-weight: bold;
+		color: var(--brand);
+		font-weight: 600;
 	}
 
 	.note ol {
@@ -1013,19 +946,19 @@
 		justify-content: center;
 		gap: 12px;
 		padding: 16px 0 10px;
-		border-bottom: 2px solid #dcdcdc;
+		border-bottom: 2px solid var(--line);
 	}
 
 	.month-label {
 		font-size: 16px;
-		font-weight: bold;
+		font-weight: 600;
 		min-width: 140px;
 		text-align: center;
 	}
 
 	.nav {
 		background: none;
-		color: #093d85;
+		color: var(--brand);
 		border: none;
 		padding: 6px 12px;
 		display: flex;
@@ -1043,7 +976,7 @@
 
 	.day {
 		padding: 14px 0;
-		border-bottom: 1px solid #e3e8f0;
+		border-bottom: 1px solid var(--line-soft);
 	}
 
 	.day-header {
@@ -1059,18 +992,18 @@
 		gap: 10px;
 		margin: 0;
 		font-size: 17px;
-		font-weight: bold;
+		font-weight: 600;
 		padding-left: 6px;
 	}
 
 	.day-icon {
 		display: inline-flex;
-		color: #091747;
+		color: var(--ink);
 	}
 
 	.day.today .day-label,
 	.day.today .day-icon {
-		color: #093d85;
+		color: var(--brand);
 	}
 
 	.button-add {
@@ -1079,7 +1012,7 @@
 		padding: 0;
 		border-radius: 50%;
 		background-color: #093d851f;
-		color: #093d85;
+		color: var(--brand);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -1092,11 +1025,11 @@
 
 	.claim-card {
 		background-color: #ffffff;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-lg);
 		padding: 12px 16px;
 		margin: 12px 0 0;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.claim-card-header {
@@ -1105,18 +1038,18 @@
 		align-items: flex-start;
 		gap: 12px;
 		padding-bottom: 10px;
-		border-bottom: 1px solid #dcdcdc;
+		border-bottom: 1px solid var(--line);
 	}
 
 	.claim-heading h3 {
 		margin: 0;
 		font-size: 16px;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.claim-description {
 		margin: 4px 0 0;
-		color: #5b6480;
+		color: var(--muted);
 		word-break: break-word;
 	}
 
@@ -1140,11 +1073,11 @@
 	}
 
 	.icon-edit {
-		color: #093d85;
+		color: var(--brand);
 	}
 
 	.icon-delete {
-		color: #c62828;
+		color: var(--danger);
 	}
 
 	.claim-details {
@@ -1161,9 +1094,9 @@
 	.detail-label {
 		margin: 0;
 		font-size: 12px;
-		font-weight: bold;
+		font-weight: 600;
 		text-transform: uppercase;
-		color: #5b6480;
+		color: var(--muted);
 	}
 
 	.detail-value {
@@ -1173,7 +1106,7 @@
 
 	.link-button {
 		background: none;
-		color: #093d85;
+		color: var(--brand);
 		padding: 0;
 		display: inline-flex;
 		align-items: center;
@@ -1184,7 +1117,7 @@
 
 	.link-button:hover {
 		background: none;
-		color: #091747;
+		color: var(--ink);
 	}
 
 	.claim-form {
@@ -1206,11 +1139,11 @@
 	.field label,
 	.field-label {
 		font-size: 13px;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.required {
-		color: #c62828;
+		color: var(--danger);
 		margin-right: 2px;
 	}
 
@@ -1218,25 +1151,25 @@
 	.field select {
 		width: 100%;
 		height: 38px;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-md);
 		padding: 8px 10px;
 		font-size: 14px;
 		background-color: #ffffff;
 	}
 
 	.field select:disabled {
-		background-color: #f2f4f9;
+		background-color: var(--mist);
 		cursor: not-allowed;
 	}
 
 	.field input.invalid {
-		border-color: #c62828;
+		border-color: var(--danger);
 	}
 
 	.field-error {
 		font-size: 12px;
-		color: #c62828;
+		color: var(--danger);
 		margin: 0;
 	}
 
@@ -1254,7 +1187,7 @@
 		width: 46px;
 		height: 38px;
 		padding: 0;
-		background-color: #091747;
+		background-color: var(--ink);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -1262,7 +1195,7 @@
 	}
 
 	.button-search:hover {
-		background-color: #091747b9;
+		background-color: var(--brand);
 	}
 
 	.upload-box {
@@ -1272,21 +1205,21 @@
 		gap: 6px;
 		min-height: 38px;
 		padding: 8px 10px;
-		border: 1px dashed #091747b9;
-		border-radius: 4px;
+		border: 1px dashed var(--line-strong);
+		border-radius: var(--r-lg);
 		cursor: pointer;
 		font-weight: normal !important;
 		text-align: center;
 	}
 
 	.upload-box:hover {
-		background-color: #f2f4f9;
+		background-color: var(--mist);
 	}
 
 	.upload-box.locked {
 		border-style: solid;
-		border-color: #dcdcdc;
-		background-color: #f2f4f9;
+		border-color: var(--line);
+		background-color: var(--mist);
 		cursor: default;
 	}
 
@@ -1299,7 +1232,7 @@
 
 	.remove-file {
 		justify-self: start;
-		color: #c62828;
+		color: var(--danger);
 	}
 
 	.visually-hidden {
@@ -1313,103 +1246,12 @@
 		border: 0;
 	}
 
-	.delete-summary {
-		margin: 12px 0;
-		padding: 10px 12px;
-		background-color: #f2f4f9;
-		border-radius: 4px;
-	}
-
 	.delete-summary p {
 		margin: 2px 0;
 		word-break: break-word;
 	}
 
-	.project-search {
-		display: flex;
-		gap: 10px;
-		margin-bottom: 16px;
-	}
-
-	.project-search-input {
-		flex: 1;
-		height: 36px;
-		padding: 0 10px;
-		border: 1px solid #cfd6e4;
-		border-radius: 6px;
-		font-size: 14px;
-	}
-
-	.project-list {
-		border: 1px solid #cfd6e4;
-		border-radius: 8px;
-		max-height: 320px;
-		overflow-y: auto;
-	}
-
-	.project-list-header,
-	.project-row {
-		display: grid;
-		grid-template-columns: 1.5fr 1fr;
-		gap: 10px;
-		padding: 10px 12px;
-	}
-
-	.project-list-header {
-		background-color: #f2f4f9;
-		font-weight: bold;
-		border-bottom: 1px solid #cfd6e4;
-		text-align: center;
-	}
-
-	.project-row {
-		width: 100%;
-		text-align: left;
-		background: #ffffff;
-		border: none;
-		border-bottom: 1px solid #e3e8f0;
-		border-radius: 0;
-	}
-
-	.project-row:last-child {
-		border-bottom: none;
-	}
-
-	.project-row:hover {
-		background-color: #dedede;
-	}
-
-	.project-row-id {
-		text-align: center;
-	}
-
-	.project-status {
-		padding: 12px;
-		margin: 0;
-	}
-
-	@media (max-width: 1024px) {
-		.title {
-			font-size: 24px;
-			margin-bottom: 15px;
-		}
-
-		.project-box {
-			margin: 8px;
-		}
-	}
-
 	@media (max-width: 600px) {
-		.title {
-			font-size: 22px;
-			margin-bottom: 14px;
-		}
-
-		.project-box {
-			margin: 6px;
-			padding: 8px;
-		}
-
 		.note ol {
 			padding-left: 30px;
 		}

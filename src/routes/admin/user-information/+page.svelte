@@ -293,43 +293,12 @@
 </Modal>
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
-	button {
-		background-color: #093d85;
-		color: #ffffff;
-		border: none;
-		font-size: small;
-		padding: 6px 14px;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	button:hover {
-		background-color: #093d85a4;
-	}
-
 	button span {
 		color: #ffffff;
 	}
 
 	.button-inverted {
-		background-color: #ffffff;
-		color: #093d85;
-		font-size: small;
 		margin-top: 5px;
-		padding: 6px 14px;
-		border: 2px solid #093d85;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	.button-inverted:hover {
-		background-color: #dedede;
 	}
 
 	.button-modify {
@@ -352,7 +321,7 @@
 	}
 
 	.button-delete {
-		background-color: #c62828;
+		background-color: var(--danger);
 	}
 
 	.button-delete:hover:not(:disabled) {
@@ -373,34 +342,8 @@
 		gap: 20px;
 	}
 
-	.filter-bar {
-		display: flex;
-		align-items: flex-end;
-		gap: 12px;
-		margin: 10px;
-		padding: 10px 0;
-	}
-
-	.filter-bar p {
-		margin: 0 0 6px 0;
-	}
-
-	.filter-input {
-		width: 350px;
-		height: 40px;
-		padding: 0 10px;
-		font-size: 14px;
-	}
-
 	h3 {
-		font-weight: bold;
-	}
-
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		margin-bottom: 20px;
-		padding: 0 10px;
+		font-weight: 600;
 	}
 
 	.user-card {
@@ -408,11 +351,11 @@
 		align-items: center;
 		gap: 16px;
 		background-color: #ffffff;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-lg);
 		padding: 15px 20px;
 		margin: 10px 10px 0;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.user-info {
@@ -432,59 +375,43 @@
 		display: grid;
 		gap: 6px;
 		font-size: 13px;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.edit-form input {
 		width: 100%;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-md);
 		padding: 8px 10px;
 		font-size: 14px;
 	}
 
 	.button-confirm,
 	.button-danger {
-		font-weight: bold;
+		font-weight: 600;
 		padding: 8px 20px;
 	}
 
 	.button-confirm {
-		background-color: #091747;
+		background-color: var(--ink);
 	}
 
 	.button-confirm:hover:not(:disabled) {
-		background-color: #091747b9;
-	}
-
-	.button-danger {
-		background-color: #c62828;
+		background-color: var(--brand);
 	}
 
 	.button-danger:hover:not(:disabled) {
 		background-color: #c62828c7;
 	}
 
-	button:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
 	.error {
-		color: #c62828;
-		font-weight: bold;
+		color: var(--danger);
+		font-weight: 600;
 		margin: 8px 10px;
 	}
 
 	.modal-error {
 		margin: 12px 0 0;
-	}
-
-	.delete-summary {
-		margin: 12px 0;
-		padding: 10px 12px;
-		background-color: #f2f4f9;
-		border-radius: 4px;
 	}
 
 	.delete-summary p {
@@ -493,26 +420,11 @@
 
 	.hint {
 		font-size: 12px;
-		color: #5b6480;
+		color: var(--muted);
 		margin: 8px 0 0;
 	}
 
 	@media (max-width: 1024px) {
-		.title {
-			font-size: 24px;
-			margin-bottom: 15px;
-		}
-
-		.filter-bar {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 10px;
-		}
-
-		.filter-input {
-			width: 100%;
-		}
-
 		.department-select {
 			width: 100%;
 		}
@@ -555,22 +467,6 @@
 	}
 
 	@media (max-width: 600px) {
-		.title {
-			font-size: 22px;
-		}
-
-		.filter-bar {
-			flex-direction: column;
-			align-items: stretch;
-			margin: 8px;
-			padding: 8px 0;
-			gap: 12px;
-		}
-
-		.filter-bar > div {
-			width: 100%;
-		}
-
 		.department-select,
 		.filter-input {
 			width: 100%;

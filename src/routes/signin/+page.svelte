@@ -3,6 +3,7 @@
 	import { authUser } from '$lib/auth-store';
 	import { goto } from '$app/navigation';
 	import { toast } from '$lib/stores/toast';
+	import AuthShell from '$lib/components/AuthShell.svelte';
 
 	let email = '';
 	let password = '';
@@ -103,13 +104,14 @@
 	}
 </script>
 
-<div class="background">
-	<div class="box">
-		<div class="form">
+<svelte:head>
+	<title>Sign in | BME e-Safety App</title>
+</svelte:head>
+
+<AuthShell>
 			<form on:submit|preventDefault={signIn}>
-				<img src="/images/bme-logo.png" alt="BME Logo" class="logo" />
-				<h1 class="title">BME e-Safety App</h1>
-				<p class="sub">Sign In</p>				
+				<h1 class="auth-title">Sign in</h1>
+				<p class="auth-sub">Use the e-mail and password registered to your account.</p>
 				<p><label for="email">E-mail</label></p>
 				<p>
 					<input
@@ -117,7 +119,7 @@
 						name="email"
 						type="email"
 						bind:value={email}
-						placeholder="example@email.com"
+						placeholder="name@company.com"
 						class="input-box"
 						autocomplete="email"
 						required
@@ -187,185 +189,10 @@
 					<p class="error">{error}</p>
 				{/if}
 				<button type="submit" class="button-primary" disabled={signingIn}>
-					{signingIn ? 'Signing in...' : 'Sign In'}
+					{signingIn ? 'Signing in…' : 'Sign in'}
 				</button>
 				<!-- <p class="no-account">
 					Don't have an account? Sign up <a href="/signup" class="signup">here</a>.
 				</p> -->
 			</form>
-		</div>
-	</div>
-</div>
-
-<style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
-	.background {
-		background-color: #09174723;
-	}
-
-	.box {
-		display: grid;
-		align-items: center;
-		justify-content: center;
-		min-height: 100vh;
-		min-height: 100dvh;
-		box-sizing: border-box;
-		padding: 30px 15px;
-	}
-
-	.logo {
-		width: 35%;
-		justify-self: center;
-	}
-
-	button {
-		background-color: #093d85;
-		color: #ffffff;
-		border: none;
-		font-size: small;
-		padding: 6px 14px;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	button:hover {
-		background-color: #093d85a4;
-	}
-
-	.button-primary {
-		width: 100%;
-		background-color: #091747;
-		font-weight: bold;
-		margin-top: 10px;
-		padding: 10px 20px;
-	}
-
-	button:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.button-primary:hover {
-		background-color: #091747b9;
-	}
-
-	.error {
-		font-size: 12px;
-		color: #ff0000;
-	}
-
-	.forgotpw {
-		font-size: 14px;
-		text-align: right;
-	}
-
-	.forgotpw:hover {
-		cursor: pointer;
-		text-decoration: underline;
-	}
-
-	.form {
-		background-color: #ffffff;
-		border: 1px solid #091747b7;
-		border-radius: 4px;
-		padding: 30px;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-		width: 100%;
-		max-width: 420px;
-	}
-
-	.input-box {
-		width: 100%;
-		margin-bottom: 10px;
-	}
-
-	.password-wrapper {
-		position: relative;
-		margin-bottom: 10px;
-	}
-
-	.password-wrapper .input-box {
-		margin-bottom: 0;
-		padding-right: 44px;
-	}
-
-	.toggle-password {
-		position: absolute;
-		top: 50%;
-		right: 6px;
-		transform: translateY(-50%);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 32px;
-		height: 32px;
-		padding: 0;
-		background: transparent;
-		color: #091747;
-		border-radius: 4px;
-	}
-
-	.toggle-password:hover {
-		background: #09174714;
-	}
-
-	.toggle-password:focus-visible {
-		outline: 2px solid #091747;
-		outline-offset: 1px;
-	}
-
-	.toggle-password svg {
-		color: currentColor;
-		pointer-events: none;
-	}
-
-	label {
-		font-weight: bold;
-	}
-
-	/* .no-account {
-		font-size: 14px;
-		margin-top: 5px;
-	} */
-
-	/* .signup {
-		font-size: 14px;
-		text-decoration: underline;
-	} */
-
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		text-align: center;
-		margin-bottom: 10px;
-	}
-
-	.sub {
-		font-size: 20px;
-		font-weight: bold;
-		margin-bottom: 10px;
-	}
-
-	@media (max-width: 600px) {
-		.box {
-			padding-left: 15px;
-			padding-right: 15px;
-		}
-
-		.form {
-			width: 100%;
-			max-width: 100%;
-			margin: 0;
-			padding: 20px;
-		}
-
-		.input-box {
-			width: 100%;
-		}
-	}
-</style>
+</AuthShell>

@@ -461,29 +461,8 @@
 </Modal>
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
-	button {
-		background-color: #093d85;
-		color: #ffffff;
-		border: none;
-		font-size: small;
-		padding: 6px 14px;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
 	button:hover:not(:disabled) {
-		background-color: #093d85a4;
-	}
-
-	button:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
+		background-color: var(--brand-deep);
 	}
 
 	button span {
@@ -532,39 +511,25 @@
 	}
 
 	.button-delete {
-		background-color: #c62828;
+		background-color: var(--danger);
 	}
 
 	.button-delete:hover:not(:disabled) {
 		background-color: #c62828c7;
 	}
 
-	.button-inverted {
-		background-color: #ffffff;
-		color: #093d85;
-		font-weight: bold;
-		padding: 8px 18px;
-		border: 2px solid #093d85;
-	}
-
 	.button-inverted:hover:not(:disabled) {
-		background-color: #dedede;
+		background-color: var(--mist-2);
 	}
 
 	.button-confirm {
-		background-color: #091747;
-		font-weight: bold;
+		background-color: var(--ink);
+		font-weight: 600;
 		padding: 10px 20px;
 	}
 
 	.button-confirm:hover:not(:disabled) {
-		background-color: #091747b9;
-	}
-
-	.button-danger {
-		background-color: #c62828;
-		font-weight: bold;
-		padding: 10px 20px;
+		background-color: var(--brand);
 	}
 
 	.button-danger:hover:not(:disabled) {
@@ -585,38 +550,15 @@
 		padding: 0 10px;
 	}
 
-	.filter-bar {
-		display: flex;
-		align-items: flex-end;
-		gap: 12px;
-		margin: 10px;
-		padding: 10px 0;
-	}
-
 	.filter-bar label {
 		display: block;
 		margin: 0 0 6px 0;
 	}
 
-	.filter-input {
-		width: 350px;
-		height: 40px;
-		padding: 0 10px;
-		font-size: 14px;
-	}
-
-	.forms-date {
-		cursor: pointer;
-	}
-
-	.forms-date::-webkit-calendar-picker-indicator {
-		cursor: pointer;
-	}
-
 	h3 {
 		margin-bottom: 10px;
 		font-size: 16px;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.option-select,
@@ -630,7 +572,7 @@
 
 	.pic {
 		margin: 10px 0;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.project-card {
@@ -639,10 +581,10 @@
 		gap: 16px;
 		min-width: 0;
 		background-color: #ffffff;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-lg);
 		padding: 15px 20px;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.project-info {
@@ -658,12 +600,12 @@
 	.status {
 		padding: 0 10px;
 		margin: 10px 0;
-		color: #5b6480;
+		color: var(--muted);
 	}
 
 	.error {
-		color: #c62828;
-		font-weight: bold;
+		color: var(--danger);
+		font-weight: 600;
 		margin: 8px 10px;
 	}
 
@@ -685,23 +627,16 @@
 		display: grid;
 		gap: 6px;
 		font-size: 13px;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.form-grid input {
 		width: 100%;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-md);
 		padding: 8px 10px;
 		font-size: 14px;
 		font-weight: normal;
-	}
-
-	.delete-summary {
-		margin: 12px 0;
-		padding: 10px 12px;
-		background-color: #f2f4f9;
-		border-radius: 4px;
 	}
 
 	.delete-summary p {
@@ -710,32 +645,11 @@
 
 	.hint {
 		font-size: 12px;
-		color: #5b6480;
+		color: var(--muted);
 		margin: 8px 0 0;
 	}
 
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		margin-bottom: 20px;
-		padding: 0 10px;
-	}
-
 	@media (max-width: 1024px) {
-		.title {
-			font-size: 24px;
-			margin-bottom: 15px;
-		}
-
-		.filter-bar {
-			flex-wrap: wrap;
-		}
-
-		.filter-bar > div {
-			flex: 1 1 220px;
-			min-width: 0;
-		}
-
 		.status-select,
 		.option-select,
 		.filter-input {
@@ -758,20 +672,6 @@
 	}
 
 	@media (max-width: 600px) {
-		.title {
-			font-size: 22px;
-			margin-bottom: 14px;
-		}
-
-		.filter-bar {
-			margin: 0 10px;
-			padding: 6px 0;
-		}
-
-		.filter-bar > div {
-			flex-basis: 100%;
-		}
-
 		.button-modify {
 			flex-direction: column;
 		}

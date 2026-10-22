@@ -516,57 +516,10 @@
 </Modal>
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
-	button {
-		background-color: #093d85;
-		color: #ffffff;
-		border: none;
-		font-size: small;
-		padding: 6px 14px;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	button:hover {
-		background-color: #093d85a4;
-	}
-
-	button:disabled {
-		opacity: 0.5;
-		cursor: default;
-	}
-
-	.button-primary {
-		background-color: #091747;
-		font-weight: bold;
-		padding: 10px 20px;
-	}
-
-	.button-primary:hover {
-		background-color: #091747b9;
-	}
-
 	.error {
-		color: #c62828;
-		font-weight: bold;
+		color: var(--danger);
+		font-weight: 600;
 		margin: 8px 0;
-	}
-
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		padding: 0 10px;
-	}
-
-	.project-box {
-		margin: 10px;
-		padding: 10px;
-		font-size: 14px;
 	}
 
 	.visually-hidden {
@@ -582,11 +535,11 @@
 		display: inline-block;
 		min-width: 250px;
 		background-color: #ffffff;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-lg);
 		padding: 10px 24px;
 		text-align: center;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.total-label {
@@ -597,7 +550,7 @@
 	.total-value {
 		margin: 2px 0 0;
 		font-size: 24px;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.toolbar {
@@ -612,22 +565,22 @@
 		align-items: center;
 		gap: 4px;
 		background-color: #ffffff;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-md);
 		padding: 4px 6px;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.month-label {
 		font-size: 16px;
-		font-weight: bold;
+		font-weight: 600;
 		min-width: 140px;
 		text-align: center;
 	}
 
 	.nav {
 		background: none;
-		color: #093d85;
+		color: var(--brand);
 		padding: 6px 10px;
 		display: flex;
 		align-items: center;
@@ -648,12 +601,12 @@
 		font-size: 14px;
 		cursor: pointer;
 		background-color: #ffffff;
-		color: #091747;
+		color: var(--ink);
 	}
 
 	.user-select option {
 		background-color: #ffffff;
-		color: #091747;
+		color: var(--ink);
 	}
 
 	.action-buttons {
@@ -699,12 +652,12 @@
 
 	.bg-teal,
 	.bg-teal:hover {
-		background-color: #093d85;
+		background-color: var(--brand);
 	}
 
 	.bg-navy,
 	.bg-navy:hover {
-		background-color: #091747;
+		background-color: var(--ink);
 	}
 
 	.bg-green,
@@ -717,42 +670,8 @@
 		margin-top: 12px;
 	}
 
-	.table-container {
-		position: relative;
-		margin-top: 8px;
-		overflow-x: auto;
-	}
-
 	.table-container.is-loading {
 		opacity: 0.6;
-	}
-
-	.claim-table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-
-	.claim-table th,
-	.claim-table td {
-		border: 1px solid #091747b9;
-		padding: 10px 16px;
-		text-align: left;
-		font-size: 14px;
-	}
-
-	.claim-table thead th {
-		background-color: #091747;
-		color: #ffffff;
-		font-weight: 700;
-		text-align: center;
-	}
-
-	.claim-table tbody tr:nth-child(even) {
-		background-color: #ececec;
-	}
-
-	.claim-table .center {
-		text-align: center;
 	}
 
 	.col-no {
@@ -774,8 +693,8 @@
 	}
 
 	.details-box {
-		border: 1px solid #091747b9;
-		border-radius: 6px;
+		border: 1px solid var(--line-strong);
+		border-radius: var(--r-lg);
 		padding: 10px 12px;
 		display: grid;
 		gap: 10px;
@@ -787,12 +706,12 @@
 	}
 
 	.detail-label {
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.link-button {
 		background: none;
-		color: #093d85;
+		color: var(--brand);
 		padding: 0;
 		display: inline-flex;
 		align-items: center;
@@ -805,15 +724,10 @@
 
 	.link-button:hover {
 		background: none;
-		color: #091747;
+		color: var(--ink);
 	}
 
 	@media (max-width: 1024px) {
-		.title {
-			font-size: 24px;
-			margin-bottom: 15px;
-		}
-
 		.claim-table {
 			min-width: 820px;
 		}
@@ -826,16 +740,6 @@
 	}
 
 	@media (max-width: 600px) {
-		.title {
-			font-size: 22px;
-			margin-bottom: 14px;
-		}
-
-		.project-box {
-			margin: 6px;
-			padding: 8px;
-		}
-
 		.total-card {
 			display: block;
 		}
@@ -885,8 +789,8 @@
 		.claim-table tbody tr {
 			margin-bottom: 10px;
 			padding: 8px 12px;
-			border: 1px solid #dcdcdc;
-			border-radius: 4px;
+			border: 1px solid var(--line);
+			border-radius: var(--r-md);
 			background-color: #ffffff;
 			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 		}
@@ -909,7 +813,7 @@
 
 		.claim-table td::before {
 			content: attr(data-label);
-			font-weight: bold;
+			font-weight: 600;
 		}
 
 		.claim-table td.col-action {

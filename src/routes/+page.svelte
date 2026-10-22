@@ -5,6 +5,9 @@
 	import { menuSections } from '$lib/data/menu';
 	import { onDestroy, onMount } from 'svelte';
 	import { authUser } from '$lib/auth-store';
+	import Search from '@lucide/svelte/icons/search';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import X from '@lucide/svelte/icons/x';
 
 	let allowedMenuAccess = [];
 	let visibleSections = [];
@@ -45,6 +48,25 @@
 		}
 
 		return groups;
+	}
+
+	let query = '';
+
+	$: shownSections = filterSections(visibleSections, query);
+	$: totalShown = shownSections.reduce((sum, section) => sum + section.items.length, 0);
+
+	function filterSections(sections, text) {
+		const q = text.trim().toLowerCase();
+		if (!q) return sections;
+
+		return sections
+			.map((section) => {
+				const items = section.items.filter((item) =>
+					`${item.title} ${item.description} ${section.department}`.toLowerCase().includes(q)
+				);
+				return { ...section, items, groups: buildGroups(section, items) };
+			})
+			.filter((section) => section.items.length > 0);
 	}
 
 	let loading = true;
@@ -101,202 +123,345 @@
 	<p class="error">{errorMsg}</p>
 {/if}
 
-<h1 class="title">Main Menu</h1>
+<div class="page-head">
+	<h1 class="title">Main Menu</h1>
+
+	{#if !loading && visibleSections.length > 0}
+		<label class="finder">
+			<Search size={18} />
+			<input
+				type="search"
+				placeholder="Find a form or record"
+				aria-label="Find a form or record"
+				bind:value={query}
+			/>
+			{#if query}
+				<button type="button" class="finder-clear" aria-label="Clear search" on:click={() => (query = '')}>
+					<X size={16} />
+				</button>
+			{/if}
+		</label>
+	{/if}
+</div>
 
 {#if loading}
 	<Spinner inline size={140} label="Loading menu" />
 {:else if !errorMsg && visibleSections.length === 0}
-	<p class="status">No menu items have been assigned to your account yet.</p>
+	<p class="status">No menu items have been assigned to your account yet. Ask an admin to grant access.</p>
+{:else if query && totalShown === 0}
+	<p class="status">Nothing matches “{query}”. Try a shorter or different word.</p>
 {/if}
 
-{#each visibleSections as section}
-	<h2 class="department">Department: <span class="item">{section.department}</span></h2>
+{#each shownSections as section (section.key)}
+	<section class="dept">
+		<div class="dept-head">
+			<h2 class="department">{section.department}</h2>
+			<!-- <span class="count">{section.items.length}</span> -->
+		</div>
 
-	{#each section.groups as group (group.key)}
-		{#if group.label}
-			<h3 class="category-title">{group.label}</h3>
-		{/if}
+		{#each section.groups as group (group.key)}
+			{#if group.label}
+				<h3 class="category-title">{group.label}</h3>
+			{/if}
 
-		{#each group.items as item}
-			<div class="menu-card">
-				<img src={item.icon} alt="icon" class="menu-icon" />
-				<div class="menu-info">
-					<h4>{item.title}</h4>
-					<p>{item.description}</p>
-				</div>
-				<button
-					type="button"
-					disabled={item.disabled}
-					on:click={() => !item.disabled && goto(item.route)}
-				>
-					Open
-				</button>
+			<div class="grid">
+				{#each group.items as item (item.route)}
+					<div class="menu-card" class:is-disabled={item.disabled}>
+						<span class="icon-tile">
+							<img src={item.icon} alt="" class="menu-icon" />
+						</span>
+						<div class="menu-info">
+							<h4>{item.title}</h4>
+							<p>{item.description}</p>
+						</div>
+						<button
+							type="button"
+							class="open"
+							disabled={item.disabled}
+							aria-label={`Open ${item.title}`}
+							on:click={() => !item.disabled && goto(item.route)}
+						>
+							<span>Open</span>
+							<ChevronRight size={16} />
+						</button>
+					</div>
+				{/each}
 			</div>
 		{/each}
-	{/each}
+	</section>
 {/each}
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
+	.page-head {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 16px 24px;
+		margin-bottom: 28px;
 	}
 
-	button {
-		background-color: #093d85;
-		color: #ffffff;
-		border: none;
-		font-size: small;
-		padding: 6px 14px;
-		border-radius: 4px;
-		cursor: pointer;
+	.page-head .title {
+		margin-bottom: 0;
 	}
 
-	button[disabled] {
-		background-color: #cccccc;
-		color: #666666;
-		cursor: not-allowed;
-		opacity: 0.6;
+	/* ---- Search ---- */
+
+	.finder {
+		position: relative;
+		display: block;
+		width: min(100%, 340px);
+		margin: 4px 10px 0 0;
 	}
 
-	button:hover {
-		background-color: #093d85a4;
+	.finder :global(svg:first-child) {
+		position: absolute;
+		top: 50%;
+		left: 13px;
+		transform: translateY(-50%);
+		color: var(--muted);
+		pointer-events: none;
+	}
+
+	.finder input {
+		width: 100%;
+		height: 44px;
+		padding: 0 40px 0 40px;
+		border-radius: var(--r-lg);
+		box-shadow: var(--shadow-sm);
+	}
+
+	.finder input::-webkit-search-cancel-button {
+		display: none;
+	}
+
+	.finder-clear {
+		position: absolute;
+		top: 50%;
+		right: 8px;
+		width: 28px;
+		height: 28px;
+		padding: 0;
+		transform: translateY(-50%);
+		border-radius: var(--r-sm);
+		background: transparent;
+		color: var(--muted);
+	}
+
+	.finder-clear:hover {
+		background: var(--mist);
+		color: var(--ink);
+	}
+
+	/* ---- Departments & groups ---- */
+
+	.dept {
+		margin: 0 10px 36px;
+	}
+
+	.dept-head {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin-bottom: 16px;
+	}
+
+	.dept-head::after {
+		content: '';
+		flex: 1;
+		height: 1px;
+		background: var(--line);
 	}
 
 	.department {
-		font-size: large;
-		font-weight: bold;
-		margin-top: 30px;
-		padding: 0 10px;
+		margin: 0;
+		font-size: 20px;
+		font-weight: 600;
+		letter-spacing: -0.015em;
 	}
 
-	h4 {
-		font-weight: bold;
-		font-size: 16px;
-	}
+	/* .count {
+		min-width: 24px;
+		padding: 2px 8px;
+		border-radius: 999px;
+		background: var(--ink);
+		color: #ffffff;
+		font-size: 12px;
+		font-weight: 600;
+		text-align: center;
+	} */
 
 	.category-title {
-		margin: 24px 10px 0;
-		padding: 0 0 6px 10px;
-		font-size: 16px;
-		font-weight: bold;
-		color: #093d85;
-		border-left: 4px solid #093d85;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin: 22px 0 12px;
+		color: var(--brand);
+		font-size: 15px;
+		font-weight: 600;
 	}
 
-	.item {
-		font-size: large;
-		color: #093d85;
+	.category-title::before {
+		content: '';
+		width: 18px;
+		height: 8px;
+		border-radius: 2px;
+		background: var(--stripes);
 	}
 
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		margin-bottom: 20px;
-		padding: 0 10px;
+	/* ---- Cards ---- */
+
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 12px;
 	}
 
 	.menu-card {
+		position: relative;
 		display: flex;
 		align-items: center;
 		gap: 16px;
-		background-color: #ffffff;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
-		padding: 15px 20px;
-		margin: 10px 10px 0;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+		min-width: 0;
+		padding: 16px 18px;
+		border: 1px solid var(--line-soft);
+		border-radius: var(--r-lg);
+		background-color: var(--surface);
+		box-shadow: var(--shadow-sm);
+		transition:
+			border-color 0.15s ease,
+			box-shadow 0.15s ease;
+	}
+
+	.menu-card:not(.is-disabled):hover {
+		border-color: var(--brand);
+		box-shadow: var(--shadow-md);
+	}
+
+	.menu-card.is-disabled {
+		background-color: var(--mist);
+		box-shadow: none;
+	}
+
+	.menu-card.is-disabled .menu-info,
+	.menu-card.is-disabled .icon-tile {
+		opacity: 0.55;
+	}
+
+	.icon-tile {
+		display: grid;
+		place-items: center;
+		flex-shrink: 0;
+		width: 52px;
+		height: 52px;
+		border: 1px solid var(--line-soft);
+		border-radius: var(--r-lg);
+		background: #ffffff;
 	}
 
 	.menu-icon {
-		width: 40px;
-		height: 40px;
-		flex-shrink: 0;
+		width: 34px;
+		height: 34px;
+		object-fit: contain;
 	}
 
 	.menu-info {
-		flex-grow: 1;
+		flex: 1 1 auto;
+		min-width: 0;
 	}
 
 	.menu-info h4 {
 		margin: 0;
+		font-size: 15px;
+		font-weight: 600;
+		line-height: 1.3;
 	}
 
 	.menu-info p {
-		margin: 4px 0 0;
-		font-size: 14px;
-		color: #091747;
+		margin: 3px 0 0;
+		color: var(--muted);
+		font-size: 13px;
+		line-height: 1.45;
+	}
+
+	.open {
+		flex: 0 0 auto;
+		gap: 4px;
+		padding: 8px 10px 8px 14px;
+		background-color: var(--mist);
+		color: var(--ink);
+		cursor: pointer;
+	}
+
+	.open:hover:not(:disabled) {
+		background-color: var(--ink);
+		color: #ffffff;
+	}
+
+	.open[disabled] {
+		background-color: transparent;
+		color: var(--muted);
+		cursor: not-allowed;
 	}
 
 	.status {
-		padding: 0 10px;
-		color: #5b6480;
+		margin: 0 10px;
+		padding: 18px 20px;
+		border: 1px dashed var(--line-strong);
+		border-radius: var(--r-lg);
+		color: var(--muted);
 	}
 
 	.error {
-		margin: 10px;
-		color: #c62828;
-		font-weight: bold;
+		margin: 0 10px 16px;
+		padding: 12px 16px;
+		border-left: 4px solid var(--danger);
+		border-radius: var(--r-md);
+		background: var(--danger-bg);
+		color: var(--danger);
+		font-weight: 600;
 	}
 
 	@media (max-width: 1024px) {
-		.title {
-			font-size: 24px;
-			margin-bottom: 15px;
+		.grid {
+			grid-template-columns: minmax(0, 1fr);
 		}
 	}
 
 	@media (max-width: 600px) {
-		.title {
-			font-size: 22px;
+		.dept,
+		.status,
+		.error {
+			margin-left: 4px;
+			margin-right: 4px;
 		}
 
-		.department,
-		.item {
-			font-size: 16px;
+		.finder {
+			margin-right: 4px;
+			width: 100%;
 		}
 
 		.menu-card {
+			gap: 12px;
 			padding: 12px;
 		}
 
-		.menu-info h4 {
-			font-size: 15px;
-		}
-
-		.menu-info p {
-			font-size: 13px;
-		}
-
-		.menu-card button {
-			height: 32px;
-			padding: 0 12px;
-			font-size: 13px;
-		}
-
-		.menu-card {
-			display: flex;
-			align-items: center;
-			gap: 10px;
+		.icon-tile {
+			width: 44px;
+			height: 44px;
 		}
 
 		.menu-icon {
-			width: 38px;
-			height: 38px;
-			flex: 0 0 auto;
+			width: 28px;
+			height: 28px;
 		}
 
-		.menu-info {
-			flex: 1 1 auto;
-			min-width: 0;
-			padding-right: 8px;
+		.open span {
+			display: none;
 		}
 
-		.menu-card button {
-			flex: 0 0 auto;
-			white-space: nowrap;
-			min-width: 72px;
+		.open {
+			padding: 8px;
 		}
 	}
 </style>

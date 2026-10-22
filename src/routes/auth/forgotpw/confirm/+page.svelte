@@ -1,72 +1,47 @@
-<div class="page">
-	<div class="user-card">
-		<img src="/icons/confirm.png" alt="Confirm Icon" class="confirm-icon" />
-		<h3>Reset password request was successful.</h3>
-		<p>Please check your e-mail to reset your password.</p>
-		<p class="back"><a href="/signin">Back to Sign In</a></p>
+<script>
+	import AuthShell from '$lib/components/AuthShell.svelte';
+</script>
+
+<svelte:head>
+	<title>Check your e-mail | BME e-Safety App</title>
+</svelte:head>
+
+<AuthShell>
+	<div class="done">
+		<span class="done-icon">
+			<img src="/icons/confirm.png" alt="" />
+		</span>
+		<h1 class="auth-title">Check your e-mail</h1>
+		<p class="auth-sub">We sent a link to reset your password. It can take a minute to arrive.</p>
+		<p class="back"><a href="/signin">Back to sign in</a></p>
 	</div>
-</div>
+</AuthShell>
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
-	.page {
-		min-height: 100vh;
-		min-height: 100dvh;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		padding: 24px 16px;
-		background-color: #f2f4f9;
-	}
-
-	.user-card {
-		width: 100%;
-		max-width: 480px;
+	.done {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
-		gap: 12px;
 		text-align: center;
-		background-color: #ffffff;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
-		padding: 36px 24px;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 	}
 
-	.confirm-icon {
-		width: 56px;
-		height: 56px;
+	.done-icon {
+		display: grid;
+		place-items: center;
+		width: 72px;
+		height: 72px;
+		margin-bottom: 18px;
+		border-radius: 50%;
+		background: var(--success-bg);
 	}
 
-	h3 {
-		font-size: 22px;
-		font-weight: bold;
-		line-height: 1.3;
+	.done-icon img {
+		width: 40px;
+		height: 40px;
+		object-fit: contain;
 	}
 
-	.back {
-		margin-top: 8px;
-	}
-
-	.back a {
-		text-decoration: underline;
-		font-weight: bold;
-	}
-
-	@media (max-width: 600px) {
-		h3 {
-			font-size: 18px;
-		}
-
-		.user-card {
-			padding: 28px 18px;
-		}
+	.done :global(.auth-sub) {
+		margin-bottom: 4px;
 	}
 </style>

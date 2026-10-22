@@ -1055,63 +1055,14 @@
 </Modal>
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
-	button {
-		background-color: #093d85;
-		color: #ffffff;
-		border: none;
-		font-size: small;
-		padding: 6px 14px;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	button:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-
-	.button-primary {
-		background-color: #091747;
-		font-weight: bold;
-		padding: 10px 20px;
-	}
-
-	.button-primary:hover {
-		background-color: #091747b9;
-	}
-
-	.button-inverted {
-		background-color: #ffffff;
-		color: #093d85;
-		font-weight: bold;
-		padding: 8px 18px;
-		border: 2px solid #093d85;
-	}
-
-	.button-inverted:hover {
-		background-color: #dedede;
-	}
-
-	.button-danger {
-		background-color: #c62828;
-		font-weight: bold;
-		padding: 10px 20px;
-	}
-
 	.button-danger:hover {
 		background-color: #c62828c7;
 	}
 
 	.calendar {
 		margin-top: 10px;
-		border: 1px solid #b0b0b0;
-		border-radius: 6px;
+		border: 1px solid var(--line-strong);
+		border-radius: var(--r-md);
 		overflow: hidden;
 	}
 
@@ -1121,7 +1072,7 @@
 		justify-content: center;
 		gap: 12px;
 		padding: 10px 0;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.calendar-header .month-label {
@@ -1134,8 +1085,8 @@
 		justify-content: center;
 		min-height: 90px;
 		padding: 8px;
-		border-right: 1px solid #b0b0b0;
-		border-bottom: 1px solid #b0b0b0;
+		border-right: 1px solid var(--line-strong);
+		border-bottom: 1px solid var(--line-strong);
 		position: relative;
 		background: #fff;
 	}
@@ -1145,7 +1096,7 @@
 	}
 
 	.cell.today {
-		box-shadow: inset 0 0 0 2px #091747;
+		box-shadow: inset 0 0 0 2px var(--ink);
 	}
 
 	.cell:last-child {
@@ -1156,8 +1107,8 @@
 		position: absolute;
 		bottom: 6px;
 		right: 8px;
-		font-weight: bold;
-		color: #093d85;
+		font-weight: 600;
+		color: var(--brand);
 	}
 
 	.status-icon {
@@ -1183,8 +1134,8 @@
 	.legend-swatch {
 		width: 14px;
 		height: 14px;
-		border-radius: 3px;
-		border: 1px solid #b0b0b0;
+		border-radius: var(--r-sm);
+		border: 1px solid var(--line-strong);
 	}
 
 	.legend-swatch.state-working {
@@ -1199,7 +1150,7 @@
 
 	.legend-swatch.state-not-working {
 		background-color: #fdecec;
-		border-color: #c62828;
+		border-color: var(--danger);
 	}
 
 	.legend-dot {
@@ -1237,7 +1188,7 @@
 
 	.nav {
 		background: none;
-		color: #093d85;
+		color: var(--brand);
 		border: none;
 		font-size: 18px;
 		cursor: pointer;
@@ -1249,13 +1200,6 @@
 		cursor: default;
 	}
 
-	.project-box {
-		margin: 10px;
-		border-radius: 4px;
-		padding: 10px;
-		font-size: 14px;
-	}
-
 	.submissions-info {
 		display: flex;
 		justify-content: space-between;
@@ -1264,51 +1208,44 @@
 
 	.status-ok {
 		color: #0f8f2f;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.status-incomplete {
 		color: #e67e00;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.status-bad {
-		color: #c62828;
-		font-weight: bold;
+		color: var(--danger);
+		font-weight: 600;
 	}
 
 	.status-error {
-		color: #c62828;
-		font-weight: bold;
+		color: var(--danger);
+		font-weight: 600;
 		margin: 8px 0;
 	}
 
 	.hint {
 		font-size: 12px;
-		color: #5b6480;
+		color: var(--muted);
 		margin: 8px 0 0;
-	}
-
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		margin-bottom: 20px;
-		padding: 0 10px;
 	}
 
 	.weekdays {
 		display: grid;
 		grid-template-columns: repeat(7, 1fr);
 		background: #f7fbff;
-		border-top: 1px solid #b0b0b0;
-		border-bottom: 1px solid #b0b0b0;
+		border-top: 1px solid var(--line-strong);
+		border-bottom: 1px solid var(--line-strong);
 	}
 
 	.weekdays > div {
 		padding: 10px;
 		text-align: center;
-		font-weight: bold;
-		color: #091747;
+		font-weight: 600;
+		color: var(--ink);
 	}
 
 	.week {
@@ -1347,12 +1284,12 @@
 		font-size: 14px;
 		cursor: pointer;
 		background-color: #ffffff;
-		color: #091747;
+		color: var(--ink);
 	}
 
 	.user-select option {
 		background-color: #ffffff;
-		color: #091747;
+		color: var(--ink);
 	}
 
 	.action-buttons {
@@ -1399,11 +1336,11 @@
 	}
 
 	.bg-teal {
-		background-color: #093d85;
+		background-color: var(--brand);
 	}
 
 	.bg-navy {
-		background-color: #091747;
+		background-color: var(--ink);
 	}
 
 	.bg-green {
@@ -1411,7 +1348,7 @@
 	}
 
 	.bg-danger {
-		background-color: #c62828;
+		background-color: var(--danger);
 	}
 
 	.holidays {
@@ -1429,15 +1366,15 @@
 	.holidays-header h2 {
 		margin: 0;
 		font-size: 20px;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.button-create {
 		display: inline-flex;
 		align-items: center;
 		gap: 8px;
-		background-color: #093d85;
-		font-weight: bold;
+		background-color: var(--brand);
+		font-weight: 600;
 		padding: 8px 16px;
 		color: #ffffff;
 	}
@@ -1447,8 +1384,8 @@
 	}
 
 	.holiday-list {
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-md);
 		background-color: #ffffff;
 	}
 
@@ -1458,7 +1395,7 @@
 
 	.holiday-card {
 		padding: 10px 12px;
-		border-bottom: 1px solid #dcdcdc;
+		border-bottom: 1px solid var(--line);
 	}
 
 	.holiday-card:last-child {
@@ -1508,7 +1445,7 @@
 	}
 
 	.holiday-label {
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.holiday-empty {
@@ -1516,7 +1453,6 @@
 		margin: 0;
 		text-align: center;
 	}
-
 
 	.holiday-form {
 		display: grid;
@@ -1531,7 +1467,7 @@
 	.field > span,
 	.field > label {
 		font-size: 13px;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.field input[type='date'],
@@ -1539,8 +1475,8 @@
 	.field select {
 		width: 100%;
 		height: 40px;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-md);
 		padding: 8px 10px;
 		font-size: 14px;
 		background-color: #ffffff;
@@ -1560,8 +1496,8 @@
 	}
 
 	.region-list {
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-md);
 		max-height: 260px;
 		overflow-y: auto;
 	}
@@ -1572,7 +1508,7 @@
 		align-items: center;
 		gap: 8px;
 		padding: 6px 10px;
-		border-bottom: 1px solid #e3e8f0;
+		border-bottom: 1px solid var(--line-soft);
 	}
 
 	.region-row:last-child {
@@ -1584,24 +1520,12 @@
 		height: 30px;
 	}
 
-	.delete-summary {
-		margin: 12px 0;
-		padding: 10px 12px;
-		background-color: #f2f4f9;
-		border-radius: 4px;
-	}
-
 	.delete-summary p {
 		margin: 2px 0;
 		word-break: break-word;
 	}
 
 	@media (max-width: 1024px) {
-		.title {
-			font-size: 24px;
-			margin-bottom: 15px;
-		}
-
 		.project-box p {
 			word-break: break-word;
 			overflow-wrap: anywhere;
@@ -1653,10 +1577,6 @@
 		}
 	}
 	@media (max-width: 600px) {
-		.title {
-			font-size: 22px;
-		}
-
 		.calendar-header {
 			flex-wrap: nowrap;
 			justify-content: space-between;

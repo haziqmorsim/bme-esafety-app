@@ -792,26 +792,6 @@
 {/if}
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
-	button {
-		background-color: #093d85;
-		color: #ffffff;
-		border: none;
-		font-size: small;
-		padding: 6px 14px;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	button:hover {
-		background-color: #093d85a4;
-	}
-
 	.button-download {
 		background-color: #31b647;
 		width: 100px;
@@ -831,15 +811,6 @@
 		background-color: #31b647bd;
 	}
 
-	.button-primary {
-		background-color: #091747;
-		padding: 10px 20px;
-	}
-
-	.button-primary:hover {
-		background-color: #091747b9;
-	}
-
 	.form-select {
 		width: 220px;
 		height: 40px;
@@ -857,29 +828,11 @@
 
 	.file-url {
 		text-decoration: underline;
-		color: #093d85;
+		color: var(--brand);
 	}
 
 	.file-url:hover {
 		color: #093d85a4;
-	}
-
-	.filter-bar {
-		display: flex;
-		align-items: flex-end;
-		gap: 12px;
-		margin: 10px;
-	}
-
-	.filter-bar p {
-		margin: 0 0 6px 0;
-	}
-
-	.filter-input {
-		width: 350px;
-		height: 40px;
-		padding: 0 10px;
-		font-size: 14px;
 	}
 
 	.form-details {
@@ -887,24 +840,8 @@
 		white-space: pre-wrap;
 	}
 
-	.forms-date {
-		cursor: pointer;
-	}
-
-	.forms-date::-webkit-calendar-picker-indicator {
-		cursor: pointer;
-	}
-
 	.hint {
 		margin: 10px;
-	}
-
-	.project-box {
-		margin: 10px;
-		border: 1px solid #dcdcdc;
-		border-radius: 4px;
-		padding: 10px;
-		font-size: 14px;
 	}
 
 	.project-box-top {
@@ -917,7 +854,7 @@
 
 	.project-name {
 		font-size: 16px;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.site-safety-download {
@@ -925,41 +862,10 @@
 		margin: 10px;
 	}
 
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		margin-bottom: 20px;
-		padding: 0 10px;
-	}
-
 	@media (max-width: 1024px) {
-		.title {
-			font-size: 24px;
-			margin-bottom: 15px;
-		}
-
-		.filter-bar {
-			flex-wrap: wrap;
-			gap: 12px;
-		}
-
-		.filter-bar > div {
-			min-width: 220px;
-		}
-
 		.filter-input,
 		.date-from,
 		.date-to {
-			width: 100%;
-		}
-
-		.filter-bar {
-			display: flex;
-			flex-direction: column;
-			gap: 8px;
-		}
-
-		.filter-input {
 			width: 100%;
 		}
 
@@ -977,11 +883,6 @@
 		.button-download {
 			margin-left: 0;
 			width: 100%;
-		}
-
-		.project-box {
-			margin: 8px;
-			padding: 10px;
 		}
 
 		.project-box-top {
@@ -1006,32 +907,11 @@
 	}
 
 	@media (max-width: 600px) {
-		.title {
-			font-size: 22px;
-			margin-bottom: 14px;
-		}
-
-		.filter-bar {
-			flex-direction: column;
-			align-items: stretch;
-			margin: 8px;
-			padding: 8px 0;
-			gap: 12px;
-		}
-
-		.filter-bar > div {
-			width: 100%;
-		}
-
 		.filter-input,
 		.form-select,
 		.date-from,
 		.date-to {
 			width: 100%;
-		}
-
-		.filter-input {
-			font-size: 13px;
 		}
 
 		button,
@@ -1042,10 +922,6 @@
 
 		#button-details {
 			margin-bottom: 10px;
-		}
-
-		.project-box {
-			padding: 8px;
 		}
 
 		.project-box p {

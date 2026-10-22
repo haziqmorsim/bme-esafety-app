@@ -227,48 +227,9 @@
 </div>
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
-	}
-
-	button {
-		background-color: #093d85;
-		color: #ffffff;
-		border: none;
-		font-size: small;
-		padding: 6px 14px;
-		border-radius: 4px;
-		cursor: pointer;
-	}
-
-	.button-submit {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		background-color: #091747;
-		font-weight: bold;
-		margin: 5px;
-		padding: 10px 20px;
-	}
-
-	.button-submit:hover {
-		background-color: #091747b9;
-	}
-
 	.container {
 		display: flex;
 		margin: 10px 0;
-	}
-
-	.declaration {
-		padding: 0 10px;
-		font-weight: bold;
-	}
-
-	.declaration p {
-		margin-bottom: 10px;
 	}
 
 	.department-select,
@@ -278,175 +239,23 @@
 		margin: 10px 0;
 	}
 
-	.forms {
-		margin: 0;
-		position: relative;
-	}
-
-	.forms-date {
-		cursor: pointer;
-	}
-
-	.forms-date::-webkit-calendar-picker-indicator {
-		cursor: pointer;
-	}
-
-	.forms-input {
-		height: 30px;
-		width: 500px;
-		font-size: 14px;
-	}
-
-	.forms-label {
-		width: 200px;
-		font-size: 14px;
-	}
-
-	.forms-p {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		margin: 10px 0;
-	}
-
-	.heading {
-		margin: 10px 0;
-		font-size: 20px;
-		font-weight: bold;
-	}
-
-	.project-box {
-		margin: 10px;
-		border: 1px solid #091747;
-		border-radius: 4px;
-		padding: 10px;
-		font-size: 14px;
-	}
-
-	.remarks {
-		width: 100%;
-		height: 200px;
-	}
-
-	.submit {
-		display: flex;
-		justify-content: flex-end;
-	}
-
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		margin-bottom: 20px;
-		padding: 0 10px;
-	}
-
 	@media (max-width: 1024px) {
-		.title {
-			font-size: 24px;
-			margin-bottom: 15px;
-		}
-
-		.project-box {
-			margin: 8px;
-			padding: 10px;
-		}
-
-		.forms-input {
-			width: 100%;
-			max-width: 100%;
-		}
-
-		.forms-label {
-			width: 180px;
-		}
-
 		.department-select,
 		.claim-select {
 			width: 100%;
-		}
-
-		.forms-p {
-			align-items: flex-start;
-		}
-
-		.remarks {
-			height: 180px;
-		}
-
-		.declaration {
-			padding-left: 8px;
-		}
-
-		.declaration p {
-			word-break: break-word;
-			overflow-wrap: anywhere;
 		}
 	}
 
 	@media (max-width: 600px) {
-		.title {
-			font-size: 22px;
-			margin-bottom: 14px;
-		}
-
-		.heading {
-			font-size: 18px;
-		}
-
-		.project-box {
-			margin: 6px;
-			padding: 8px;
-		}
-
-		.forms-p {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 4px;
-		}
-
-		.forms-label {
-			width: 100%;
-			font-size: 13px;
-		}
-
-		.forms-input {
-			width: 100%;
-			height: 34px;
-			font-size: 13px;
-		}
-
 		.department-select,
 		.claim-select {
 			width: 100%;
 			height: 34px;
-			font-size: 13px;
-		}
-
-		.remarks {
-			height: 160px;
 			font-size: 13px;
 		}
 
 		.container {
 			gap: 10px;
-		}
-
-		.declaration {
-			padding: 0;
-			font-size: 13px;
-		}
-
-		.declaration p {
-			font-size: 13px;
-		}
-
-		.submit {
-			justify-content: center;
-		}
-
-		.button-submit {
-			width: 100%;
-			justify-content: center;
 		}
 	}
 </style>

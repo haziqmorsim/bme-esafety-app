@@ -158,7 +158,9 @@
 		justify-content: center;
 		padding: 32px 20px;
 		overflow-y: auto;
-		background: rgba(9, 23, 71, 0.45);
+		background: rgba(9, 23, 71, 0.55);
+		-webkit-backdrop-filter: blur(3px);
+		backdrop-filter: blur(3px);
 	}
  
 	.modal {
@@ -169,12 +171,14 @@
 		width: min(var(--modal-width), 100%);
 		max-height: calc(100dvh - 64px);
 		margin: auto 0;
-		background: #ffffff;
-		border-radius: 8px;
-		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-		font-family: Arial, Helvetica, sans-serif;
-		color: #091747;
+		background: var(--surface);
+		border: 1px solid var(--line-soft);
+		border-radius: var(--r-xl);
+		box-shadow: var(--shadow-lg);
+		font-family: var(--font-sans);
+		color: var(--ink);
 		outline: none;
+		overflow: hidden;
 	}
  
 	.modal-sm {
@@ -205,17 +209,18 @@
  
 	.modal-title {
 		margin: 0;
-		font-size: 20px;
-		font-weight: bold;
+		font-size: 18px;
+		font-weight: 600;
 		line-height: 1.3;
-		color: #091747;
+		letter-spacing: -0.01em;
+		color: var(--ink);
 		overflow-wrap: anywhere;
 	}
  
 	.modal-subtitle {
 		margin: 4px 0 0;
 		font-size: 14px;
-		color: #5b6480;
+		color: var(--muted);
 		overflow-wrap: anywhere;
 	}
  
@@ -224,17 +229,18 @@
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
-		margin: -4px -6px 0 0;
-		padding: 6px;
+		margin: -4px -8px 0 0;
+		padding: 7px;
 		border: none;
-		border-radius: 50%;
+		border-radius: var(--r-md);
 		background: transparent;
-		color: #091747;
+		color: var(--muted);
 		cursor: pointer;
 	}
  
 	.modal-close:hover:not(:disabled) {
-		background: rgba(0, 0, 0, 0.06);
+		background: var(--mist);
+		color: var(--ink);
 	}
  
 	.modal-close:disabled {
@@ -245,7 +251,7 @@
 	.modal-body {
 		flex: 1 1 auto;
 		min-height: 0;
-		padding: 16px 20px;
+		padding: 20px 24px;
 		overflow-y: auto;
 		overflow-wrap: anywhere;
 	}
@@ -270,7 +276,7 @@
 		}
  
 		.modal-header {
-			padding: 16px 16px 0;
+			padding: 16px 16px 12px;
 		}
  
 		.modal-title {
@@ -283,7 +289,7 @@
  
 		.modal-footer {
 			flex-direction: column-reverse;
-			padding: 4px 16px 16px;
+			padding: 12px 16px 16px;
 		}
  
 		.modal-footer :global(button) {

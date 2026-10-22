@@ -205,30 +205,20 @@
 </div>
 
 <style>
-	.wda-table .center {
-		text-align: center;
-	}
-
 	.wda-table .present {
 		color: #0f8f2f;
-		font-weight: bold;
+		font-weight: 600;
 	}
 
 	.wda-table .absent {
-		color: #c62828;
-		font-weight: bold;
+		color: var(--danger);
+		font-weight: 600;
 	}
 
 	.empty {
 		text-align: center;
 		padding: 16px;
-		color: #5b6480;
-	}
-
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
+		color: var(--muted);
 	}
 
 	.date-records {
@@ -247,57 +237,11 @@
 		cursor: pointer;
 	}
 
-	.project-box {
-		margin: 10px;
-		padding: 10px;
-		font-size: 14px;
-	}
-
 	.records {
 		font-size: 12px;
 	}
 
-	.title {
-		font-size: 35px;
-		font-weight: bold;
-		margin-bottom: 20px;
-		padding: 0 10px;
-	}
-
-	.table-container {
-		margin-top: 12px;
-	}
-
-	.wda-table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-
-	.wda-table th,
-	.wda-table td {
-		border: 1px solid #091747b9;
-		padding: 12px 16px;
-		text-align: left;
-		font-size: 14px;
-	}
-
-	.wda-table thead th {
-		background-color: #091747;
-		color: #ffffff;
-		font-weight: 700;
-		text-align: center;
-	}
-
-	.wda-table tbody tr:nth-child(even) {
-		background-color: #ececec;
-	}
-
 	@media (max-width: 1024px) {
-		.title {
-			font-size: 24px;
-			margin-bottom: 12px;
-		}
-
 		.date-records {
 			flex-wrap: wrap;
 			align-items: flex-start;
@@ -325,16 +269,6 @@
 	}
 
 	@media (max-width: 600px) {
-		.title {
-			font-size: 22px;
-			margin-bottom: 14px;
-		}
-
-		.project-box {
-			margin: 6px;
-			padding: 8px;
-		}
-
 		.date-records {
 			flex-direction: column;
 			align-items: flex-start;
@@ -344,10 +278,6 @@
 		.filter-date {
 			width: 100%;
 			font-size: 13px;
-		}
-
-		.forms-date {
-			width: 100%;
 		}
 
 		.records {
@@ -377,8 +307,8 @@
 		.wda-table tbody tr {
 			margin-bottom: 10px;
 			padding: 8px 12px;
-			border: 1px solid #dcdcdc;
-			border-radius: 4px;
+			border: 1px solid var(--line);
+			border-radius: var(--r-md);
 			background-color: #ffffff;
 			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 		}
@@ -402,8 +332,149 @@
 
 		.wda-table td::before {
 			content: attr(data-label);
-			font-weight: bold;
-			color: #091747;
+			font-weight: 600;
+			color: var(--ink);
+		}
+
+		.wda-table td.empty {
+			display: block;
+			text-align: center;
+		}
+
+		.wda-table td.empty::before {
+			content: none;
+		}
+	}
+
+	.wda-table .present {
+		color: #0f8f2f;
+		font-weight: 600;
+	}
+
+	.wda-table .absent {
+		color: var(--danger);
+		font-weight: 600;
+	}
+
+	.empty {
+		text-align: center;
+		padding: 16px;
+		color: var(--muted);
+	}
+
+	.date-records {
+		display: flex;
+		justify-content: space-between;
+		align-items: end;
+		gap: 12px;
+	}
+
+	.filter-date {
+		font-size: 12px;
+		cursor: pointer;
+	}
+
+	.filter-date::-webkit-calendar-picker-indicator {
+		cursor: pointer;
+	}
+
+	.records {
+		font-size: 12px;
+	}
+
+	@media (max-width: 1024px) {
+		.date-records {
+			flex-wrap: wrap;
+			align-items: flex-start;
+			gap: 10px;
+		}
+
+		.records {
+			width: 100%;
+			text-align: left;
+		}
+
+		.table-container {
+			overflow-x: auto;
+		}
+
+		.wda-table {
+			min-width: 900px;
+		}
+
+		.wda-table th,
+		.wda-table td {
+			padding: 10px 12px;
+			font-size: 13px;
+		}
+	}
+
+	@media (max-width: 600px) {
+		.date-records {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 8px;
+		}
+
+		.filter-date {
+			width: 100%;
+			font-size: 13px;
+		}
+
+		.records {
+			font-size: 12px;
+		}
+
+		.table-container {
+			overflow: visible;
+		}
+
+		.wda-table {
+			min-width: 0;
+		}
+
+		.wda-table thead {
+			display: none;
+		}
+
+		.wda-table,
+		.wda-table tbody,
+		.wda-table tr,
+		.wda-table td {
+			display: block;
+			width: 100%;
+		}
+
+		.wda-table tbody tr {
+			margin-bottom: 10px;
+			padding: 8px 12px;
+			border: 1px solid var(--line);
+			border-radius: var(--r-md);
+			background-color: #ffffff;
+			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+		}
+
+		.wda-table tbody tr:nth-child(even) {
+			background-color: #ffffff;
+		}
+
+		.wda-table td,
+		.wda-table .center {
+			display: grid;
+			grid-template-columns: 96px minmax(0, 1fr);
+			gap: 8px;
+			padding: 4px 0;
+			border: none;
+			font-size: 14px;
+			text-align: left;
+			white-space: normal;
+			overflow-wrap: anywhere;
+		}
+
+		.wda-table td::before {
+			content: attr(data-label);
+			font-weight: 600;
+			color: var(--ink);
 		}
 
 		.wda-table td.empty {

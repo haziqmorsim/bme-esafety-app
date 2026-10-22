@@ -1,26 +1,30 @@
 <footer class="footer">
-	<div class="footer-bottom">
+	<div class="footer-inner">
 		<p class="small">© 2026 Boilermech Sdn Bhd. All rights reserved.</p>
 	</div>
 </footer>
 
 <style>
-	* {
-		font-family: Arial, Helvetica, sans-serif;
-		font-size: 14px;
-		color: #091747;
+	.footer {
+		margin-top: 40px;
+		border-top: 1px solid var(--line-soft);
+		background-color: var(--surface);
+		border-bottom: 4px solid var(--ink);
 	}
 
-	.footer-bottom {
-		text-align: center;
-		border-top: 1px solid #091747;
-		padding: 5px;
-		margin-top: 20px;
-		position: relative;
+	.footer-inner {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 14px;
+		max-width: 1320px;
+		margin: 0 auto;
+		padding: 18px 20px;
 	}
 
 	.small {
-		padding-top: 10px;
+		margin: 0;
+		color: var(--muted);
 		font-size: 12px;
 	}
 </style>
