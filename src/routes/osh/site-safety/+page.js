@@ -1,5 +1,5 @@
 export function load() {
 	return {
-		title: 'Site Safety eForm Information Page | BME e-Safety App'
+		title: 'Site Safety eForm Information | BME e-Safety App'
 	};
 }

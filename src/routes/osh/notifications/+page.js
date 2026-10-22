@@ -1,5 +1,5 @@
 export function load() {
 	return {
-		title: 'Notifications Page | BME e-Safety App'
+		title: 'Notifications | BME e-Safety App'
 	};
 }
