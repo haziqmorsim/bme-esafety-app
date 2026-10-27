@@ -361,10 +361,22 @@
 					{topic}
 				</label>
 			{/each}
-			<label class="topic-item"
-				><input type="checkbox" bind:checked={otherTopicChecked} />
-				Other Topics: <input type="text" class="topic-input" bind:value={other_topic} />
-			</label>
+			<div class="topic-other">
+				<label class="topic-item">
+					<input type="checkbox" bind:checked={otherTopicChecked} />
+					Other Topics
+				</label>
+				{#if otherTopicChecked}
+					<input
+						type="text"
+						class="topic-input"
+						placeholder="Please specify"
+						aria-label="Other topic"
+						bind:value={other_topic}
+						required
+					/>
+				{/if}
+			</div>
 		</div>
 		<br />
 		<hr />
@@ -859,11 +871,17 @@
 		display: grid;
 		grid-template-columns: repeat(5, 1fr);
 		gap: 10px 20px;
+		align-items: start;
+	}
+
+	.topic-other {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
 	}
 
 	.topic-input {
-		height: 25px;
-		width: 150px;
+		width: 100%;
 		font-size: 14px;
 	}
 

@@ -1,5 +1,6 @@
 <script>
 	import AuthShell from '$lib/components/AuthShell.svelte';
+	import PasswordInput from '$lib/components/PasswordInput.svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { getSupabase } from '$lib/supabase';
@@ -96,24 +97,20 @@
 		<form on:submit={submitNewPassword}>
 			<div class="auth-field">
 				<label for="new-password">New password</label>
-				<input
+				<PasswordInput
 					id="new-password"
-					type="password"
 					bind:value={password}
-					minlength="8"
-					autocomplete="new-password"
-					required
+					minlength={8}
+					what="new password"
 				/>
 			</div>
 			<div class="auth-field">
 				<label for="confirm-password">Confirm new password</label>
-				<input
+				<PasswordInput
 					id="confirm-password"
-					type="password"
 					bind:value={confirmPassword}
-					minlength="8"
-					autocomplete="new-password"
-					required
+					minlength={8}
+					what="confirm password"
 				/>
 			</div>
 			{#if errorMsg}
@@ -135,7 +132,7 @@
 		width: 100%;
 		height: 46px;
 		border-radius: var(--r-md);
-		background: var(--ink);
+		background: var(--fill);
 		color: #ffffff;
 		font-size: 15px;
 		font-weight: 600;

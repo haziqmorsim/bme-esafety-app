@@ -145,7 +145,7 @@
 
 		.submitted-date {
 			font-size: 13px;
-			color: #444;
+			color: var(--muted);
 		}
 	}
 
@@ -191,7 +191,7 @@
 
 		.submitted-date {
 			font-size: 12px;
-			color: #555;
+			color: var(--muted);
 		}
 	}
 </style>

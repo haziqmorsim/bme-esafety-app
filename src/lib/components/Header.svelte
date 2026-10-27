@@ -9,6 +9,7 @@
 	import Bell from '@lucide/svelte/icons/bell';
 	import House from '@lucide/svelte/icons/house';
 	import LogOut from '@lucide/svelte/icons/log-out';
+	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 
 	const navItems = [
 		{ href: '/', label: 'Main Menu', icon: House },
@@ -130,6 +131,7 @@
 			</nav>
 
 			<div class="user">
+				<ThemeToggle />
 				<span class="avatar" aria-hidden="true">{initials}</span>
 				<span class="user-text">
 					<span class="user-label">Signed in as</span>
@@ -149,7 +151,7 @@
 		position: sticky;
 		top: 0;
 		z-index: 50;
-		background-color: rgba(255, 255, 255, 0.92);
+		background-color: var(--header-bg);
 		border-bottom: 1px solid var(--line-soft);
 		box-shadow: var(--shadow-sm);
 		-webkit-backdrop-filter: saturate(160%) blur(10px);
@@ -171,8 +173,6 @@
 		padding: 0 20px;
 	}
 
-	/* ---- Brand ---- */
-
 	.brand {
 		display: flex;
 		align-items: center;
@@ -189,17 +189,17 @@
 
 	.logo-crop {
 		display: block;
-		width: 86px;
-		height: 56px;
+		width: 90px;
+		height: 90px;
 		overflow: hidden;
 		position: relative;
+		border-radius: 8px;
 	}
 
 	.logo {
 		position: absolute;
-		top: -8px;
 		left: -3px;
-		height: 74px;
+		height: 90px;
 		width: auto;
 		max-width: none;
 	}
@@ -213,8 +213,6 @@
 		line-height: 1.1;
 		white-space: nowrap;
 	}
-
-	/* ---- Navigation ---- */
 
 	.nav {
 		display: flex;
@@ -281,7 +279,7 @@
 		width: 36px;
 		height: 36px;
 		border-radius: 50%;
-		background-color: var(--ink);
+		background-color: var(--fill);
 		color: #ffffff;
 		font-size: 13px;
 		font-weight: 600;
@@ -323,8 +321,6 @@
 		background-color: var(--mist);
 	}
 
-	/* ---- Tablet: drop the "signed in as" label, shorten spacing ---- */
-
 	@media (max-width: 1100px) {
 		.bar {
 			gap: 12px;
@@ -338,8 +334,6 @@
 			display: none;
 		}
 	}
-
-	/* ---- Mobile: brand + account on top, navigation scrolls beneath ---- */
 
 	@media (max-width: 860px) {
 		.bar {
@@ -418,7 +412,7 @@
 
 		.nav-link.active {
 			background-color: transparent;
-			color: var(--brand);
+			color: var(--link);
 		}
 
 		.nav-link.active::after {
@@ -427,8 +421,6 @@
 			bottom: 0;
 		}
 	}
-
-	/* ---- Small phones: icon over label so all four tabs fit ---- */
 
 	@media (max-width: 480px) {
 		.nav {

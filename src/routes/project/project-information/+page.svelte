@@ -511,7 +511,7 @@
 	}
 
 	.button-delete {
-		background-color: var(--danger);
+		background-color: var(--danger-solid);
 	}
 
 	.button-delete:hover:not(:disabled) {
@@ -523,7 +523,7 @@
 	}
 
 	.button-confirm {
-		background-color: var(--ink);
+		background-color: var(--fill);
 		font-weight: 600;
 		padding: 10px 20px;
 	}
@@ -580,7 +580,7 @@
 		align-items: center;
 		gap: 16px;
 		min-width: 0;
-		background-color: #ffffff;
+		background-color: var(--surface);
 		border: 1px solid var(--line);
 		border-radius: var(--r-lg);
 		padding: 15px 20px;

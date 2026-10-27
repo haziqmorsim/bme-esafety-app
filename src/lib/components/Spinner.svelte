@@ -47,7 +47,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: #ffffff;
+		background: var(--overlay-solid);
 		z-index: 9999;
 	}
 
@@ -80,7 +80,7 @@
 	.dot {
 		width: var(--dot-size);
 		height: var(--dot-size);
-		background: #091747;
+		background: var(--spinner-dot);
 		border-radius: 50%;
 		position: absolute;
 		left: 50%;
@@ -99,7 +99,7 @@
 		height: 68%;
 		padding: 10px;
 		object-fit: contain;
-		border-radius: 4px;
+		border-radius: 12px;
 		position: relative;
 		z-index: -1;
 	}

@@ -789,7 +789,7 @@
 	}
 
 	.info-button {
-		background-color: #ffffff;
+		background-color: var(--surface);
 		color: var(--ink);
 		cursor: pointer;
 		padding: 0;
@@ -820,7 +820,7 @@
 		left: 50%;
 		transform: translateX(-50%);
 		z-index: 20;
-		background: #ffffff;
+		background: var(--surface);
 		border: 1px solid var(--line-strong);
 		border-radius: var(--r-md);
 		padding: 12px;
@@ -954,7 +954,7 @@
 			overflow-y: auto;
 			padding: 16px;
 			border-radius: 10px;
-			background: white;
+			background: var(--surface);
 			box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 			z-index: 2000;
 		}

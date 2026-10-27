@@ -9,7 +9,12 @@ let unsub = null;
 
 function setUser(user) {
 	const current = get(authUser);
-	if ((current?.id ?? null) !== (user?.id ?? null) || current?.email !== user?.email) {
+	const flag = (u) => Boolean(u?.app_metadata?.must_change_password);
+	if (
+		(current?.id ?? null) !== (user?.id ?? null) ||
+		current?.email !== user?.email ||
+		flag(current) !== flag(user)
+	) {
 		authUser.set(user ?? null);
 	}
 }

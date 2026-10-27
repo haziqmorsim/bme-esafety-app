@@ -908,7 +908,7 @@
 	}
 
 	.note {
-		background-color: #ffffff;
+		background-color: var(--surface);
 		border: 1px solid var(--line);
 		border-radius: var(--r-md);
 		padding: 10px 14px;
@@ -921,11 +921,11 @@
 		gap: 6px;
 		margin: 0 0 4px;
 		font-weight: 600;
-		color: var(--brand);
+		color: var(--link);
 	}
 
 	.note-title span {
-		color: var(--brand);
+		color: var(--link);
 		font-weight: 600;
 	}
 
@@ -958,7 +958,7 @@
 
 	.nav {
 		background: none;
-		color: var(--brand);
+		color: var(--link);
 		border: none;
 		padding: 6px 12px;
 		display: flex;
@@ -966,7 +966,7 @@
 	}
 
 	.nav:hover {
-		background: rgba(0, 0, 0, 0.05);
+		background: var(--hover-tint);
 	}
 
 	.day-list.is-loading {
@@ -1003,7 +1003,7 @@
 
 	.day.today .day-label,
 	.day.today .day-icon {
-		color: var(--brand);
+		color: var(--link);
 	}
 
 	.button-add {
@@ -1011,8 +1011,8 @@
 		height: 40px;
 		padding: 0;
 		border-radius: 50%;
-		background-color: #093d851f;
-		color: var(--brand);
+		background-color: var(--brand-tint);
+		color: var(--link);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -1020,11 +1020,11 @@
 	}
 
 	.button-add:hover {
-		background-color: #093d853d;
+		background-color: var(--brand-tint-hover);
 	}
 
 	.claim-card {
-		background-color: #ffffff;
+		background-color: var(--surface);
 		border: 1px solid var(--line);
 		border-radius: var(--r-lg);
 		padding: 12px 16px;
@@ -1069,11 +1069,11 @@
 	}
 
 	.icon-button:hover {
-		background: rgba(0, 0, 0, 0.06);
+		background: var(--hover-tint);
 	}
 
 	.icon-edit {
-		color: var(--brand);
+		color: var(--link);
 	}
 
 	.icon-delete {
@@ -1106,7 +1106,7 @@
 
 	.link-button {
 		background: none;
-		color: var(--brand);
+		color: var(--link);
 		padding: 0;
 		display: inline-flex;
 		align-items: center;
@@ -1155,7 +1155,7 @@
 		border-radius: var(--r-md);
 		padding: 8px 10px;
 		font-size: 14px;
-		background-color: #ffffff;
+		background-color: var(--surface);
 	}
 
 	.field select:disabled {
@@ -1187,7 +1187,7 @@
 		width: 46px;
 		height: 38px;
 		padding: 0;
-		background-color: var(--ink);
+		background-color: var(--fill);
 		display: flex;
 		align-items: center;
 		justify-content: center;

@@ -4,6 +4,10 @@
 	import Search from '@lucide/svelte/icons/search';
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
+	import Plus from '@lucide/svelte/icons/plus';
+	import Eye from '@lucide/svelte/icons/eye';
+	import EyeOff from '@lucide/svelte/icons/eye-off';
+	import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 	import { supabase } from '$lib/supabase';
 	import { requireUser } from '$lib/auth-guard';
 	import { toast } from '$lib/stores/toast';
@@ -15,7 +19,21 @@
 	let modalError = '';
 	let showEditModal = false;
 	let showDeleteModal = false;
+	let showAddModal = false;
+	let showTempPassword = false;
 	let selectedUser = null;
+	const emptyAddForm = () => ({
+		first_name: '',
+		last_name: '',
+		nickname: '',
+		email: '',
+		phone: '',
+		department: '',
+		position: '',
+		region: '',
+		temporaryPassword: ''
+	});
+	let addForm = emptyAddForm();
 	let editForm = {
 		first_name: '',
 		last_name: '',
@@ -87,6 +105,93 @@
 		selectedUser = null;
 	};
 
+	const openAddModal = () => {
+		addForm = emptyAddForm();
+		showTempPassword = false;
+		modalError = '';
+		showAddModal = true;
+	};
+
+	const closeAddModal = () => {
+		if (isSaving) return;
+		showAddModal = false;
+	};
+
+	const generateTempPassword = () => {
+		const sets = ['ABCDEFGHJKLMNPQRSTUVWXYZ', 'abcdefghijkmnopqrstuvwxyz', '23456789'];
+		const all = sets.join('');
+		const pick = (chars) => {
+			const buf = new Uint32Array(1);
+			crypto.getRandomValues(buf);
+			return chars[buf[0] % chars.length];
+		};
+		const out = sets.map(pick);
+		while (out.length < 12) out.push(pick(all));
+		for (let i = out.length - 1; i > 0; i--) {
+			const buf = new Uint32Array(1);
+			crypto.getRandomValues(buf);
+			const j = buf[0] % (i + 1);
+			[out[i], out[j]] = [out[j], out[i]];
+		}
+		addForm.temporaryPassword = out.join('');
+		showTempPassword = true;
+	};
+
+	const addUser = async () => {
+		modalError = '';
+
+		const first = addForm.first_name.trim();
+		const email = addForm.email.trim();
+		if (!first) return (modalError = 'First name is required.');
+		if (!email) return (modalError = 'E-mail address is required.');
+		if (addForm.temporaryPassword.length < 8) {
+			return (modalError = 'The temporary password must be at least 8 characters.');
+		}
+
+		isSaving = true;
+		try {
+			const {
+				data: { session }
+			} = await supabase.auth.getSession();
+			if (!session?.access_token) throw new Error('Your session has expired. Please sign in again.');
+
+			const res = await fetch('/api/admin/users', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${session.access_token}`
+				},
+				body: JSON.stringify({
+					...addForm,
+					first_name: first,
+					email,
+					department: addForm.department
+						.split(',')
+						.map((value) => value.trim())
+						.filter(Boolean)
+				})
+			});
+
+			const result = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(result?.message ?? `Could not add the user (${res.status}).`);
+
+			const created = result.user;
+			users = [...users, created].sort((a, b) =>
+				(a.first_name ?? '').localeCompare(b.first_name ?? '')
+			);
+			isSaving = false;
+			showAddModal = false;
+			addForm = emptyAddForm();
+			toast.success(
+				`User "${fullName(created)}" added. They must change the temporary password at first sign-in.`
+			);
+		} catch (error) {
+			modalError = error?.message ?? String(error);
+		} finally {
+			isSaving = false;
+		}
+	};
+
 	const openDeleteModal = (user) => {
 		selectedUser = user;
 		modalError = '';
@@ -151,15 +256,18 @@
 		const name = fullName(selectedUser);
 
 		try {
-			const { data, error } = await supabase
-				.from('profiles')
-				.delete()
-				.eq('id', id)
-				.select('id');
+			const {
+				data: { session }
+			} = await supabase.auth.getSession();
+			if (!session?.access_token) throw new Error('Your session has expired. Please sign in again.');
 
-			if (error) throw error;
-			if (!data || data.length === 0) {
-				throw new Error('The user was not deleted. You may not have permission to delete this user.');
+			const res = await fetch(`/api/admin/users/${id}`, {
+				method: 'DELETE',
+				headers: { Authorization: `Bearer ${session.access_token}` }
+			});
+			if (!res.ok) {
+				const result = await res.json().catch(() => ({}));
+				throw new Error(result?.message ?? `Could not delete the user (${res.status}).`);
 			}
 
 			users = users.filter((user) => user.id !== id);
@@ -193,6 +301,11 @@
 	<div>
 		<p>User</p>
 		<input type="text" placeholder="Search by user..." bind:value={searchText} class="filter-input" />
+	</div>
+	<div class="filter-actions">
+		<button type="button" class="button-submit add-user" onclick={openAddModal}>
+			<Plus size={18} /><span>Add User</span>
+		</button>
 	</div>
 </div>
 
@@ -270,6 +383,89 @@
 	{/snippet}
 </Modal>
 
+<Modal open={showAddModal} title="Add User" busy={isSaving} onclose={closeAddModal}>
+	<form id="add-user-form" class="edit-form" onsubmit={(e) => (e.preventDefault(), addUser())}>
+		<label>
+			First Name:
+			<input type="text" bind:value={addForm.first_name} autocomplete="off" required />
+		</label>
+		<label>
+			Last Name:
+			<input type="text" bind:value={addForm.last_name} autocomplete="off" />
+		</label>
+		<label>
+			Nickname:
+			<input type="text" bind:value={addForm.nickname} autocomplete="off" />
+		</label>
+		<label>
+			E-mail Address:
+			<input type="email" bind:value={addForm.email} autocomplete="off" required />
+		</label>
+		<label>
+			Phone Number:
+			<input type="text" bind:value={addForm.phone} autocomplete="off" />
+		</label>
+		<label>
+			Department(s) (comma-separated):
+			<input type="text" bind:value={addForm.department} autocomplete="off" />
+		</label>
+		<label>
+			Position:
+			<input type="text" bind:value={addForm.position} autocomplete="off" />
+		</label>
+		<label>
+			Region:
+			<input type="text" bind:value={addForm.region} autocomplete="off" />
+		</label>
+		<div class="field">
+			<label for="temp-password">Temporary Password:</label>
+			<div class="password-row">
+				<input
+					id="temp-password"
+					type={showTempPassword ? 'text' : 'password'}
+					bind:value={addForm.temporaryPassword}
+					minlength="8"
+					maxlength="72"
+					autocomplete="new-password"
+					required
+				/>
+				<button
+					type="button"
+					class="icon-button"
+					onclick={() => (showTempPassword = !showTempPassword)}
+					aria-label={showTempPassword ? 'Hide temporary password' : 'Show temporary password'}
+					title={showTempPassword ? 'Hide' : 'Show'}
+				>
+					{#if showTempPassword}<EyeOff size={18} />{:else}<Eye size={18} />{/if}
+				</button>
+				<button
+					type="button"
+					class="icon-button"
+					onclick={generateTempPassword}
+					aria-label="Generate a random temporary password"
+					title="Generate a random password"
+				>
+					<RefreshCw size={18} />
+				</button>
+			</div>
+			<p class="hint">
+				At least 8 characters. The user is asked to choose a new password the first time they sign
+				in with this one.
+			</p>
+		</div>
+	</form>
+	{#if modalError}
+		<p class="error modal-error">{modalError}</p>
+	{/if}
+
+	{#snippet footer()}
+		<button class="button-inverted" onclick={closeAddModal} disabled={isSaving}>Cancel</button>
+		<button type="submit" form="add-user-form" class="button-confirm" disabled={isSaving}>
+			{isSaving ? 'Adding...' : 'Add User'}
+		</button>
+	{/snippet}
+</Modal>
+
 <Modal open={showDeleteModal} title="Delete User" size="sm" busy={isSaving} onclose={closeDeleteModal}>
 	<p>Are you sure you want to delete this user?</p>
 	{#if selectedUser}
@@ -298,7 +494,7 @@
 	}
 
 	.button-inverted {
-		margin-top: 5px;
+		margin-top: 0;
 	}
 
 	.button-modify {
@@ -321,11 +517,64 @@
 	}
 
 	.button-delete {
-		background-color: var(--danger);
+		background-color: var(--danger-solid);
 	}
 
 	.button-delete:hover:not(:disabled) {
 		background-color: #c62828c7;
+	}
+
+	.filter-actions {
+		margin-left: auto;
+	}
+
+	.add-user {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+	}
+
+	.add-user span {
+		color: #ffffff;
+	}
+
+	.field {
+		display: grid;
+		gap: 6px;
+	}
+
+	.field > label {
+		font-size: 13px;
+		font-weight: 600;
+	}
+
+	.password-row {
+		display: flex;
+		gap: 8px;
+	}
+
+	.password-row input {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.icon-button {
+		display: grid;
+		place-items: center;
+		flex-shrink: 0;
+		width: 40px;
+		height: 40px;
+		padding: 0;
+		border: 1px solid var(--line-strong);
+		border-radius: var(--r-md);
+		background-color: var(--surface);
+		color: var(--ink);
+	}
+
+	.icon-button:hover:not(:disabled) {
+		border-color: var(--ink);
+		background-color: var(--mist);
 	}
 
 	.department-select {
@@ -350,7 +599,7 @@
 		display: flex;
 		align-items: center;
 		gap: 16px;
-		background-color: #ffffff;
+		background-color: var(--surface);
 		border: 1px solid var(--line);
 		border-radius: var(--r-lg);
 		padding: 15px 20px;
@@ -393,7 +642,7 @@
 	}
 
 	.button-confirm {
-		background-color: var(--ink);
+		background-color: var(--fill);
 	}
 
 	.button-confirm:hover:not(:disabled) {
@@ -426,6 +675,15 @@
 
 	@media (max-width: 1024px) {
 		.department-select {
+			width: 100%;
+		}
+
+		.filter-actions {
+			margin-left: 0;
+			width: 100%;
+		}
+
+		.add-user {
 			width: 100%;
 		}
 

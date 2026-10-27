@@ -427,7 +427,7 @@
 	}
 
 	.button-confirm {
-		background-color: var(--ink);
+		background-color: var(--fill);
 		font-weight: 600;
 		padding: 8px 20px;
 	}

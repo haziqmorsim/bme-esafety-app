@@ -2,14 +2,7 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
-/* ==========================================================================
-   BME e-Safety design system
-   Palette is unchanged from the original app:
-   navy #091747 · blue #093d85 · mist #f2f4f9 · line #cfd6e4 · slate #5b6480
-   ========================================================================== */
-
 :root {
-	/* Core palette */
 	--ink: #091747;
 	--brand: #093d85;
 	--brand-deep: #072f69;
@@ -21,7 +14,6 @@
 	--line-strong: #b4bfd6;
 	--surface: #ffffff;
 
-	/* Status colours (already used in the app) */
 	--danger: #c62828;
 	--danger-bg: #fdecec;
 	--success: #0f8f2f;
@@ -29,7 +21,26 @@
 	--warn: #e67e00;
 	--warn-bg: #fff2e0;
 
-	/* Shape + depth */
+	--fill: #091747;
+	--link: #093d85;
+	--link-hover: #072f69;
+	--danger-solid: #c62828;
+	--danger-solid-hover: #a71f1f;
+	--placeholder: #8a93ad;
+	--selection: rgba(9, 61, 133, 0.18);
+	--header-bg: rgba(255, 255, 255, 0.92);
+	--overlay: rgba(9, 23, 71, 0.55);
+	--overlay-solid: #ffffff;
+	--hover-tint: rgba(0, 0, 0, 0.05);
+	--surface-alt: #f7f9fc;
+	--surface-tint: #f7fbff;
+	--upload-hover: #eaf0fa;
+	--brand-tint: #093d851f;
+	--brand-tint-hover: #093d853d;
+	--focus-soft: rgba(9, 23, 71, 0.12);
+	--logo-bg: transparent;
+	--spinner-dot: #091747;
+
 	--r-sm: 6px;
 	--r-md: 8px;
 	--r-lg: 12px;
@@ -38,17 +49,69 @@
 	--shadow-md: 0 4px 12px rgba(9, 23, 71, 0.08), 0 2px 4px rgba(9, 23, 71, 0.04);
 	--shadow-lg: 0 16px 40px rgba(9, 23, 71, 0.18);
 	--ring: 0 0 0 3px rgba(9, 61, 133, 0.22);
+	color-scheme: only light;
 
 	--font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
 
 	--control-h: 40px;
 	--header-h: 68px;
 
-	/* The logo's diagonal stripes, reused as a quiet signature */
 	--stripes: var(--brand);
 }
 
-/* ---------- Base ---------- */
+/* Dark theme */
+
+:root[data-theme='dark'] {
+	--ink: #e8ecf8;
+	--muted: #a3aed0;
+	--mist: #0a1230;
+	--mist-2: #17224d;
+	--surface: #111b40;
+	--line: #2a3763;
+	--line-soft: #1f2a52;
+	--line-strong: #3b4a7c;
+
+	--brand: #3b72dc;
+	--brand-deep: #2f5fc4;
+	--fill: #2c56b8;
+	--link: #8fb4ff;
+	--link-hover: #b5ceff;
+
+	--danger: #ff8f8f;
+	--danger-bg: #3a1620;
+	--danger-solid: #c62828;
+	--danger-solid-hover: #d94040;
+	--success: #5fd37b;
+	--success-bg: #12331f;
+	--warn: #ffa94d;
+	--warn-bg: #3a2810;
+
+	--placeholder: #8a93ad;
+	--selection: rgba(143, 180, 255, 0.35);
+	--header-bg: rgba(10, 18, 48, 0.92);
+	--overlay: rgba(3, 7, 22, 0.72);
+	--overlay-solid: #0a1230;
+	--hover-tint: rgba(255, 255, 255, 0.08);
+	--surface-alt: #16224d;
+	--surface-tint: #16224d;
+	--upload-hover: #16224d;
+	--brand-tint: rgba(59, 114, 220, 0.2);
+	--brand-tint-hover: rgba(59, 114, 220, 0.35);
+	--focus-soft: rgba(143, 180, 255, 0.35);
+	--logo-bg: #ffffff;
+	--spinner-dot: #8fb4ff;
+
+	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
+	--shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+	--shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+	--ring: 0 0 0 3px rgba(143, 180, 255, 0.35);
+
+	color-scheme: dark;
+}
+
+:root[data-theme='dark'] select:not([multiple]):not([size]) {
+	background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23a3aed0' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
 
 html {
 	-webkit-text-size-adjust: 100%;
@@ -64,20 +127,23 @@ body {
 	line-height: 1.5;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+	transition:
+		background-color 0.2s ease,
+		color 0.2s ease;
 }
 
 ::selection {
-	background: rgba(9, 61, 133, 0.18);
+	background: var(--selection);
 }
 
 a {
-	color: var(--brand);
+	color: var(--link);
 	text-decoration: none;
 	text-underline-offset: 3px;
 }
 
 a:hover {
-	color: var(--brand-deep);
+	color: var(--link-hover);
 	text-decoration: underline;
 }
 
@@ -120,9 +186,6 @@ hr {
 	}
 }
 
-/* ---------- Form controls ---------- */
-
-/* :where() keeps these defaults at zero specificity so any component class can refine them */
 :where(
 		input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not(
 				[type='color']
@@ -158,7 +221,7 @@ hr {
 
 input::placeholder,
 textarea::placeholder {
-	color: #8a93ad;
+	color: var(--placeholder);
 	opacity: 1;
 }
 
@@ -207,6 +270,26 @@ input[type='radio']:focus {
 	border-color: var(--brand);
 }
 
+input[type='checkbox']:checked,
+input[type='radio']:checked,
+input[type='checkbox']:indeterminate {
+	background-color: var(--brand);
+	border-color: var(--brand);
+}
+
+input[type='checkbox']:checked:hover,
+input[type='radio']:checked:hover,
+input[type='checkbox']:indeterminate:hover {
+	background-color: var(--brand-deep);
+	border-color: var(--brand-deep);
+}
+
+input[type='checkbox']:disabled,
+input[type='radio']:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
 input[type='date'],
 input[type='time'],
 input[type='datetime-local'],
@@ -217,8 +300,6 @@ input[type='month'] {
 label {
 	color: var(--ink);
 }
-
-/* ---------- Buttons ---------- */
 
 button {
 	display: inline-flex;
@@ -243,7 +324,6 @@ button {
 		transform 0.1s ease;
 }
 
-/* :where() keeps these low-specificity so any component class can still override them */
 :where(button:enabled):hover {
 	background-color: var(--brand-deep);
 }
@@ -273,7 +353,7 @@ button svg {
 .button-submit {
 	min-height: var(--control-h);
 	padding: 0 20px;
-	background-color: var(--ink);
+	background-color: var(--fill);
 	font-size: 14px;
 	box-shadow: var(--shadow-sm);
 }
@@ -310,14 +390,12 @@ button svg {
 .button-danger {
 	min-height: var(--control-h);
 	padding: 0 20px;
-	background-color: var(--danger);
+	background-color: var(--danger-solid);
 }
 
 .button-danger:hover:not(:disabled) {
-	background-color: #a71f1f;
+	background-color: var(--danger-solid-hover);
 }
-
-/* ---------- Page structure ---------- */
 
 .title {
 	margin: 4px 0 28px;
@@ -338,7 +416,6 @@ button svg {
 	background: var(--stripes);
 }
 
-/* The main white panel that holds a form or a list */
 .project-box {
 	margin: 0 10px 24px;
 	padding: 28px 32px 32px;
@@ -456,8 +533,6 @@ button svg {
 	background-color: var(--mist);
 }
 
-/* ---------- File upload ---------- */
-
 .upload {
 	display: flex;
 	align-items: center;
@@ -475,7 +550,7 @@ button svg {
 
 .upload:hover {
 	border-color: var(--brand);
-	background-color: #eaf0fa;
+	background-color: var(--upload-hover);
 }
 
 .upload-text {
@@ -493,7 +568,7 @@ input[type='file']::file-selector-button {
 	padding: 8px 16px;
 	border: none;
 	border-radius: var(--r-md);
-	background-color: var(--ink);
+	background-color: var(--fill);
 	color: #ffffff;
 	font-family: inherit;
 	font-size: 13px;
@@ -506,8 +581,6 @@ input[type='file']::file-selector-button {
 input[type='file']::file-selector-button:hover {
 	background-color: var(--brand);
 }
-
-/* ---------- Project picker (inside modals) ---------- */
 
 .project-search {
 	display: flex;
@@ -525,7 +598,7 @@ input[type='file']::file-selector-button:hover {
 	width: 44px;
 	height: 40px;
 	padding: 0;
-	background-color: var(--ink);
+	background-color: var(--fill);
 }
 
 .project-search-button:hover:not(:disabled) {
@@ -594,8 +667,6 @@ input[type='file']::file-selector-button:hover {
 	text-align: center;
 }
 
-/* ---------- Filters ---------- */
-
 .filter-bar,
 .notifications-filter,
 .submissions-filter {
@@ -631,8 +702,6 @@ input[type='file']::file-selector-button:hover {
 	height: var(--control-h);
 	max-width: 100%;
 }
-
-/* ---------- Data tables ---------- */
 
 .table-container {
 	margin: 12px 10px 0;
@@ -681,14 +750,12 @@ input[type='file']::file-selector-button:hover {
 }
 
 :is(.claim-table, .dept-table, .wda-table) tbody tr:hover {
-	background-color: #f7f9fc;
+	background-color: var(--surface-alt);
 }
 
 :is(.claim-table, .dept-table, .wda-table) tbody tr:last-child td {
 	border-bottom: none;
 }
-
-/* ---------- Cards used across lists ---------- */
 
 .total-card {
 	display: inline-block;
@@ -700,8 +767,6 @@ input[type='file']::file-selector-button:hover {
 	box-shadow: var(--shadow-sm);
 	text-align: center;
 }
-
-/* ---------- Responsive ---------- */
 
 @media (max-width: 1024px) {
 	.title {

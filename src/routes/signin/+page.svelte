@@ -53,6 +53,12 @@
 				}, 8000);
 			}));
 
+		if (user?.app_metadata?.must_change_password) {
+			toast.info('Please choose a new password to continue.');
+			goto('/auth/changepw');
+			return;
+		}
+
 		if (user) {
 			const meta = user.user_metadata ?? {};
 
@@ -109,90 +115,90 @@
 </svelte:head>
 
 <AuthShell>
-			<form on:submit|preventDefault={signIn}>
-				<h1 class="auth-title">Sign in</h1>
-				<p class="auth-sub">Use the e-mail and password registered to your account.</p>
-				<p><label for="email">E-mail</label></p>
-				<p>
-					<input
-						id="email"
-						name="email"
-						type="email"
-						bind:value={email}
-						placeholder="name@company.com"
-						class="input-box"
-						autocomplete="email"
-						required
-					/>
-				</p>
-				<p><label for="password">Password</label></p>
-				<div class="password-wrapper">
-					<input
-						id="password"
-						name="password"
-						type={showPassword ? 'text' : 'password'}
-						bind:value={password}
-						placeholder="********"
-						class="input-box"
-						autocomplete="current-password"
-						required
-					/>
-					<button
-						type="button"
-						class="toggle-password"
-						on:click={() => (showPassword = !showPassword)}
-						aria-label={showPassword ? 'Hide password' : 'Show password'}
-						aria-pressed={showPassword}
-						title={showPassword ? 'Hide password' : 'Show password'}
+	<form on:submit|preventDefault={signIn}>
+		<h1 class="auth-title">Sign in</h1>
+		<p class="auth-sub">Use the e-mail and password registered to your account.</p>
+		<p><label for="email">E-mail</label></p>
+		<p>
+			<input
+				id="email"
+				name="email"
+				type="email"
+				bind:value={email}
+				placeholder="name@company.com"
+				class="input-box"
+				autocomplete="email"
+				required
+			/>
+		</p>
+		<p><label for="password">Password</label></p>
+		<div class="password-wrapper">
+			<input
+				id="password"
+				name="password"
+				type={showPassword ? 'text' : 'password'}
+				bind:value={password}
+				placeholder="********"
+				class="input-box"
+				autocomplete="current-password"
+				required
+			/>
+			<button
+				type="button"
+				class="toggle-password"
+				on:click={() => (showPassword = !showPassword)}
+				aria-label={showPassword ? 'Hide password' : 'Show password'}
+				aria-pressed={showPassword}
+				title={showPassword ? 'Hide password' : 'Show password'}
+			>
+				{#if showPassword}
+					<!-- Eye-off icon: password is currently visible -->
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
 					>
-						{#if showPassword}
-							<!-- Eye-off icon: password is currently visible -->
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="20"
-								height="20"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								aria-hidden="true"
-							>
-								<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-								<path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
-								<path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
-								<line x1="2" y1="2" x2="22" y2="22" />
-							</svg>
-						{:else}
-							<!-- Eye icon: password is currently hidden -->
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="20"
-								height="20"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								aria-hidden="true"
-							>
-								<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-								<circle cx="12" cy="12" r="3" />
-							</svg>
-						{/if}
-					</button>
-				</div>
-				<p class="forgotpw"><a href="/auth/forgotpw">Forgot password?</a></p>
-				{#if error}
-					<p class="error">{error}</p>
+						<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+						<path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+						<path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+						<line x1="2" y1="2" x2="22" y2="22" />
+					</svg>
+				{:else}
+					<!-- Eye icon: password is currently hidden -->
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+						<circle cx="12" cy="12" r="3" />
+					</svg>
 				{/if}
-				<button type="submit" class="button-primary" disabled={signingIn}>
-					{signingIn ? 'Signing in…' : 'Sign in'}
-				</button>
-				<!-- <p class="no-account">
-					Don't have an account? Sign up <a href="/signup" class="signup">here</a>.
-				</p> -->
-			</form>
+			</button>
+		</div>
+		<p class="forgotpw"><a href="/auth/forgotpw">Forgot password?</a></p>
+		{#if error}
+			<p class="error">{error}</p>
+		{/if}
+		<button type="submit" class="button-primary" disabled={signingIn}>
+			{signingIn ? 'Signing in…' : 'Sign in'}
+		</button>
+		<!-- <p class="no-account">
+			Don't have an account? Sign up <a href="/signup" class="signup">here</a>.
+		</p> -->
+	</form>
 </AuthShell>

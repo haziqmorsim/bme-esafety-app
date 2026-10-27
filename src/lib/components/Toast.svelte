@@ -69,18 +69,18 @@
 	}
 
 	.toast-success {
-		--toast-icon-color: #0f8f2f;
-		--toast-accent: #0f8f2f;
+		--toast-icon-color: var(--success);
+		--toast-accent: var(--success);
 	}
 
 	.toast-error {
-		--toast-icon-color: #c62828;
-		--toast-accent: #c62828;
+		--toast-icon-color: var(--danger);
+		--toast-accent: var(--danger);
 	}
 
 	.toast-info {
-		--toast-icon-color: #093d85;
-		--toast-accent: #093d85;
+		--toast-icon-color: var(--link);
+		--toast-accent: var(--link);
 	}
 
 	.toast :global(svg) {

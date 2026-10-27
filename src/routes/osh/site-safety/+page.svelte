@@ -828,11 +828,11 @@
 
 	.file-url {
 		text-decoration: underline;
-		color: var(--brand);
+		color: var(--link);
 	}
 
 	.file-url:hover {
-		color: #093d85a4;
+		color: color-mix(in srgb, var(--link) 64%, transparent);
 	}
 
 	.form-details {

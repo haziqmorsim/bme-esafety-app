@@ -260,7 +260,7 @@
 		height: 30px;
 		border-radius: 50%;
 		border: 2px solid var(--line-strong);
-		background: #ffffff;
+		background: var(--surface);
 		box-sizing: border-box;
 		position: relative;
 	}
@@ -284,7 +284,7 @@
 		pointer-events: none;
 	}
 	.circle-checkbox input:checked + .checkmark {
-		background: var(--ink);
+		background: var(--fill);
 	}
 
 	.circle-checkbox input:checked + .checkmark::after {
@@ -293,11 +293,11 @@
 	}
 
 	.circle-checkbox input:focus + .checkmark {
-		outline: 3px solid rgba(9, 23, 71, 0.12);
+		outline: 3px solid var(--focus-soft);
 	}
 
 	.error {
-		color: #b00020;
+		color: var(--danger);
 		padding: 0 10px 10px;
 	}
 
@@ -315,12 +315,12 @@
 		padding: 0 10px;
 		font-size: 14px;
 		cursor: pointer;
-		background-color: #ffffff;
+		background-color: var(--surface);
 		color: var(--ink);
 	}
 
 	.user-select option {
-		background-color: #ffffff;
+		background-color: var(--surface);
 		color: var(--ink);
 	}
 
@@ -332,7 +332,7 @@
 		width: 100%;
 		align-items: center;
 		gap: 16px;
-		background-color: #ffffff;
+		background-color: var(--surface);
 		border: 1px solid var(--line);
 		border-radius: var(--r-lg);
 		padding: 15px 10px;

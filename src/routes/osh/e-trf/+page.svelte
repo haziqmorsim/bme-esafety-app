@@ -299,19 +299,49 @@
 			<input type="text" class="forms-input" bind:value={travel_flight_no} required />
 		</div>
 		<div class="forms-p">
-			<label for="travel-baggage-required" class="forms-label">Baggage Required (kg):</label>
-			<input type="radio" name="baggage-weight" id="15-kg" bind:value={travel_baggage_required} />
+			<span class="forms-label">Baggage Required (kg):</span>
+			<input
+				type="radio"
+				name="baggage-weight"
+				id="15-kg"
+				value="15"
+				bind:group={travel_baggage_required}
+			/>
 			<label for="15-kg" class="label">15</label>
-			<input type="radio" name="baggage-weight" id="20-kg" bind:value={travel_baggage_required} />
+			<input
+				type="radio"
+				name="baggage-weight"
+				id="20-kg"
+				value="20"
+				bind:group={travel_baggage_required}
+			/>
 			<label for="20-kg" class="label">20</label>
-			<input type="radio" name="baggage-weight" id="30-kg" bind:value={travel_baggage_required} />
+			<input
+				type="radio"
+				name="baggage-weight"
+				id="30-kg"
+				value="30"
+				bind:group={travel_baggage_required}
+			/>
 			<label for="30-kg" class="label">30</label>
 		</div>
 		<div class="forms-p">
-			<label for="meal-onboard-required" class="forms-label">Meal Onboard Required:</label>
-			<input type="radio" name="baggage-weight" id="meal-yes" bind:value={meal_onboard_required} />
+			<span class="forms-label">Meal Onboard Required:</span>
+			<input
+				type="radio"
+				name="meal-onboard"
+				id="meal-yes"
+				value="Yes"
+				bind:group={meal_onboard_required}
+			/>
 			<label for="meal-yes" class="label">Yes</label>
-			<input type="radio" name="baggage-weight" id="meal-no" bind:value={meal_onboard_required} />
+			<input
+				type="radio"
+				name="meal-onboard"
+				id="meal-no"
+				value="No"
+				bind:group={meal_onboard_required}
+			/>
 			<label for="meal-no" class="label">No</label>
 		</div>
 		<br />

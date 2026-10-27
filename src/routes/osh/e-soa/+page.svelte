@@ -446,7 +446,7 @@
 		height: 35px;
 		border-radius: 50%;
 		border: 2px solid var(--line-strong);
-		background: #ffffff;
+		background: var(--surface);
 		box-sizing: border-box;
 		position: relative;
 	}
@@ -470,7 +470,7 @@
 		pointer-events: none;
 	}
 	.circle-checkbox input:checked + .checkmark {
-		background: var(--ink);
+		background: var(--fill);
 	}
 
 	.circle-checkbox input:checked + .checkmark::after {
@@ -479,7 +479,7 @@
 	}
 
 	.circle-checkbox input:focus + .checkmark {
-		outline: 3px solid rgba(9, 23, 71, 0.12);
+		outline: 3px solid var(--focus-soft);
 	}
 
 	.audit-grid {
@@ -519,7 +519,7 @@
 	.item-note {
 		margin-top: 6px;
 		font-size: 12px;
-		color: #4a5568;
+		color: var(--muted);
 	}
 
 	.note {

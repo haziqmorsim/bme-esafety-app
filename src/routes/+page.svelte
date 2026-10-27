@@ -284,7 +284,7 @@
 		min-width: 24px;
 		padding: 2px 8px;
 		border-radius: 999px;
-		background: var(--ink);
+		background: var(--fill);
 		color: #ffffff;
 		font-size: 12px;
 		font-weight: 600;
@@ -296,7 +296,7 @@
 		align-items: center;
 		gap: 10px;
 		margin: 22px 0 12px;
-		color: var(--brand);
+		color: var(--link);
 		font-size: 15px;
 		font-weight: 600;
 	}
@@ -394,7 +394,7 @@
 	}
 
 	.open:hover:not(:disabled) {
-		background-color: var(--ink);
+		background-color: var(--fill);
 		color: #ffffff;
 	}
 

@@ -534,7 +534,7 @@
 	.total-card {
 		display: inline-block;
 		min-width: 250px;
-		background-color: #ffffff;
+		background-color: var(--surface);
 		border: 1px solid var(--line);
 		border-radius: var(--r-lg);
 		padding: 10px 24px;
@@ -564,7 +564,7 @@
 		display: flex;
 		align-items: center;
 		gap: 4px;
-		background-color: #ffffff;
+		background-color: var(--surface);
 		border: 1px solid var(--line);
 		border-radius: var(--r-md);
 		padding: 4px 6px;
@@ -580,14 +580,14 @@
 
 	.nav {
 		background: none;
-		color: var(--brand);
+		color: var(--link);
 		padding: 6px 10px;
 		display: flex;
 		align-items: center;
 	}
 
 	.nav:hover {
-		background: rgba(0, 0, 0, 0.05);
+		background: var(--hover-tint);
 	}
 
 	.user-filter p {
@@ -600,12 +600,12 @@
 		padding: 0 10px;
 		font-size: 14px;
 		cursor: pointer;
-		background-color: #ffffff;
+		background-color: var(--surface);
 		color: var(--ink);
 	}
 
 	.user-select option {
-		background-color: #ffffff;
+		background-color: var(--surface);
 		color: var(--ink);
 	}
 
@@ -657,7 +657,7 @@
 
 	.bg-navy,
 	.bg-navy:hover {
-		background-color: var(--ink);
+		background-color: var(--fill);
 	}
 
 	.bg-green,
@@ -711,7 +711,7 @@
 
 	.link-button {
 		background: none;
-		color: var(--brand);
+		color: var(--link);
 		padding: 0;
 		display: inline-flex;
 		align-items: center;
@@ -791,12 +791,12 @@
 			padding: 8px 12px;
 			border: 1px solid var(--line);
 			border-radius: var(--r-md);
-			background-color: #ffffff;
+			background-color: var(--surface);
 			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 		}
 
 		.claim-table tbody tr:nth-child(even) {
-			background-color: #ffffff;
+			background-color: var(--surface);
 		}
 
 		.claim-table td,

@@ -1088,7 +1088,7 @@
 		border-right: 1px solid var(--line-strong);
 		border-bottom: 1px solid var(--line-strong);
 		position: relative;
-		background: #fff;
+		background: var(--surface);
 	}
 
 	.cell.clickable {
@@ -1108,7 +1108,7 @@
 		bottom: 6px;
 		right: 8px;
 		font-weight: 600;
-		color: var(--brand);
+		color: var(--link);
 	}
 
 	.status-icon {
@@ -1139,17 +1139,17 @@
 	}
 
 	.legend-swatch.state-working {
-		background-color: #e6f4ea;
-		border-color: #0f8f2f;
+		background-color: var(--success-bg);
+		border-color: var(--success);
 	}
 
 	.legend-swatch.state-incomplete {
-		background-color: #fff2e0;
-		border-color: #e67e00;
+		background-color: var(--warn-bg);
+		border-color: var(--warn);
 	}
 
 	.legend-swatch.state-not-working {
-		background-color: #fdecec;
+		background-color: var(--danger-bg);
 		border-color: var(--danger);
 	}
 
@@ -1188,7 +1188,7 @@
 
 	.nav {
 		background: none;
-		color: var(--brand);
+		color: var(--link);
 		border: none;
 		font-size: 18px;
 		cursor: pointer;
@@ -1207,12 +1207,12 @@
 	}
 
 	.status-ok {
-		color: #0f8f2f;
+		color: var(--success);
 		font-weight: 600;
 	}
 
 	.status-incomplete {
-		color: #e67e00;
+		color: var(--warn);
 		font-weight: 600;
 	}
 
@@ -1236,7 +1236,7 @@
 	.weekdays {
 		display: grid;
 		grid-template-columns: repeat(7, 1fr);
-		background: #f7fbff;
+		background: var(--surface-tint);
 		border-top: 1px solid var(--line-strong);
 		border-bottom: 1px solid var(--line-strong);
 	}
@@ -1283,12 +1283,12 @@
 		padding: 0 10px;
 		font-size: 14px;
 		cursor: pointer;
-		background-color: #ffffff;
+		background-color: var(--surface);
 		color: var(--ink);
 	}
 
 	.user-select option {
-		background-color: #ffffff;
+		background-color: var(--surface);
 		color: var(--ink);
 	}
 
@@ -1340,7 +1340,7 @@
 	}
 
 	.bg-navy {
-		background-color: var(--ink);
+		background-color: var(--fill);
 	}
 
 	.bg-green {
@@ -1348,7 +1348,7 @@
 	}
 
 	.bg-danger {
-		background-color: var(--danger);
+		background-color: var(--danger-solid);
 	}
 
 	.holidays {
@@ -1386,7 +1386,7 @@
 	.holiday-list {
 		border: 1px solid var(--line);
 		border-radius: var(--r-md);
-		background-color: #ffffff;
+		background-color: var(--surface);
 	}
 
 	.holiday-list.is-loading {
@@ -1479,7 +1479,7 @@
 		border-radius: var(--r-md);
 		padding: 8px 10px;
 		font-size: 14px;
-		background-color: #ffffff;
+		background-color: var(--surface);
 	}
 
 	.field input[type='date'] {
@@ -1625,15 +1625,15 @@
 		}
 
 		.cell.state-working {
-			background-color: #e6f4ea;
+			background-color: var(--success-bg);
 		}
 
 		.cell.state-incomplete {
-			background-color: #fff2e0;
+			background-color: var(--warn-bg);
 		}
 
 		.cell.state-not-working {
-			background-color: #fdecec;
+			background-color: var(--danger-bg);
 		}
 
 		.legend-state {

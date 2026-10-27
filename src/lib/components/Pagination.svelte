@@ -122,7 +122,7 @@
 	}
  
 	.page-button.active {
-		background: var(--ink);
+		background: var(--fill);
 		border-color: var(--ink);
 		color: #ffffff;
 		font-weight: 600;

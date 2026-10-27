@@ -406,7 +406,7 @@
 	}
 
 	.photo-link {
-		color: var(--brand);
+		color: var(--link);
 		font-weight: 600;
 		text-decoration: underline;
 		text-underline-offset: 3px;
@@ -457,7 +457,7 @@
 	}
 
 	.empty {
-		color: #555;
+		color: var(--muted);
 		padding: 10px 2px;
 	}
 
@@ -587,7 +587,7 @@
 	}
 
 	.photo-link {
-		color: var(--brand);
+		color: var(--link);
 		font-weight: 600;
 		text-decoration: underline;
 		text-underline-offset: 3px;
@@ -638,7 +638,7 @@
 	}
 
 	.empty {
-		color: #555;
+		color: var(--muted);
 		padding: 10px 2px;
 	}
 

@@ -158,7 +158,7 @@
 		justify-content: center;
 		padding: 32px 20px;
 		overflow-y: auto;
-		background: rgba(9, 23, 71, 0.55);
+		background: var(--overlay);
 		-webkit-backdrop-filter: blur(3px);
 		backdrop-filter: blur(3px);
 	}

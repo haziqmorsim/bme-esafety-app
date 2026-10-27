@@ -39,10 +39,20 @@
 		'/auth/forgotpw',
 		'/auth/forgotpw/confirm',
 		'/auth/resetpw',
+		'/auth/changepw',
 		'/confirmation'
 	];
+	const CHANGE_PW_PATH = '/auth/changepw';
 
 	const isAuthPage = $derived(AUTH_PATHS.includes($page.url.pathname));
+
+	const mustChangePassword = $derived(Boolean($authUser?.app_metadata?.must_change_password));
+
+	$effect(() => {
+		if (mustChangePassword && $page.url.pathname !== CHANGE_PW_PATH) {
+			goto(CHANGE_PW_PATH, { replaceState: true });
+		}
+	});
 
 	function recentlyForcedReload() {
 		try {
@@ -71,7 +81,8 @@
 	});
 
 	async function handleSessionTimeout() {
-		if (isAuthPage || signingOut || !get(authUser)) return;
+		const onChangePw = $page.url.pathname === CHANGE_PW_PATH;
+		if ((isAuthPage && !onChangePw) || signingOut || !get(authUser)) return;
 		signingOut = true;
 
 		try {
