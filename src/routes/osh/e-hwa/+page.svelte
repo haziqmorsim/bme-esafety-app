@@ -239,7 +239,7 @@
 				<input type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} required />
 			</div>
 			<div class="declaration">
-				<p>The declaration for the Hot Work Activities Report as below:</p>
+				<p>The declaration for the Hot Work Activities Report is as below:</p>
 				<p>
 					I hereby acknowledge that I have conducted a thorough check and confirm the following:
 				</p>
