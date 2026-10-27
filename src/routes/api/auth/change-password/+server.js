@@ -44,7 +44,7 @@ export async function POST({ request }) {
     if (newPassword.length < MIN_PASSWORD) {
         error(400, `Password must be at least ${MIN_PASSWORD} characters.`);
     }
-    if (new.length > MAX_PASSWORD) {
+    if (newPassword.length > MAX_PASSWORD) {
         error(400, `Password must be at most ${MAX_PASSWORD} characters.`);
     }
     if (user.email && (await matchesCurrentPassword(user.email, newPassword))) {
