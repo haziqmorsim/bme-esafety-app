@@ -6,6 +6,7 @@
 	import { getSupabase } from '$lib/supabase';
 	import { authUser, waitForAuthReady } from '$lib/auth-store';
 	import { toast } from '$lib/stores/toast';
+	import { validation } from '$lib/validation';
 
 	const MIN_PASSWORD = 8;
 	const supabase = getSupabase();
@@ -98,7 +99,7 @@
 			You signed in with a temporary password. Choose a new password with at least {MIN_PASSWORD}
 			characters to continue.
 		</p>
-		<form onsubmit={submit}>
+		<form use:validation onsubmit={submit}>
 			<div class="auth-field">
 				<label for="new-password">New Password</label>
 				<PasswordInput

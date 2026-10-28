@@ -1,4 +1,5 @@
 <script>
+	import { validation } from '$lib/validation';
 	import { supabase } from '$lib/supabase';
 	import { authUser } from '$lib/auth-store';
 	import { goto } from '$app/navigation';
@@ -115,7 +116,7 @@
 </svelte:head>
 
 <AuthShell>
-	<form on:submit|preventDefault={signIn}>
+	<form use:validation on:submit|preventDefault={signIn}>
 		<h1 class="auth-title">Sign in</h1>
 		<p class="auth-sub">Use the e-mail and password registered to your account.</p>
 		<p><label for="email">E-mail</label></p>

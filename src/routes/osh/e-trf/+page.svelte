@@ -1,4 +1,5 @@
 <script>
+	import { validation, checkSubmit } from '$lib/validation';
 	import FileText from '@lucide/svelte/icons/file-text';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import Search from '@lucide/svelte/icons/search';
@@ -40,12 +41,6 @@
 	let created_at = '';
 	let created_by = '';
 
-	// let confirmPassword = '';
-
-	// if (!confirmPassword) {
-	// 	throw new Error('Please confirm your login password.');
-	// }
-
 	let errorMsg = '';
 	let saving = false;
 
@@ -66,6 +61,7 @@
 
 	async function handleSubmit(e) {
 		e.preventDefault();
+		if (!checkSubmit(e)) return;
 		errorMsg = '';
 		saving = true;
 
@@ -178,10 +174,7 @@
 	}
 
 	function selectProject(project) {
-		project_name = project.project_name ?? '';
 		project_no = project.project_id ?? '';
-		region = project.region ?? '';
-		location = project.location ?? '';
 		closeProjectModal();
 	}
 </script>
@@ -189,7 +182,7 @@
 <h1 class="title">Travel Requisition Form Report (e-TRF) Submission</h1>
 
 <div class="project-box">
-	<form class="forms" onsubmit={handleSubmit}>
+	<form class="forms" use:validation onsubmit={handleSubmit}>
 		<h2 class="heading">Requestor Information</h2>
 		<div class="forms-p">
 			<label for="requestor-name" class="forms-label">Requestor Name:</label>
@@ -236,7 +229,7 @@
 		</div>
 		<div class="forms-p">
 			<label for="traveller-phone-no" class="forms-label">Phone No.:</label>
-			<input type="text" class="forms-input" bind:value={traveller_phone_no} required />
+			<input type="text" class="forms-input" bind:value={traveller_phone_no} />
 		</div>
 		<div class="forms-p">
 			<label for="mode-of-travel" class="forms-label">Mode of Travel:</label>
@@ -285,22 +278,22 @@
 		</div>
 		<div class="forms-p">
 			<label for="project-id" class="forms-label">Project No.:</label>
-			<input type="text" class="forms-input" bind:value={project_no} disabled />
+			<input required type="text" class="forms-input" bind:value={project_no} readonly />
 			<button type="button" class="button-primary" onclick={openProjectModal} id="button-search"
 				><Search size={16} />Search Project</button
 			>
 		</div>
 		<div class="forms-p">
 			<label for="travel-airline" class="forms-label">Preferred Airline:</label>
-			<input type="text" class="forms-input" bind:value={travel_airline} required />
+			<input type="text" class="forms-input" bind:value={travel_airline} />
 		</div>
 		<div class="forms-p">
 			<label for="travel-flight-no" class="forms-label">Flight No.:</label>
-			<input type="text" class="forms-input" bind:value={travel_flight_no} required />
+			<input type="text" class="forms-input" bind:value={travel_flight_no} />
 		</div>
 		<div class="forms-p">
-			<span class="forms-label">Baggage Required (kg):</span>
-			<input
+			<span class="forms-label" data-label-for="baggage-weight">Baggage Required (kg):</span>
+			<input required
 				type="radio"
 				name="baggage-weight"
 				id="15-kg"
@@ -326,8 +319,8 @@
 			<label for="30-kg" class="label">30</label>
 		</div>
 		<div class="forms-p">
-			<span class="forms-label">Meal Onboard Required:</span>
-			<input
+			<span class="forms-label" data-label-for="meal-onboard">Meal Onboard Required:</span>
+			<input required
 				type="radio"
 				name="meal-onboard"
 				id="meal-yes"
@@ -396,23 +389,23 @@
 			<h3 class="heading">Additional Traveller Information</h3>
 			<div class="forms-p">
 				<label for="traveller-2-name" class="forms-label">Traveller Name:</label>
-				<input id="traveller-2-name" type="text" class="forms-input" />
+				<input required id="traveller-2-name" type="text" class="forms-input" />
 			</div>
 			<div class="forms-p">
 				<label for="traveller-2-ic-passport" class="forms-label">IC or Passport No.:</label>
-				<input id="traveller-2-ic-passport" type="text" class="forms-input" />
+				<input required id="traveller-2-ic-passport" type="text" class="forms-input" />
 			</div>
 			<div class="forms-p">
 				<label for="traveller-2-company" class="forms-label">Company:</label>
-				<input id="traveller-2-company" type="text" class="forms-input" />
+				<input required id="traveller-2-company" type="text" class="forms-input" />
 			</div>
 			<div class="forms-p">
 				<label for="traveller-2-position" class="forms-label">Position:</label>
-				<input id="traveller-2-position" type="text" class="forms-input" />
+				<input required id="traveller-2-position" type="text" class="forms-input" />
 			</div>
 			<div class="forms-p">
 				<label for="traveller-2-department" class="forms-label">Department:</label>
-				<select id="traveller-2-department" class="select">
+				<select required id="traveller-2-department" class="select">
 					<option value="" disabled selected></option>
 					<option value="Project">Project</option>
 					<option value="OSH">OSH</option>
@@ -424,7 +417,7 @@
 			</div>
 			<div class="forms-p">
 				<label for="traveller-2-mode-of-travel" class="forms-label">Mode of Travel:</label>
-				<select id="traveller-2-mode-of-travel" class="select">
+				<select required id="traveller-2-mode-of-travel" class="select">
 					<option value="" disabled selected></option>
 					<option value="Road">Road</option>
 					<option value="Company-Vehicle">Company Vehicle</option>
@@ -433,7 +426,7 @@
 			</div>
 			<div class="forms-p">
 				<label for="traveller-2-fare-borne-by" class="forms-label">Fare to be Borne by:</label>
-				<select id="traveller-2-fare-borne-by" class="select">
+				<select required id="traveller-2-fare-borne-by" class="select">
 					<option value="" disabled selected></option>
 					<option value="boilermech">Boilermech Sdn Bhd</option>
 					<option value="bm-greentech">BM GreenTech Bhd</option>
@@ -445,30 +438,24 @@
 		{/if}
 		<br />
 		<hr />
-		<h2 class="heading">Acknowledgement and Submission</h2>
-		<div class="container">
+		<h2 class="heading" data-label-for="checkbox">Acknowledgement and Submission</h2>
+		<div class="container" data-field>
 			<div class="checkbox">
-				<input type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} />
+				<input data-label="Acknowledgement" required type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} />
 			</div>
 			<div class="declaration">
-				<p>The declaration for the Travel Requisition Form is as below:</p>
+				<p>The declaration for the Travel Requisition Form is as below.</p>
 				<p>
 					I hereby acknowledge that I have conducted a thorough check and confirm the following:
 				</p>
-				<p>>> All information in this report is accurate and up to date.</p>
-				<p>>> All personnel working on site are registered and have appropriate permits.</p>
-				<p>
-					By entering my password below, I confirm my identity and consent as a digital
-					acknowledgment.
-				</p>
+				<ul>
+					<li>All information in this report is accurate and up to date.</li>
+					<li>All personnel working on site are registered and have appropriate permits.</li>
+				</ul>
 				<p>I understand that this action may be recorded as part of the official audit trail.</p>
 			</div>
 		</div>
 		<p>Note: Double check if content is correct before submitting.</p>
-		<!-- <div class="forms-p">
-			<p><b>Confirm Login Password</b></p>
-			<input type="password" class="forms-input" bind:value={confirmPassword} />
-		</div> -->
 		{#if errorMsg}
 			<p class="error">{errorMsg}</p>
 		{/if}
@@ -498,6 +485,11 @@
 		height: 30px;
 		width: 500px;
 		font-size: 14px;
+	}
+
+	ul {
+		list-style-type: circle;
+		margin: 0 0 10px 15px;
 	}
 
 	@media (max-width: 1024px) {

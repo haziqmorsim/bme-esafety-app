@@ -5,6 +5,7 @@
 	import { onMount } from 'svelte';
 	import { requireUser } from '$lib/auth-guard';
 	import Modal from '$lib/components/Modal.svelte';
+	import { validation } from '$lib/validation';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import { toast } from '$lib/stores/toast';
 	import { sendToMake } from '$lib/make';
@@ -382,7 +383,7 @@
 	busy={emailSending}
 	onclose={closeEmail}
 >
-	<form id="email-copy-form" class="email-form" onsubmit={sendEmailCopy}>
+	<form id="email-copy-form" class="email-form" use:validation onsubmit={sendEmailCopy}>
 		<label for="email-copy-to">Send the PDF to</label>
 		<input id="email-copy-to" type="email" bind:value={emailAddress} required />
 	</form>
@@ -402,7 +403,7 @@
 		align-items: flex-end;
 		gap: 12px;
 		margin: 10px;
-		padding: 10px 0;
+		padding: 10px;
 	}
 
 	.photo-link {

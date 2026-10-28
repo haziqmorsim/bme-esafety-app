@@ -11,6 +11,22 @@
 	import { toast } from '$lib/stores/toast';
 	import Modal from '$lib/components/Modal.svelte';
 
+	const STATUS_OPTIONS = [
+		'Commissioning',
+		'Delivery',
+		'Factory',
+		'Installation',
+		'Mechanical Completion',
+		'N/A'
+	];
+
+	const normStatus = (value) =>
+		String(value ?? '')
+			.toLowerCase()
+			.replace(/[\s_-]+/g, ' ')
+			.trim();
+	const matchStatus = (value) => STATUS_OPTIONS.find((o) => normStatus(o) === normStatus(value));
+
 	const EMPTY_FORM = {
 		project_name: '',
 		project_id: '',
@@ -39,6 +55,8 @@
 	let form = $state({ ...EMPTY_FORM });
 	let isSaving = $state(false);
 	let formError = $state('');
+	let fieldErr = $state({});
+	let submitted = $state(false);
 
 	let showDeleteModal = $state(false);
 	let deletingProject = $state(null);
@@ -63,7 +81,7 @@
 			const search = searchText.trim().toLowerCase();
 
 			const matchesStatus =
-				selectedStatus === 'All' || (p.status ?? '').toLowerCase() === selectedStatus.toLowerCase();
+				selectedStatus === 'All' || normStatus(p.status) === normStatus(selectedStatus);
 
 			let matchesSearch = true;
 
@@ -128,6 +146,8 @@
 		selectedProject = null;
 		form = { ...EMPTY_FORM };
 		formError = '';
+		fieldErr = {};
+		submitted = false;
 		showFormModal = true;
 	}
 
@@ -135,7 +155,10 @@
 		formMode = 'edit';
 		selectedProject = project;
 		form = Object.fromEntries(Object.keys(EMPTY_FORM).map((key) => [key, project[key] ?? '']));
+		form.status = matchStatus(project.status) ?? form.status;
 		formError = '';
+		fieldErr = {};
+		submitted = false;
 		showFormModal = true;
 	}
 
@@ -162,14 +185,30 @@
 		};
 	}
 
+	function validate() {
+		const e = {};
+		const blank = (v) => !String(v ?? '').trim();
+		if (blank(form.project_name)) e.project_name = 'Project name is required.';
+		if (blank(form.project_id)) e.project_id = 'Project no. is required.';
+		if (blank(form.status)) e.status = 'Status is required.';
+		if (blank(form.region)) e.region = 'Region is required.';
+		if (blank(form.location)) e.location = 'Location is required.';
+		if (!form.start_date) e.start_date = 'Start date is required.';
+		if (!form.end_date) e.end_date = 'End date is required.';
+		fieldErr = e;
+		return Object.keys(e).length === 0;
+	}
+
+	function revalidate() {
+		if (submitted) validate();
+	}
+
 	async function saveProject(event) {
 		event?.preventDefault();
 		formError = '';
 
-		if (!String(form.project_name).trim()) {
-			formError = 'Please enter the project name.';
-			return;
-		}
+		submitted = true;
+		if (!validate()) return;
 
 		isSaving = true;
 		const payload = buildPayload();
@@ -262,9 +301,11 @@
 	<input
 		type="date"
 		class="forms-date"
+		class:invalid={fieldErr[key]}
 		bind:value={form[key]}
 		onfocus={(e) => e.currentTarget.showPicker?.()}
 	/>
+	{#if fieldErr[key]}<span class="field-err">{fieldErr[key]}</span>{/if}
 {/snippet}
 
 <h1 class="title">Project Information Management</h1>
@@ -274,12 +315,9 @@
 		<label for="status-filter">Project Status</label>
 		<select id="status-filter" bind:value={selectedStatus} class="status-select">
 			<option value="All">Choose a Project Status</option>
-			<option value="Commissioning">Commissioning</option>
-			<option value="Delivery">Delivery</option>
-			<option value="Factory">Factory</option>
-			<option value="Installation">Installation</option>
-			<option value="Mechanical-completion">Mechanical Completion</option>
-			<option value="N/A">N/A</option>
+			{#each STATUS_OPTIONS as option (option)}
+				<option value={option}>{option}</option>
+			{/each}
 		</select>
 	</div>
 </div>
@@ -312,7 +350,7 @@
 
 <div class="button-modify">
 	<button class="button-assign" onclick={openCreateModal}>
-		<Plus size={20} /><span>New Project</span>
+		<Plus size={20} /><span>Add Project</span>
 	</button>
 	<button class="button-download"><ArrowDownToLine size={20} /><span>Excel</span></button>
 </div>
@@ -355,39 +393,59 @@
 
 <Modal
 	open={showFormModal}
-	title={formMode === 'create' ? 'New Project' : 'Edit Project Information'}
+	title={formMode === 'create' ? 'Add Project' : 'Edit Project Information'}
 	size="md"
 	busy={isSaving}
 	onclose={closeFormModal}
 >
-	<form id="project-form" class="project-form" onsubmit={saveProject} novalidate>
+	<form
+		id="project-form"
+		class="project-form"
+		novalidate
+		onsubmit={saveProject}
+		oninput={revalidate}
+		onchange={revalidate}
+	>
 		<div class="form-grid">
 			<label>
-				Project Name:
-				<input type="text" bind:value={form.project_name} />
+				<span class="label-text">Project Name: <span class="required">*</span></span>
+				<input type="text" bind:value={form.project_name} class:invalid={fieldErr.project_name} />
+				{#if fieldErr.project_name}<span class="field-err">{fieldErr.project_name}</span>{/if}
 			</label>
 			<label>
-				Project No.:
-				<input type="text" bind:value={form.project_id} />
+				<span class="label-text">Project No.: <span class="required">*</span></span>
+				<input type="text" bind:value={form.project_id} class:invalid={fieldErr.project_id} />
+				{#if fieldErr.project_id}<span class="field-err">{fieldErr.project_id}</span>{/if}
 			</label>
 			<label>
-				Status:
-				<input type="text" bind:value={form.status} />
+				<span class="label-text">Status: <span class="required">*</span></span>
+				<select bind:value={form.status} class:invalid={fieldErr.status}>
+					<option value="">Select a status</option>
+					{#each STATUS_OPTIONS as option (option)}
+						<option value={option}>{option}</option>
+					{/each}
+					{#if form.status && !STATUS_OPTIONS.includes(form.status)}
+						<option value={form.status}>{form.status}</option>
+					{/if}
+				</select>
+				{#if fieldErr.status}<span class="field-err">{fieldErr.status}</span>{/if}
 			</label>
 			<label>
-				Region:
-				<input type="text" bind:value={form.region} />
+				<span class="label-text">Region: <span class="required">*</span></span>
+				<input type="text" bind:value={form.region} class:invalid={fieldErr.region} />
+				{#if fieldErr.region}<span class="field-err">{fieldErr.region}</span>{/if}
 			</label>
 			<label>
-				Location:
-				<input type="text" bind:value={form.location} />
+				<span class="label-text">Location: <span class="required">*</span></span>
+				<input type="text" bind:value={form.location} class:invalid={fieldErr.location} />
+				{#if fieldErr.location}<span class="field-err">{fieldErr.location}</span>{/if}
 			</label>
 			<label>
-				Start Date:
+				<span class="label-text">Start Date: <span class="required">*</span></span>
 				{@render dateInput('start_date')}
 			</label>
 			<label>
-				End Date:
+				<span class="label-text">End Date: <span class="required">*</span></span>
 				{@render dateInput('end_date')}
 			</label>
 		</div>
@@ -630,13 +688,18 @@
 		font-weight: 600;
 	}
 
-	.form-grid input {
+	.form-grid input,
+	.form-grid select {
 		width: 100%;
 		border: 1px solid var(--line);
 		border-radius: var(--r-md);
 		padding: 8px 10px;
 		font-size: 14px;
 		font-weight: normal;
+	}
+
+	.form-grid select {
+		padding-right: 2.4rem;
 	}
 
 	.delete-summary p {

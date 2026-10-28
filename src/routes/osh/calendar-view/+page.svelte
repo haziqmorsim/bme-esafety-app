@@ -114,6 +114,8 @@
 	let holidayForm = $state({ holiday_date: '', name: '', regions: [] });
 	let regionPick = $state('');
 	let holidayFormError = $state('');
+	let fieldErr = $state({});
+	let holidaySubmitted = $state(false);
 	let holidaySaving = $state(false);
 
 	let showDeleteHolidayModal = $state(false);
@@ -419,6 +421,7 @@
 		holidayForm.name;
 		holidayForm.regions.length;
 		holidayFormError = '';
+		if (holidaySubmitted) validateHoliday();
 	});
 
 	let reportBusy = $state('');
@@ -513,6 +516,8 @@
 		holidayForm = { holiday_date: '', name: '', regions: [] };
 		regionPick = '';
 		holidayFormError = '';
+		fieldErr = {};
+		holidaySubmitted = false;
 		showHolidayModal = true;
 	}
 
@@ -527,6 +532,8 @@
 		};
 		regionPick = '';
 		holidayFormError = '';
+		fieldErr = {};
+		holidaySubmitted = false;
 		showHolidayModal = true;
 	}
 
@@ -550,17 +557,24 @@
 		holidayForm.regions = event.currentTarget.checked ? [...REGIONS] : [];
 	}
 
+	function validateHoliday() {
+		const e = {};
+		if (!holidayForm.holiday_date) e.holiday_date = 'Date is required.';
+		if (!holidayForm.name?.trim()) e.name = 'Name is required.';
+		if (holidayForm.regions.length === 0) e.regions = 'Region is required.';
+		fieldErr = e;
+		return Object.keys(e).length === 0;
+	}
+
 	async function saveHoliday(event) {
 		event.preventDefault();
 		if (!isAdmin) return;
 		holidayFormError = '';
 
+		holidaySubmitted = true;
+		if (!validateHoliday()) return;
+
 		const name = holidayForm.name.trim();
-		if (!holidayForm.holiday_date) return (holidayFormError = 'Please choose a date.');
-		if (!name) return (holidayFormError = 'Please enter the holiday name.');
-		if (holidayForm.regions.length === 0) {
-			return (holidayFormError = 'Please choose at least one region.');
-		}
 
 		holidaySaving = true;
 
@@ -844,7 +858,7 @@
 			<h2>Holidays ({viewYear})</h2>
 			{#if isAdmin}
 				<button class="button-create" onclick={openCreateHoliday}>
-					<Plus size={20} /><span>New Holiday</span>
+					<Plus size={20} /><span>Add Holiday</span>
 				</button>
 			{/if}
 		</div>
@@ -945,28 +959,34 @@
 	busy={holidaySaving}
 	onclose={closeHolidayModal}
 >
-	<form id="holiday-form" class="holiday-form" onsubmit={saveHoliday} novalidate>
+	<form id="holiday-form" class="holiday-form" novalidate onsubmit={saveHoliday}>
 		<label class="field">
-			<span>Date</span>
+			<span class="label-text">Date <span class="required">*</span></span>
 			<input
 				type="date"
 				bind:value={holidayForm.holiday_date}
 				onfocus={(e) => e.currentTarget.showPicker?.()}
+				class:invalid={fieldErr.holiday_date}
 			/>
+			{#if fieldErr.holiday_date}<span class="field-err">{fieldErr.holiday_date}</span>{/if}
 		</label>
 
 		<label class="field">
-			<span>Name</span>
-			<input type="text" bind:value={holidayForm.name} />
+			<span class="label-text">Name <span class="required">*</span></span>
+			<input type="text" bind:value={holidayForm.name} class:invalid={fieldErr.name} />
+			{#if fieldErr.name}<span class="field-err">{fieldErr.name}</span>{/if}
 		</label>
 
 		<div class="field">
-			<label for="holiday-region">Region</label>
+			<label for="holiday-region"
+				><span class="label-text">Region <span class="required">*</span></span></label
+			>
 			<select
 				id="holiday-region"
 				bind:value={regionPick}
 				onchange={addRegion}
 				disabled={availableRegions.length === 0}
+				class:invalid={fieldErr.regions}
 			>
 				<option value="">
 					{availableRegions.length === 0 ? 'All regions selected' : 'Choose an option...'}
@@ -975,6 +995,7 @@
 					<option value={region}>{region}</option>
 				{/each}
 			</select>
+			{#if fieldErr.regions}<span class="field-err">{fieldErr.regions}</span>{/if}
 
 			<label class="checkbox-row">
 				<input type="checkbox" checked={allRegionsSelected} onchange={toggleAllRegions} />
@@ -1008,10 +1029,10 @@
 	</form>
 
 	{#snippet footer()}
-		<button type="button" class="button-inverted" onclick={closeHolidayModal} disabled={holidaySaving}>
+		<button class="button-inverted" onclick={closeHolidayModal} disabled={holidaySaving}>
 			Cancel
 		</button>
-		<button type="submit" form="holiday-form" class="button-primary" disabled={holidaySaving}>
+		<button type="submit" form="holiday-form" class="button-confirm" disabled={holidaySaving}>
 			{#if holidaySaving}
 				Saving...
 			{:else}
@@ -1420,6 +1441,16 @@
 		display: flex;
 		gap: 6px;
 		flex-shrink: 0;
+	}
+
+	.button-confirm {
+		background-color: var(--fill);
+		font-weight: 600;
+		padding: 8px 20px;
+	}
+
+	.button-confirm:hover:not(:disabled) {
+		background-color: var(--brand);
 	}
 
 	.icon-button {

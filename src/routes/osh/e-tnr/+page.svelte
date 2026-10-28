@@ -1,4 +1,5 @@
 <script>
+	import { validation, checkSubmit } from '$lib/validation';
 	import Search from '@lucide/svelte/icons/search';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import FileText from '@lucide/svelte/icons/file-text';
@@ -33,12 +34,6 @@
 		setter(e.currentTarget.files?.[0] ?? null);
 	}
 
-	// let confirmPassword = '';
-
-	// if (!confirmPassword) {
-	// 	throw new Error('Please confirm your login password.');
-	// }
-
 	let errorMsg = '';
 	let saving = false;
 
@@ -70,6 +65,7 @@
 
 	async function handleSubmit(e) {
 		e.preventDefault();
+		if (!checkSubmit(e)) return;
 		errorMsg = '';
 		saving = true;
 
@@ -191,18 +187,18 @@
 <h1 class="title">Training Record (e-TNR) Submission</h1>
 
 <div class="project-box">
-	<form class="forms" onsubmit={handleSubmit}>
+	<form class="forms" use:validation onsubmit={handleSubmit}>
 		<h2 class="heading">General Information</h2>
 		<button type="button" class="button-primary" onclick={openProjectModal}
 			><Search />Search Project</button
 		>
 		<div class="forms-p">
 			<label for="project-name" class="forms-label">Project Name:</label>
-			<input type="text" class="forms-input" bind:value={project_name} />
+			<input data-message="Select a project using Search Project." required type="text" class="forms-input" bind:value={project_name} readonly />
 		</div>
 		<div class="forms-p">
 			<label for="project-no" class="forms-label">Project No.:</label>
-			<input type="text" class="forms-input" bind:value={project_no} />
+			<input required type="text" class="forms-input" bind:value={project_no} readonly />
 		</div>
 		<div class="forms-p">
 			<label for="project-date" class="forms-label">Activity Date:</label>
@@ -258,9 +254,9 @@
 		<br />
 		<hr />
 		<h2 class="heading">Training Details</h2>
-		<h2 class="heading">Topic</h2>
+		<h2 class="heading" data-label-for="topic">Topic</h2>
 		<p>
-			<textarea
+			<textarea required
 				name="topic"
 				id="topic"
 				cols="30"
@@ -270,9 +266,9 @@
 				bind:value={topic}
 			></textarea>
 		</p>
-		<h2 class="heading">Description</h2>
+		<h2 class="heading" data-label-for="description">Description</h2>
 		<p>
-			<textarea
+			<textarea required
 				name="description"
 				id="description"
 				cols="30"
@@ -282,7 +278,7 @@
 				bind:value={description}
 			></textarea>
 		</p>
-		<p class="image-text">Attendance List Image</p>
+		<p class="image-text" data-label-for="tnr_attendance">Attendance List Image</p>
 		<div class="upload">
 			<p class="upload-text">
 				<input
@@ -296,7 +292,7 @@
 				/>
 			</p>
 		</div>
-		<p class="image-text">Activity Image</p>
+		<p class="image-text" data-label-for="tnr_activity">Activity Image</p>
 		<div class="upload">
 			<p class="upload-text">
 				<input
@@ -324,30 +320,24 @@
 				bind:value={remarks}
 			></textarea>
 		</p>
-		<h2 class="heading">Acknowledgement and Submission</h2>
-		<div class="container">
+		<h2 class="heading" data-label-for="checkbox">Acknowledgement and Submission</h2>
+		<div class="container" data-field>
 			<div class="checkbox">
-				<input type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} required />
+				<input data-label="Acknowledgement" type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} required />
 			</div>
 			<div class="declaration">
-				<p>The declaration for the Training Record is as below:</p>
+				<p>The declaration for the Training Record is as below.</p>
 				<p>
 					I hereby acknowledge that I have conducted a thorough check and confirm the following:
 				</p>
-				<p>>> All information in this report is accurate and up to date.</p>
-				<p>>> All personnel working on site are registered and have appropriate permits.</p>
-				<p>
-					By entering my password below, I confirm my identity and consent as a digital
-					acknowledgment.
-				</p>
+				<ul>
+					<li>All information in this report is accurate and up to date.</li>
+					<li>All personnel working on site are registered and have appropriate permits.</li>
+				</ul>
 				<p>I understand that this action may be recorded as part of the official audit trail.</p>
 			</div>
 		</div>
 		<p>Note: Double check if content is correct before submitting.</p>
-		<!-- <div class="forms-p">
-			<p><b>Confirm Login Password</b></p>
-			<input type="password" class="forms-input" bind:value={confirmPassword} />
-		</div> -->
 		{#if errorMsg}
 			<p class="error">{errorMsg}</p>
 		{/if}
@@ -377,6 +367,11 @@
 	.topic {
 		width: 100%;
 		height: 50px;
+	}
+
+	ul {
+		list-style-type: circle;
+		margin: 0 0 10px 15px;
 	}
 
 	@media (max-width: 1024px) {

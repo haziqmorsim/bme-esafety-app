@@ -1,4 +1,5 @@
 <script>
+	import { validation } from '$lib/validation';
 	import { getSupabase } from '$lib/supabase';
 	import { goto } from '$app/navigation';
 	import { toast } from '$lib/stores/toast';
@@ -45,7 +46,7 @@
 <AuthShell>
 	<h1 class="auth-title">Forgot your password?</h1>
 	<p class="auth-sub">Enter your e-mail and we will send you a link to reset it.</p>
-	<form on:submit={sendReset}>
+	<form use:validation on:submit={sendReset}>
 		<div class="auth-field">
 			<label for="email">E-mail</label>
 			<input

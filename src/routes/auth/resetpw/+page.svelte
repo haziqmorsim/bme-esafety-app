@@ -1,4 +1,5 @@
 <script>
+	import { validation } from '$lib/validation';
 	import AuthShell from '$lib/components/AuthShell.svelte';
 	import PasswordInput from '$lib/components/PasswordInput.svelte';
 	import { onMount, onDestroy } from 'svelte';
@@ -94,7 +95,7 @@
 		<a href="/auth/forgotpw" class="link-button">Request a new link</a>
 	{:else}
 		<p class="auth-sub">Choose a new password with at least 8 characters.</p>
-		<form on:submit={submitNewPassword}>
+		<form use:validation on:submit={submitNewPassword}>
 			<div class="auth-field">
 				<label for="new-password">New password</label>
 				<PasswordInput

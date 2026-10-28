@@ -1,4 +1,5 @@
 <script>
+	import { validation, checkSubmit } from '$lib/validation';
 	import Search from '@lucide/svelte/icons/search';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import FileText from '@lucide/svelte/icons/file-text';
@@ -105,12 +106,6 @@
 		setter(e.currentTarget.files?.[0] ?? null);
 	}
 
-	// let confirmPassword = '';
-
-	// if (!confirmPassword) {
-	// 	throw new Error('Please confirm your login password.');
-	// }
-
 	let errorMsg = '';
 	let saving = false;
 
@@ -142,6 +137,7 @@
 
 	async function handleSubmit(e) {
 		e.preventDefault();
+		if (!checkSubmit(e)) return;
 		errorMsg = '';
 		saving = true;
 
@@ -275,26 +271,26 @@
 <h1 class="title">Tool Box Meeting Report (e-TBM) Submission</h1>
 
 <div class="project-box">
-	<form class="forms" onsubmit={handleSubmit}>
+	<form class="forms" use:validation onsubmit={handleSubmit}>
 		<h2 class="heading">General Information</h2>
 		<button type="button" class="button-primary" onclick={openProjectModal}>
 			<Search />Search Project
 		</button>
 		<div class="forms-p">
 			<label for="project-name" class="forms-label">Project Name:</label>
-			<input type="text" class="forms-input" bind:value={project_name} disabled />
+			<input data-message="Select a project using Search Project." required type="text" class="forms-input" bind:value={project_name} readonly />
 		</div>
 		<div class="forms-p">
 			<label for="project-no" class="forms-label">Project No.:</label>
-			<input type="text" class="forms-input" bind:value={project_no} disabled />
+			<input required type="text" class="forms-input" bind:value={project_no} readonly />
 		</div>
 		<div class="forms-p">
 			<label for="project-region" class="forms-label">Region:</label>
-			<input type="text" class="forms-input" bind:value={region} disabled />
+			<input required type="text" class="forms-input" bind:value={region} readonly />
 		</div>
 		<div class="forms-p">
 			<label for="project-location" class="forms-label">Location:</label>
-			<input type="text" class="forms-input" bind:value={location} disabled />
+			<input required type="text" class="forms-input" bind:value={location} readonly />
 		</div>
 		<div class="forms-p">
 			<label for="project-date" class="forms-label">Meeting Date:</label>
@@ -353,8 +349,11 @@
 		</Modal>
 		<br />
 		<hr />
-		<h2 class="heading">Meeting Topics</h2>
-		<div class="topics-grid">
+		<h2 class="heading" data-label-for="meeting-topics">Meeting Topics</h2>
+		<div class="topics-grid" data-checkbox-group="meeting-topics"
+			data-required
+			data-message="Select at least one meeting topic."
+		>
 			{#each topics as topic}
 				<label for="" class="topic-item">
 					<input type="checkbox" value={topic} bind:group={meeting_topics} />
@@ -389,8 +388,8 @@
 			<p class="categories-criteria">Competent Person</p>
 			<p class="categories-radio">Permit/License</p>
 		</div>
-		<div class="competency-grid">
-			<p>1) Mobile Crane - Operator Certificate</p>
+		<div class="competency-grid" data-field>
+			<p data-label-for="cp-1">1) Mobile Crane - Operator Certificate</p>
 			<p class="competency-radio">
 				<input
 					type="radio"
@@ -417,8 +416,8 @@
 				/>No Activity
 			</p>
 		</div>
-		<div class="competency-grid">
-			<p>2) Mobile Crane - Perakuan Mesin Angkat (PMA)</p>
+		<div class="competency-grid" data-field>
+			<p data-label-for="cp-2">2) Mobile Crane - Perakuan Mesin Angkat (PMA)</p>
 			<p class="competency-radio">
 				<input
 					type="radio"
@@ -440,8 +439,8 @@
 				/>No Activity
 			</p>
 		</div>
-		<div class="competency-grid">
-			<p>3) Sky Lift Operator- Perakuan Mesin Angkat (PMA)</p>
+		<div class="competency-grid" data-field>
+			<p data-label-for="cp-3">3) Sky Lift Operator- Perakuan Mesin Angkat (PMA)</p>
 			<p class="competency-radio">
 				<input
 					type="radio"
@@ -463,8 +462,8 @@
 				/>No Activity
 			</p>
 		</div>
-		<div class="competency-grid">
-			<p>4) Scaffold Inspector Level 2 / 3</p>
+		<div class="competency-grid" data-field>
+			<p data-label-for="cp-4">4) Scaffold Inspector Level 2 / 3</p>
 			<p class="competency-radio">
 				<input
 					type="radio"
@@ -491,8 +490,8 @@
 				/>No Activity
 			</p>
 		</div>
-		<div class="competency-grid">
-			<p>5) Scaffold Inspector Level 1</p>
+		<div class="competency-grid" data-field>
+			<p data-label-for="cp-5">5) Scaffold Inspector Level 1</p>
 			<p class="competency-radio">
 				<input
 					type="radio"
@@ -514,8 +513,8 @@
 				/>No Activity
 			</p>
 		</div>
-		<div class="competency-grid">
-			<p>6) Authorised Gas Tester</p>
+		<div class="competency-grid" data-field>
+			<p data-label-for="cp-6">6) Authorised Gas Tester</p>
 			<p class="competency-radio">
 				<input
 					type="radio"
@@ -542,8 +541,8 @@
 				/>No Activity
 			</p>
 		</div>
-		<div class="competency-grid">
-			<p>7) Entry Supervisor</p>
+		<div class="competency-grid" data-field>
+			<p data-label-for="cp-7">7) Entry Supervisor</p>
 			<p class="competency-radio">
 				<input
 					type="radio"
@@ -570,8 +569,8 @@
 			<p class="categories-criteria">Trained Person</p>
 			<p class="categories-radio">Certificate of Attendance</p>
 		</div>
-		<div class="competency-grid">
-			<p>1) Lifting Supervisor</p>
+		<div class="competency-grid" data-field>
+			<p data-label-for="tp-1">1) Lifting Supervisor</p>
 			<p class="competency-radio">
 				<input
 					type="radio"
@@ -593,8 +592,8 @@
 				/>No Activity
 			</p>
 		</div>
-		<div class="competency-grid">
-			<p>2) Signalman</p>
+		<div class="competency-grid" data-field>
+			<p data-label-for="tp-2">2) Signalman</p>
 			<p class="competency-radio">
 				<input type="radio" name="tp-2" bind:group={competency.signalman} value="yes" required />Yes
 			</p>
@@ -606,8 +605,8 @@
 				Activity
 			</p>
 		</div>
-		<div class="competency-grid">
-			<p>3) Rigger and Slinger</p>
+		<div class="competency-grid" data-field>
+			<p data-label-for="tp-3">3) Rigger and Slinger</p>
 			<p class="competency-radio">
 				<input
 					type="radio"
@@ -629,8 +628,8 @@
 				/>No Activity
 			</p>
 		</div>
-		<div class="competency-grid">
-			<p>4) Backhoe</p>
+		<div class="competency-grid" data-field>
+			<p data-label-for="tp-4">4) Backhoe</p>
 			<p class="competency-radio">
 				<input type="radio" name="tp-4" bind:group={competency.backhoe} value="yes" required />Yes
 			</p>
@@ -642,8 +641,8 @@
 				Activity
 			</p>
 		</div>
-		<div class="competency-grid">
-			<p>5) Forklift</p>
+		<div class="competency-grid" data-field>
+			<p data-label-for="tp-5">5) Forklift</p>
 			<p class="competency-radio">
 				<input type="radio" name="tp-5" bind:group={competency.forklift} value="yes" required />Yes
 			</p>
@@ -691,7 +690,7 @@
 		</p>
 		<p><b><i>Sample:</i></b></p>
 		<img src="/images/sample-attendees.png" alt="Sample Attendees Form" width="40%" />
-		<h2 class="heading">Photo of Filled TBM Form</h2>
+		<h2 class="heading" data-label-for="tbm_form">Photo of Filled TBM Form</h2>
 		<div class="upload">
 			<p class="upload-text">
 				<input
@@ -705,7 +704,7 @@
 				/>
 			</p>
 		</div>
-		<h2 class="heading">Photos of TBM in Session</h2>
+		<h2 class="heading" data-label-for="tbm_photo">Photos of TBM in Session</h2>
 		<p class="note">Note: All attending personnel should be in full PPE</p>
 		<div class="upload">
 			<p class="upload-text">
@@ -720,7 +719,7 @@
 				/>
 			</p>
 		</div>
-		<h2 class="heading">Photo of Filled PTW Form</h2>
+		<h2 class="heading" data-label-for="ptw_form">Photo of Filled PTW Form</h2>
 		<div class="upload">
 			<p class="upload-text">
 				<input
@@ -760,30 +759,24 @@
 				bind:value={remarks}
 			></textarea>
 		</p>
-		<h2 class="heading">Acknowledgement and Submission</h2>
-		<div class="container">
+		<h2 class="heading" data-label-for="checkbox">Acknowledgement and Submission</h2>
+		<div class="container" data-field>
 			<div class="checkbox">
-				<input type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} required />
+				<input data-label="Acknowledgement" type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} required />
 			</div>
 			<div class="declaration">
-				<p>The declaration for the Tool Box Meeting Report is as below:</p>
+				<p>The declaration for the Tool Box Meeting Report is as below.</p>
 				<p>
 					I hereby acknowledge that I have conducted a thorough check and confirm the following:
 				</p>
-				<p>>> All information in this report is accurate and up to date.</p>
-				<p>>> All personnel working on site are registered and have appropriate permits.</p>
-				<p>
-					By entering my password below, I confirm my identity and consent as a digital
-					acknowledgment.
-				</p>
+				<ul>
+					<li>All information in this report is accurate and up to date.</li>
+					<li>All personnel working on site are registered and have appropriate permits.</li>
+				</ul>
 				<p>I understand that this action may be recorded as part of the official audit trail.</p>
 			</div>
 		</div>
 		<p>Note: Double check if content is correct before submitting.</p>
-		<!-- <div class="forms-p">
-			<p><b>Confirm Login Password</b></p>
-			<input type="password" class="forms-input" bind:value={confirmPassword} />
-		</div> -->
 		{#if errorMsg}
 			<p class="error">{errorMsg}</p>
 		{/if}
@@ -890,6 +883,11 @@
 		align-items: center;
 		gap: 6px;
 		white-space: nowrap;
+	}
+
+	ul {
+		list-style-type: circle;
+		margin: 0 0 10px 15px;
 	}
 
 	@media (max-width: 1024px) {

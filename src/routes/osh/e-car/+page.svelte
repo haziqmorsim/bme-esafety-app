@@ -1,4 +1,5 @@
 <script>
+	import { validation, checkSubmit } from '$lib/validation';
 	import Search from '@lucide/svelte/icons/search';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import FileText from '@lucide/svelte/icons/file-text';
@@ -33,11 +34,6 @@
 	let created_at = '';
 	let created_by = '';
 
-	// let confirmPassword = '';
-
-	// if (!confirmPassword) {
-	// 	throw new Error('Please confirm your login password.');
-	// }
 
 	let errorMsg = '';
 	let saving = false;
@@ -58,6 +54,7 @@
 
 	async function handleSubmit(e) {
 		e.preventDefault();
+		if (!checkSubmit(e)) return;
 		errorMsg = '';
 		saving = true;
 
@@ -192,26 +189,26 @@
 </div>
 
 <div class="project-box">
-	<form class="forms" onsubmit={handleSubmit}>
+	<form class="forms" use:validation onsubmit={handleSubmit}>
 		<h2 class="heading">General Information</h2>
 		<button type="button" class="button-primary" onclick={openProjectModal}
 			><Search />Search Project</button
 		>
 		<div class="forms-p">
 			<label for="project-name" class="forms-label">Project Name:</label>
-			<input type="text" class="forms-input" bind:value={project_name} />
+			<input data-message="Select a project using Search Project." required type="text" class="forms-input" bind:value={project_name} />
 		</div>
 		<div class="forms-p">
 			<label for="project-no" class="forms-label">Project No.:</label>
-			<input type="text" class="forms-input" bind:value={project_no} />
+			<input required type="text" class="forms-input" bind:value={project_no} />
 		</div>
 		<div class="forms-p">
 			<label for="project-region" class="forms-label">Region:</label>
-			<input type="text" class="forms-input" bind:value={region} />
+			<input required type="text" class="forms-input" bind:value={region} />
 		</div>
 		<div class="forms-p">
 			<label for="project-location" class="forms-label">Location:</label>
-			<input type="text" class="forms-input" bind:value={location} />
+			<input required type="text" class="forms-input" bind:value={location} />
 		</div>
 		<div class="forms-p">
 			<label for="project-date" class="forms-label">Date:</label>
@@ -307,7 +304,7 @@
 		</div>
 		<div class="forms-p">
 			<label for="iso-no" class="forms-label">Assigned To:</label>
-			<select bind:value={assigned_to} class="user-select">
+			<select required bind:value={assigned_to} class="user-select">
 				<option value="" disabled selected>Select User</option>
 				{#each users as item}
 					<option value={item.id}>{getUserName(item)}</option>
@@ -327,30 +324,24 @@
 				bind:value={remarks}
 			></textarea>
 		</p>
-		<h2 class="heading">Acknowledgement and Submission</h2>
-		<div class="container">
+		<h2 class="heading" data-label-for="checkbox">Acknowledgement and Submission</h2>
+		<div class="container" data-field>
 			<div class="checkbox">
-				<input type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} />
+				<input data-label="Acknowledgement" required type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} />
 			</div>
 			<div class="declaration">
-				<p>The declaration for the Corrective Action Report is as below:</p>
+				<p>The declaration for the Corrective Action Report is as below.</p>
 				<p>
 					I hereby acknowledge that I have conducted a thorough check and confirm the following:
 				</p>
-				<p>>> All information in this report is accurate and up to date.</p>
-				<p>>> All personnel working on site are registered and have appropriate permits.</p>
-				<p>
-					By entering my password below, I confirm my identity and consent as a digital
-					acknowledgment.
-				</p>
+				<ul>
+					<li>All information in this report is accurate and up to date.</li>
+					<li>All personnel working on site are registered and have appropriate permits.</li>
+				</ul>
 				<p>I understand that this action may be recorded as part of the official audit trail.</p>
 			</div>
 		</div>
 		<p>Note: Double check if content is correct before submitting.</p>
-		<!-- <div class="forms-p">
-			<p><b>Confirm Login Password</b></p>
-			<input type="password" class="forms-input" bind:value={confirmPassword} />
-		</div> -->
 		{#if errorMsg}
 			<p class="error">{errorMsg}</p>
 		{/if}
@@ -408,6 +399,11 @@
 		font-size: 14px;
 		width: 40%;
 		cursor: pointer;
+	}
+
+	ul {
+		list-style-type: circle;
+		margin: 0 0 10px 15px;
 	}
 
 	@media (max-width: 1024px) {

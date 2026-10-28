@@ -19,7 +19,11 @@
 	const BUCKET = 'scf_uploads';
 	const ATTACHMENT_FOLDER = 'maps_screenshot';
 
-	const SITE_ALLOWANCE_OPTIONS = [{ value: '50', label: 'RM 50' }];
+	const SITE_ALLOWANCE_OPTIONS = [
+		{ value: '30', label: 'Peninsular (Hometown) to Klang Valley (KL & Selangor) (Site) ~ RM30 / Day' },
+		{ value: '50', label: 'Peninsular (Hometown) to Other States in Peninsular (Site) ~ RM50 / Day' },
+		{ value: '65', label: 'Peninsular (Hometown) to Sabah/Sarawak (Site) ~ RM65 / Day' }
+	];
 
 	const AMOUNT_FIELDS = [
 		{ key: 'site_allowance', label: 'Site Allowance' },
@@ -66,6 +70,8 @@
 	let attachmentFile = $state(null);
 	let fileInput = $state(null);
 	let formError = $state('');
+	let fieldErr = $state({});
+	let submitted = $state(false);
 	let saving = $state(false);
 
 	let showDeleteModal = $state(false);
@@ -276,6 +282,8 @@
 		form = emptyForm(key);
 		attachmentFile = null;
 		formError = '';
+		fieldErr = {};
+		submitted = false;
 		showClaimModal = true;
 	}
 
@@ -296,6 +304,8 @@
 		};
 		attachmentFile = null;
 		formError = '';
+		fieldErr = {};
+		submitted = false;
 		showClaimModal = true;
 	}
 
@@ -327,15 +337,26 @@
 	}
 
 	function validateForm() {
-		if (!form.project_no) return 'Please select a project.';
-		if (!form.description.trim()) return 'Please enter the travel location (From-To).';
-		if (descriptionHasComma) return 'Travel Location must not contain commas (,).';
-		if (remarksHasComma) return 'Remarks must not contain commas (,).';
-		if (hasValue(form.site_allowance) && siteAllowanceTaken) {
-			return 'Site allowance has already been claimed on this date.';
-		}
-		return '';
+		const e = {};
+		if (!form.project_no) e.project_no = 'Select a project using Search Project.';
+		if (!form.description.trim()) e.description = 'Description is required.';
+		if (!hasValue(form.site_allowance)) e.site_allowance = 'Site Allowance is required.';
+		if (!hasValue(form.accommodation)) e.accommodation = 'Accommodation is required.';
+		if (!hasValue(form.toll_fare)) e.toll_fare = 'Toll Fare is required.';
+		if (!hasValue(form.claim_mileage)) e.claim_mileage = 'Mileage / Petrol / Diesel is required.';
+		if (!hasValue(form.site_purchase)) e.site_purchase = 'Site Purchase is required.';
+		fieldErr = e;
+		return (
+			Object.keys(e).length === 0 &&
+			!descriptionHasComma &&
+			!remarksHasComma &&
+			!(hasValue(form.site_allowance) && siteAllowanceTaken)
+		);
 	}
+
+	$effect(() => {
+		if (submitted && showClaimModal) validateForm();
+	});
 
 	async function siteAllowanceExistsInDb(userId) {
 		let query = supabase
@@ -356,8 +377,9 @@
 
 	async function saveClaim(event) {
 		event.preventDefault();
-		formError = validateForm();
-		if (formError) return;
+		formError = '';
+		submitted = true;
+		if (!validateForm()) return;
 
 		saving = true;
 		let successMessage = '';
@@ -632,15 +654,16 @@
 	busy={saving}
 	onclose={closeClaimModal}
 >
-	<form id="claim-form" class="claim-form" onsubmit={saveClaim} novalidate>
+	<form id="claim-form" class="claim-form" novalidate onsubmit={saveClaim}>
 		<div class="field full">
-			<label for="scf-project"><span class="required">*</span>Project</label>
+			<label for="scf-project">Project <span class="required">*</span></label>
 			<div class="project-picker">
 				<input
 					id="scf-project"
 					type="text"
 					value={form.project_no}
 					placeholder="Select a project"
+					class:invalid={fieldErr.project_no}
 					readonly
 					onclick={openProjectModal}
 				/>
@@ -653,29 +676,33 @@
 					<Search size={18} />
 				</button>
 			</div>
+			{#if fieldErr.project_no}<p class="field-err">{fieldErr.project_no}</p>{/if}
 			{#if selectedProjectName}
 				<p class="hint">{selectedProjectName}</p>
 			{/if}
 		</div>
 
 		<div class="field full">
-			<label for="scf-description"><span class="required">*</span>Description</label>
+			<label for="scf-description">Description <span class="required">*</span></label>
 			<input
 				id="scf-description"
 				type="text"
 				placeholder="Home-Site-Home (12km)"
 				bind:value={form.description}
-				class:invalid={descriptionHasComma}
+				class:invalid={descriptionHasComma || fieldErr.description}
 			/>
 			{#if descriptionHasComma}
-				<p class="field-error">Travel Location must not contain commas (,).</p>
+				<p class="field-err">Travel Location must not contain commas (,).</p>
+			{:else if fieldErr.description}
+				<p class="field-err">{fieldErr.description}</p>
 			{/if}
 		</div>
 
 		<div class="field">
-			<label for="scf-site-allowance">Site Allowance</label>
+			<label for="scf-site-allowance">Site Allowance <span class="required">*</span></label>
 			<select
 				id="scf-site-allowance"
+				class:invalid={fieldErr.site_allowance}
 				bind:value={form.site_allowance}
 				disabled={siteAllowanceTaken && !hasValue(form.site_allowance)}
 			>
@@ -688,12 +715,14 @@
 				{/if}
 			</select>
 			{#if siteAllowanceTaken}
-				<p class="field-error">Already claimed on this date.</p>
+				<p class="field-err">Already claimed on this date.</p>
+			{:else if fieldErr.site_allowance}
+				<p class="field-err">{fieldErr.site_allowance}</p>
 			{/if}
 		</div>
 
 		<div class="field">
-			<label for="scf-accommodation">Accommodation</label>
+			<label for="scf-accommodation">Accommodation <span class="required">*</span></label>
 			<input
 				id="scf-accommodation"
 				type="number"
@@ -701,11 +730,13 @@
 				min="0"
 				step="0.01"
 				bind:value={form.accommodation}
+				class:invalid={fieldErr.accommodation}
 			/>
+			{#if fieldErr.accommodation}<p class="field-err">{fieldErr.accommodation}</p>{/if}
 		</div>
 
 		<div class="field">
-			<label for="scf-toll">Toll Fare</label>
+			<label for="scf-toll">Toll Fare <span class="required">*</span></label>
 			<input
 				id="scf-toll"
 				type="number"
@@ -713,11 +744,13 @@
 				min="0"
 				step="0.01"
 				bind:value={form.toll_fare}
+				class:invalid={fieldErr.toll_fare}
 			/>
+			{#if fieldErr.toll_fare}<p class="field-err">{fieldErr.toll_fare}</p>{/if}
 		</div>
 
 		<div class="field">
-			<label for="scf-mileage">Mileage / Petrol / Diesel</label>
+			<label for="scf-mileage">Mileage / Petrol / Diesel <span class="required">*</span></label>
 			<input
 				id="scf-mileage"
 				type="number"
@@ -725,11 +758,13 @@
 				min="0"
 				step="0.01"
 				bind:value={form.claim_mileage}
+				class:invalid={fieldErr.claim_mileage}
 			/>
+			{#if fieldErr.claim_mileage}<p class="field-err">{fieldErr.claim_mileage}</p>{/if}
 		</div>
 
 		<div class="field">
-			<label for="scf-site-purchase">Site Purchase</label>
+			<label for="scf-site-purchase">Site Purchase <span class="required">*</span></label>
 			<input
 				id="scf-site-purchase"
 				type="number"
@@ -737,7 +772,9 @@
 				min="0"
 				step="0.01"
 				bind:value={form.site_purchase}
+				class:invalid={fieldErr.site_purchase}
 			/>
+			{#if fieldErr.site_purchase}<p class="field-err">{fieldErr.site_purchase}</p>{/if}
 		</div>
 
 		<div class="field">
@@ -761,7 +798,7 @@
 				class:invalid={remarksHasComma}
 			/>
 			{#if remarksHasComma}
-				<p class="field-error">Remarks must not contain commas (,).</p>
+				<p class="field-err">Remarks must not contain commas (,).</p>
 			{/if}
 		</div>
 
@@ -813,11 +850,11 @@
 		<button type="button" class="button-inverted" onclick={closeClaimModal} disabled={saving}>
 			Cancel
 		</button>
-		<button type="submit" form="claim-form" class="button-primary" disabled={saving}>
+		<button type="submit" form="claim-form" class="button-confirm" disabled={saving}>
 			{#if saving}
 				Saving...
 			{:else}
-				{modalMode === 'create' ? 'Create Claim' : 'Save Changes'}
+				{modalMode === 'create' ? 'Confirm' : 'Save Changes'}
 			{/if}
 		</button>
 	{/snippet}
@@ -893,6 +930,16 @@
 <style>
 	.button-danger:hover {
 		background-color: #c62828c7;
+	}
+
+	.button-confirm {
+		background-color: var(--fill);
+		font-weight: 600;
+		padding: 8px 20px;
+	}
+
+	.button-confirm:hover:not(:disabled) {
+		background-color: var(--brand);
 	}
 
 	.error {
@@ -1142,11 +1189,6 @@
 		font-weight: 600;
 	}
 
-	.required {
-		color: var(--danger);
-		margin-right: 2px;
-	}
-
 	.field input,
 	.field select {
 		width: 100%;
@@ -1163,14 +1205,9 @@
 		cursor: not-allowed;
 	}
 
-	.field input.invalid {
+	.field input.invalid,
+	.field select.invalid {
 		border-color: var(--danger);
-	}
-
-	.field-error {
-		font-size: 12px;
-		color: var(--danger);
-		margin: 0;
 	}
 
 	.project-picker {

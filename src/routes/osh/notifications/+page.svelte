@@ -33,6 +33,8 @@
 	let noti_photo_file = null;
 	let noti_file_file = null;
 	let createError = '';
+	let fieldErr = {};
+	let submitted = false;
 
 	function onFile(e, setter) {
 		setter(e.currentTarget.files?.[0] ?? null);
@@ -152,6 +154,8 @@
 		noti_photo_file = null;
 		noti_file_file = null;
 		createError = '';
+		fieldErr = {};
+		submitted = false;
 		showCreateModal = true;
 	};
 
@@ -160,18 +164,27 @@
 		showCreateModal = false;
 	};
 
+	function validate() {
+		const e = {};
+		if (!createForm.title?.trim()) e.title = 'Title is required.';
+		if (!createForm.summary?.trim()) e.summary = 'Summary is required.';
+		if (!createForm.full_content?.trim()) e.full_content = 'Full content is required.';
+		if (!createForm.priority) e.priority = 'Priority is required.';
+		fieldErr = e;
+		return Object.keys(e).length === 0;
+	}
+
+	function revalidate() {
+		if (submitted) validate();
+	}
+
 	const createNotification = async () => {
 		createError = '';
 
+		submitted = true;
+		if (!validate()) return;
+
 		const title = createForm.title.trim();
-		if (!title) {
-			createError = 'Please enter a title.';
-			return;
-		}
-		if (!createForm.priority) {
-			createError = 'Please choose a priority.';
-			return;
-		}
 
 		isSaving = true;
 
@@ -276,7 +289,7 @@
 <div class="notifications-create">
 	{#if isAdmin}
 		<button class="button-create" on:click={openCreateModal}
-			><Plus size={20} /><span>New Notification</span></button
+			><Plus size={20} /><span>Add Notification</span></button
 		>
 	{/if}
 </div>
@@ -318,29 +331,52 @@
 	{/each}
 </div>
 
-<Modal open={showCreateModal} title="New Notification" busy={isSaving} onclose={closeCreateModal}>
-	<div class="create-form">
-		<label>Title: <input type="text" bind:value={createForm.title} /></label>
-		<label>Summary: <input type="text" bind:value={createForm.summary} /></label>
-		<label
-			>Full Content: <textarea
+<Modal open={showCreateModal} title="Add Notification" busy={isSaving} onclose={closeCreateModal}>
+	<form
+		id="create-notification-form"
+		class="create-form"
+		novalidate
+		on:submit|preventDefault={createNotification}
+		on:input={revalidate}
+		on:change={revalidate}
+	>
+		<label>
+			<span class="label-text">Title: <span class="required">*</span></span>
+			<input type="text" bind:value={createForm.title} class:invalid={fieldErr.title} />
+			{#if fieldErr.title}<span class="field-err">{fieldErr.title}</span>{/if}
+		</label>
+		<label>
+			<span class="label-text">Summary: <span class="required">*</span></span>
+			<input type="text" bind:value={createForm.summary} class:invalid={fieldErr.summary} />
+			{#if fieldErr.summary}<span class="field-err">{fieldErr.summary}</span>{/if}
+		</label>
+		<label>
+			<span class="label-text">Full Content: <span class="required">*</span></span>
+			<textarea
 				name="content"
 				id="content"
 				rows="6"
 				bind:value={createForm.full_content}
-			></textarea></label
-		>
-		<label
-			>Priority:
-			<select bind:value={createForm.priority} class="priority-select">
+				class:invalid={fieldErr.full_content}
+			></textarea>
+			{#if fieldErr.full_content}<span class="field-err">{fieldErr.full_content}</span>{/if}
+		</label>
+		<label>
+			<span class="label-text">Priority: <span class="required">*</span></span>
+			<select
+				bind:value={createForm.priority}
+				class="priority-select"
+				class:invalid={fieldErr.priority}
+			>
 				<option value="" disabled selected>Choose Priority</option>
 				<option value="Normal">Normal</option>
 				<option value="Important">Important</option>
 				<option value="Urgent">Urgent</option>
 			</select>
+			{#if fieldErr.priority}<span class="field-err">{fieldErr.priority}</span>{/if}
 		</label>
-		<label
-			>Photo:
+		<label>
+			<span class="label-text">Photo:</span>
 			<div class="upload">
 				<p class="upload-text">
 					<input
@@ -354,8 +390,8 @@
 				</p>
 			</div>
 		</label>
-		<label
-			>File:
+		<label>
+			<span class="label-text">File:</span>
 			<div class="upload">
 				<p class="upload-text">
 					<input
@@ -369,14 +405,19 @@
 				</p>
 			</div>
 		</label>
-	</div>
+	</form>
 	{#if createError}
 		<p class="error">{createError}</p>
 	{/if}
 
 	{#snippet footer()}
 		<button class="button-inverted" on:click={closeCreateModal} disabled={isSaving}>Cancel</button>
-		<button class="button-confirm" on:click={createNotification} disabled={isSaving}>
+		<button
+			type="submit"
+			form="create-notification-form"
+			class="button-confirm"
+			disabled={isSaving}
+		>
 			{isSaving ? 'Saving...' : 'Confirm'}
 		</button>
 	{/snippet}

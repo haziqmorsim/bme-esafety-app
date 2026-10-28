@@ -1,4 +1,5 @@
 <script>
+	import { validation, checkSubmit } from '$lib/validation';
     import Search from '@lucide/svelte/icons/search';
     import Spinner from '$lib/components/Spinner.svelte';
     import FileText from '@lucide/svelte/icons/file-text';
@@ -64,6 +65,7 @@
 
     async function handleSubmit(e) {
         e.preventDefault();
+        if (!checkSubmit(e)) return;
         errorMsg = '';
         saving = true;
 
@@ -188,14 +190,14 @@
 <h1 class="title">Induction Form (e-IDF) Submission</h1>
 
 <div class="project-box">
-    <form class="forms" onsubmit={handleSubmit}>
+    <form class="forms" use:validation onsubmit={handleSubmit}>
         <h2 class="heading">General Information</h2>
         <button type="button" class="button-primary" onclick={openProjectModal}>
             <Search />Search Project
         </button>
         <div class="forms-p">
             <label for="project-name" class="forms-label">Project Name:</label>
-            <input type="text" class="forms-input" bind:value={project_name} />
+            <input data-message="Select a project using Search Project." required type="text" class="forms-input" bind:value={project_name} readonly />
         </div>
         <div class="forms-p">
             <label for="project-date" class="forms-label">Activity Date:</label>
@@ -245,19 +247,19 @@
         </div>
         <div class="forms-p">
             <label for="induction-type" class="forms-label">Induction Type:</label>
-            <select class="type-select" bind:value={induction_type}>
+            <select required class="type-select" bind:value={induction_type}>
                 <option value=""></option>
                 <option value="visitor">Visitor</option>
                 <option value="conductor">Contractor</option>
             </select>
         </div>
-        <p class="image-text">Induction Form Image</p>
+        <p class="image-text" data-label-for="idf_form">Induction Form Image</p>
         <div class="upload">
             <p class="upload-text">
                 <input type="file" name="idf_form" id="idf_form" accept="image/png, image/jpeg" multiple onchange={(e) => (idf_form_file = e.target.files[0])} required />
             </p>
         </div>
-        <p class="image-text">Activity Image</p>
+        <p class="image-text" data-label-for="idf_activity">Activity Image</p>
         <div class="upload">
             <p class="upload-text">
                 <input type="file" name="idf_activity" id="idf_activity" accept="image/png, image/jpeg" multiple onchange={(e) => (idf_activity_file = e.target.files[0])} required />
@@ -269,22 +271,20 @@
         <p>
             <textarea name="remarks" id="remarks" cols="30" rows="10" class="remarks" placeholder="Remarks" bind:value={remarks}></textarea>
         </p>
-        <h2 class="heading">Acknowledgement and Submission</h2>
-        <div class="container">
+        <h2 class="heading" data-label-for="checkbox">Acknowledgement and Submission</h2>
+        <div class="container" data-field>
             <div class="checkbox">
-                <input type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} required />
+                <input data-label="Acknowledgement" type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} required />
             </div>
             <div class="declaration">
-                <p>The declaration for the Induction Form is as below:</p>
+                <p>The declaration for the Induction Form is as below.</p>
 				<p>
 					I hereby acknowledge that I have conducted a thorough check and confirm the following:
 				</p>
-				<p>>> All information in this report is accurate and up to date.</p>
-				<p>>> All personnel working on site are registered and have appropriate permits.</p>
-				<p>
-					By entering my password below, I confirm my identity and consent as a digital
-					acknowledgment.
-				</p>
+				<ul>
+					<li>All information in this report is accurate and up to date.</li>
+					<li>All personnel working on site are registered and have appropriate permits.</li>
+				</ul>
 				<p>I understand that this action may be recorded as part of the official audit trail.</p>
             </div>
         </div>
@@ -314,6 +314,11 @@
 
 	.image-text {
 		margin-top: 10px;
+	}
+
+    ul {
+		list-style-type: circle;
+		margin: 0 0 10px 15px;
 	}
 
 	@media (max-width: 600px) {

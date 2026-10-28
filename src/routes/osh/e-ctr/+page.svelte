@@ -1,4 +1,5 @@
 <script>
+	import { validation, checkSubmit } from '$lib/validation';
 	import Search from '@lucide/svelte/icons/search';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import FileText from '@lucide/svelte/icons/file-text';
@@ -43,12 +44,6 @@
 	let created_at = '';
 	let created_by = '';
 
-	// let confirmPassword = '';
-
-	// if (!confirmPassword) {
-	// 	throw new Error('Please confirm your login password.');
-	// }
-
 	let errorMsg = '';
 	let saving = false;
 
@@ -63,6 +58,7 @@
 
 	async function handleSubmit(e) {
 		e.preventDefault();
+		if (!checkSubmit(e)) return;
 		errorMsg = '';
 		saving = true;
 
@@ -187,26 +183,26 @@
 <h1 class="title">Competency Register Report (e-CTR) Submission</h1>
 
 <div class="project-box">
-	<form class="forms" onsubmit={handleSubmit}>
+	<form class="forms" use:validation onsubmit={handleSubmit}>
 		<h2 class="heading">General Information</h2>
 		<button type="button" class="button-primary" onclick={openProjectModal}
 			><Search />Search Project</button
 		>
 		<div class="forms-p">
 			<label for="project-name" class="forms-label">Project Name:</label>
-			<input type="text" class="forms-input" bind:value={project_name} />
+			<input data-message="Select a project using Search Project." required type="text" class="forms-input" bind:value={project_name} />
 		</div>
 		<div class="forms-p">
 			<label for="project-no" class="forms-label">Project No.:</label>
-			<input type="text" class="forms-input" bind:value={project_no} />
+			<input required type="text" class="forms-input" bind:value={project_no} />
 		</div>
 		<div class="forms-p">
 			<label for="project-region" class="forms-label">Region:</label>
-			<input type="text" class="forms-input" bind:value={region} />
+			<input required type="text" class="forms-input" bind:value={region} />
 		</div>
 		<div class="forms-p">
 			<label for="project-location" class="forms-label">Location:</label>
-			<input type="text" class="forms-input" bind:value={location} />
+			<input required type="text" class="forms-input" bind:value={location} />
 		</div>
 		<div class="forms-p">
 			<label for="kickoff-date" class="forms-label">Kick-off Date:</label>
@@ -268,11 +264,11 @@
 		<h2 class="heading">Site Safety Supervisor Allocation</h2>
 		<div class="forms-p">
 			<label for="supervisor-name" class="forms-label">Supervisor Name:</label>
-			<input type="text" class="forms-input" bind:value={supervisor_name} />
+			<input required type="text" class="forms-input" bind:value={supervisor_name} />
 		</div>
 		<div class="forms-p">
 			<label for="start-date" class="forms-label">Start Date:</label>
-			<input
+			<input required
 				type="date"
 				class="forms-input forms-date"
 				bind:value={start_date}
@@ -281,7 +277,7 @@
 		</div>
 		<div class="forms-p">
 			<label for="end-date" class="forms-label">End Date:</label>
-			<input
+			<input required
 				type="date"
 				class="forms-input forms-date"
 				bind:value={end_date}
@@ -294,11 +290,11 @@
 		<h3 class="subheading">Workday</h3>
 		<div class="forms-p">
 			<label for="staff-name" class="forms-label">Staff Name:</label>
-			<input type="text" class="forms-input" bind:value={staff_name} />
+			<input required type="text" class="forms-input" bind:value={staff_name} />
 		</div>
 		<div class="forms-p">
 			<label for="workday-date" class="forms-label">Date:</label>
-			<input
+			<input required
 				type="date"
 				class="forms-input forms-date"
 				bind:value={workday_date}
@@ -307,21 +303,21 @@
 		</div>
 		<div class="forms-p">
 			<label for="hours-worked" class="forms-label">Hours Worked:</label>
-			<input type="text" class="forms-input" bind:value={hours_worked} />
+			<input required type="text" class="forms-input" bind:value={hours_worked} />
 		</div>
 		<h3 class="subheading">Overtime (OT) Claim</h3>
 		<div class="forms-p">
 			<label for="workday-day" class="forms-label">Workday:</label>
-			<input type="text" class="forms-input" bind:value={workday_day} />
+			<input required type="text" class="forms-input" bind:value={workday_day} />
 		</div>
 		<div class="forms-p">
 			<label for="hours-worked" class="forms-label">Hours Worked:</label>
-			<input type="text" class="forms-input" bind:value={actual_hours_worked} />
+			<input required type="text" class="forms-input" bind:value={actual_hours_worked} />
 		</div>
 		<h3 class="subheading">Travel Details</h3>
 		<div class="forms-p">
 			<label for="travel-date" class="forms-label">Date:</label>
-			<input
+			<input required
 				type="date"
 				class="forms-input forms-date"
 				bind:value={travel_date}
@@ -330,38 +326,38 @@
 		</div>
 		<div class="forms-p">
 			<label for="travel-origin" class="forms-label">Origin:</label>
-			<input type="text" class="forms-input" bind:value={travel_origin} />
+			<input required type="text" class="forms-input" bind:value={travel_origin} />
 		</div>
 		<div class="forms-p">
 			<label for="travel-destination" class="forms-label">Destination:</label>
-			<input type="text" class="forms-input" bind:value={travel_destination} />
+			<input required type="text" class="forms-input" bind:value={travel_destination} />
 		</div>
 		<div class="forms-p">
 			<label for="travel-allowance" class="forms-label">Allowance:</label>
-			<input type="text" class="forms-input" bind:value={travel_allowance} />
+			<input required type="text" class="forms-input" bind:value={travel_allowance} />
 		</div>
 		<br />
 		<hr />
 		<h2 class="heading">Contractor Information</h2>
 		<div class="forms-p">
 			<label for="contractor-name" class="forms-label">Contractor Name:</label>
-			<input type="text" class="forms-input" bind:value={contractor_name} />
+			<input required type="text" class="forms-input" bind:value={contractor_name} />
 		</div>
 		<div class="forms-p">
 			<label for="contractor-phone-no" class="forms-label">Phone No.:</label>
-			<input type="text" class="forms-input" bind:value={contractor_phone_no} />
+			<input required type="text" class="forms-input" bind:value={contractor_phone_no} />
 		</div>
 		<div class="forms-p">
 			<label for="contractor-company" class="forms-label">Company:</label>
-			<input type="text" class="forms-input" bind:value={contractor_company} />
+			<input required type="text" class="forms-input" bind:value={contractor_company} />
 		</div>
 		<div class="forms-p">
 			<label for="contractor-email" class="forms-label">Email:</label>
-			<input type="email" class="forms-input" bind:value={contractor_email} />
+			<input required type="email" class="forms-input" bind:value={contractor_email} />
 		</div>
 		<div class="forms-p">
 			<label for="contractor-certification" class="forms-label">Certification Expiry Date:</label>
-			<input
+			<input required
 				type="date"
 				class="forms-input forms-date"
 				bind:value={contractor_certification}
@@ -381,30 +377,24 @@
 				bind:value={remarks}
 			></textarea>
 		</p>
-		<h2 class="heading">Acknowledgement and Submission</h2>
-		<div class="container">
+		<h2 class="heading" data-label-for="checkbox">Acknowledgement and Submission</h2>
+		<div class="container" data-field>
 			<div class="checkbox">
-				<input type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} />
+				<input data-label="Acknowledgement" required type="checkbox" name="checkbox" id="checkbox" bind:checked={acknowledged} />
 			</div>
 			<div class="declaration">
-				<p>The declaration for the Competency Register Report is as below:</p>
+				<p>The declaration for the Competency Register Report is as below.</p>
 				<p>
 					I hereby acknowledge that I have conducted a thorough check and confirm the following:
 				</p>
-				<p>>> All information in this report is accurate and up to date.</p>
-				<p>>> All personnel working on site are registered and have appropriate permits.</p>
-				<p>
-					By entering my password below, I confirm my identity and consent as a digital
-					acknowledgment.
-				</p>
+				<ul>
+					<li>All information in this report is accurate and up to date.</li>
+					<li>All personnel working on site are registered and have appropriate permits.</li>
+				</ul>
 				<p>I understand that this action may be recorded as part of the official audit trail.</p>
 			</div>
 		</div>
 		<p>Note: Double check if content is correct before submitting.</p>
-		<!-- <div class="forms-p">
-			<p><b>Confirm Login Password</b></p>
-			<input type="password" class="forms-input" />
-		</div> -->
 		{#if errorMsg}
 			<p class="error">{errorMsg}</p>
 		{/if}
@@ -426,6 +416,11 @@
 		margin: 10px 0;
 		font-size: 16px;
 		font-weight: 600;
+	}
+
+	ul {
+		list-style-type: circle;
+		margin: 0 0 10px 15px;
 	}
 
 	@media (max-width: 1024px) {

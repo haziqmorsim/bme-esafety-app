@@ -1,4 +1,5 @@
 <script>
+	import { validation } from '$lib/validation';
 	import AuthShell from '$lib/components/AuthShell.svelte';
 	import { supabase } from '$lib/supabase';
 	import { goto } from '$app/navigation';
@@ -104,7 +105,7 @@
 </svelte:head>
 
 <AuthShell wide>
-			<form on:submit|preventDefault={signUp}>
+			<form use:validation on:submit|preventDefault={signUp}>
 				<h1 class="auth-title">Create your account</h1>
 				<p class="auth-sub">Fill in your details. You will confirm your e-mail before signing in.</p>
 				<p><label for="first_name">First Name</label></p>
@@ -178,6 +179,7 @@
 						class="input-box"
 						autocomplete="email"
 						required
+						data-skip-format
 						on:input={(e) => validateEmail(e.target.value)}
 					/>
 				</p>

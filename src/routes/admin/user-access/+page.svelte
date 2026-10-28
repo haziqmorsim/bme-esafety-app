@@ -350,11 +350,22 @@
 		color: var(--ink);
 	}
 
+	@media (min-width: 1025px) {
+		.access-grid {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 16px 20px;
+		}
+
+		.menu-card {
+			margin: 0;
+		}
+	}
+
 	@media (max-width: 1024px) {
 		.access-grid {
 			display: flex;
 			flex-direction: column;
-			gap: 10px;
 		}
 
 		.department-select,

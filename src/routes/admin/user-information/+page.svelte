@@ -13,10 +13,25 @@
 	import { toast } from '$lib/stores/toast';
 	import Modal from '$lib/components/Modal.svelte';
 
+	const DEPARTMENTS = ['Admin', 'Project', 'OSH'];
+
+	const splitDepartments = (list) => {
+		const chosen = [];
+		const other = [];
+		for (const value of list ?? []) {
+			const match = DEPARTMENTS.find((d) => d.toLowerCase() === String(value).trim().toLowerCase());
+			if (match) chosen.push(match);
+			else if (String(value).trim()) other.push(String(value).trim());
+		}
+		return { chosen: [...new Set(chosen)], other };
+	};
+
 	let users = [];
 	let errorMsg = '';
 	let isSaving = false;
 	let modalError = '';
+	let fieldErr = {};
+	let submitted = false;
 	let showEditModal = false;
 	let showDeleteModal = false;
 	let showAddModal = false;
@@ -28,7 +43,7 @@
 		nickname: '',
 		email: '',
 		phone: '',
-		department: '',
+		department: [],
 		position: '',
 		region: '',
 		temporaryPassword: ''
@@ -40,10 +55,11 @@
 		nickname: '',
 		email: '',
 		phone: '',
-		department: '',
+		department: [],
 		position: '',
 		region: ''
 	};
+	let editOtherDepartments = [];
 
 	let searchText = '';
 	let selectedDepartment = 'All';
@@ -85,17 +101,21 @@
 
 	const openEditModal = (user) => {
 		selectedUser = user;
+		const { chosen, other } = splitDepartments(user.department);
+		editOtherDepartments = other;
 		editForm = {
 			first_name: user.first_name ?? '',
 			last_name: user.last_name ?? '',
 			nickname: user.nickname ?? '',
 			email: user.email ?? '',
 			phone: user.phone ?? '',
-			department: (user.department ?? []).join(', '),
+			department: chosen,
 			position: user.position ?? '',
 			region: user.region ?? ''
 		};
 		modalError = '';
+		fieldErr = {};
+		submitted = false;
 		showEditModal = true;
 	};
 
@@ -109,6 +129,8 @@
 		addForm = emptyAddForm();
 		showTempPassword = false;
 		modalError = '';
+		fieldErr = {};
+		submitted = false;
 		showAddModal = true;
 	};
 
@@ -137,16 +159,43 @@
 		showTempPassword = true;
 	};
 
+	function validate(form, isNew) {
+		const e = {};
+		const blank = (v) => !String(v ?? '').trim();
+		if (blank(form.first_name)) e.first_name = 'First name is required.';
+		if (blank(form.last_name)) e.last_name = 'Last name is required.';
+		if (blank(form.nickname)) e.nickname = 'Nickname is required.';
+		if (blank(form.email)) e.email = 'E-mail address is required.';
+		else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+			e.email = 'Enter a valid e-mail address.';
+		}
+		if (!form.department?.length) e.department = 'Select at least one department.';
+		if (blank(form.position)) e.position = 'Position is required.';
+		if (blank(form.region)) e.region = 'Region is required.';
+		if (isNew) {
+			if (!form.temporaryPassword) e.temporaryPassword = 'Temporary password is required.';
+			else if (form.temporaryPassword.length < 8) {
+				e.temporaryPassword = 'The temporary password must be at least 8 characters.';
+			}
+		}
+		fieldErr = e;
+		return Object.keys(e).length === 0;
+	}
+
+	const revalidate = () => {
+		if (!submitted) return;
+		if (showAddModal) validate(addForm, true);
+		else if (showEditModal) validate(editForm, false);
+	};
+
 	const addUser = async () => {
 		modalError = '';
 
+		submitted = true;
+		if (!validate(addForm, true)) return;
+
 		const first = addForm.first_name.trim();
 		const email = addForm.email.trim();
-		if (!first) return (modalError = 'First name is required.');
-		if (!email) return (modalError = 'E-mail address is required.');
-		if (addForm.temporaryPassword.length < 8) {
-			return (modalError = 'The temporary password must be at least 8 characters.');
-		}
 
 		isSaving = true;
 		try {
@@ -165,10 +214,7 @@
 					...addForm,
 					first_name: first,
 					email,
-					department: addForm.department
-						.split(',')
-						.map((value) => value.trim())
-						.filter(Boolean)
+					department: [...addForm.department]
 				})
 			});
 
@@ -206,8 +252,10 @@
 
 	const saveUser = async () => {
 		if (!selectedUser) return;
-		isSaving = true;
 		modalError = '';
+		submitted = true;
+		if (!validate(editForm, false)) return;
+		isSaving = true;
 
 		const id = selectedUser.id;
 		const payload = {
@@ -216,10 +264,7 @@
 			nickname: editForm.nickname.trim() || null,
 			email: editForm.email.trim() || null,
 			phone: editForm.phone.trim() || null,
-			department: editForm.department
-				.split(',')
-				.map((value) => value.trim())
-				.filter(Boolean),
+			department: [...editForm.department, ...editOtherDepartments],
 			position: editForm.position.trim() || null,
 			region: editForm.region.trim() || null
 		};
@@ -337,38 +382,59 @@
 </div>
 
 <Modal open={showEditModal} title="Edit User Information" busy={isSaving} onclose={closeEditModal}>
-	<form id="user-form" class="edit-form" onsubmit={(e) => (e.preventDefault(), saveUser())}>
+	<form
+		id="user-form"
+		class="edit-form"
+		novalidate
+		onsubmit={(e) => (e.preventDefault(), saveUser())}
+		oninput={revalidate}
+		onchange={revalidate}
+	>
 		<label>
-			First Name:
-			<input type="text" bind:value={editForm.first_name} />
+			<span class="label-text">First Name: <span class="required">*</span></span>
+			<input type="text" bind:value={editForm.first_name} class:invalid={fieldErr.first_name} />
+			{#if fieldErr.first_name}<span class="field-err">{fieldErr.first_name}</span>{/if}
 		</label>
 		<label>
-			Last Name:
-			<input type="text" bind:value={editForm.last_name} />
+			<span class="label-text">Last Name: <span class="required">*</span></span>
+			<input type="text" bind:value={editForm.last_name} class:invalid={fieldErr.last_name} />
+			{#if fieldErr.last_name}<span class="field-err">{fieldErr.last_name}</span>{/if}
 		</label>
 		<label>
-			Nickname:
-			<input type="text" bind:value={editForm.nickname} />
+			<span class="label-text">Nickname: <span class="required">*</span></span>
+			<input type="text" bind:value={editForm.nickname} class:invalid={fieldErr.nickname} />
+			{#if fieldErr.nickname}<span class="field-err">{fieldErr.nickname}</span>{/if}
 		</label>
 		<label>
-			E-mail Address:
-			<input type="email" bind:value={editForm.email} />
+			<span class="label-text">E-mail Address: <span class="required">*</span></span>
+			<input type="email" bind:value={editForm.email} class:invalid={fieldErr.email} />
+			{#if fieldErr.email}<span class="field-err">{fieldErr.email}</span>{/if}
 		</label>
 		<label>
-			Phone Number:
+			<span class="label-text">Phone Number:</span>
 			<input type="text" bind:value={editForm.phone} />
 		</label>
+		<div class="field">
+			<span class="field-title">Department(s): <span class="required">*</span></span>
+			<div class="check-row" class:invalid-group={fieldErr.department}>
+				{#each DEPARTMENTS as dept (dept)}
+					<label class="check-option">
+						<input type="checkbox" value={dept} bind:group={editForm.department} />
+						{dept}
+					</label>
+				{/each}
+			</div>
+			{#if fieldErr.department}<span class="field-err">{fieldErr.department}</span>{/if}
+		</div>
 		<label>
-			Department(s) (comma-separated):
-			<input type="text" bind:value={editForm.department} />
+			<span class="label-text">Position: <span class="required">*</span></span>
+			<input type="text" bind:value={editForm.position} class:invalid={fieldErr.position} />
+			{#if fieldErr.position}<span class="field-err">{fieldErr.position}</span>{/if}
 		</label>
 		<label>
-			Position:
-			<input type="text" bind:value={editForm.position} />
-		</label>
-		<label>
-			Region:
-			<input type="text" bind:value={editForm.region} />
+			<span class="label-text">Region: <span class="required">*</span></span>
+			<input type="text" bind:value={editForm.region} class:invalid={fieldErr.region} />
+			{#if fieldErr.region}<span class="field-err">{fieldErr.region}</span>{/if}
 		</label>
 	</form>
 	{#if modalError}
@@ -384,50 +450,72 @@
 </Modal>
 
 <Modal open={showAddModal} title="Add User" busy={isSaving} onclose={closeAddModal}>
-	<form id="add-user-form" class="edit-form" onsubmit={(e) => (e.preventDefault(), addUser())}>
+	<form
+		id="add-user-form"
+		class="edit-form"
+		novalidate
+		onsubmit={(e) => (e.preventDefault(), addUser())}
+		oninput={revalidate}
+		onchange={revalidate}
+	>
 		<label>
-			First Name:
-			<input type="text" bind:value={addForm.first_name} autocomplete="off" required />
+			<span class="label-text">First Name: <span class="required">*</span></span>
+			<input type="text" bind:value={addForm.first_name} autocomplete="off" class:invalid={fieldErr.first_name} />
+			{#if fieldErr.first_name}<span class="field-err">{fieldErr.first_name}</span>{/if}
 		</label>
 		<label>
-			Last Name:
-			<input type="text" bind:value={addForm.last_name} autocomplete="off" />
+			<span class="label-text">Last Name: <span class="required">*</span></span>
+			<input type="text" bind:value={addForm.last_name} autocomplete="off" class:invalid={fieldErr.last_name} />
+			{#if fieldErr.last_name}<span class="field-err">{fieldErr.last_name}</span>{/if}
 		</label>
 		<label>
-			Nickname:
-			<input type="text" bind:value={addForm.nickname} autocomplete="off" />
+			<span class="label-text">Nickname: <span class="required">*</span></span>
+			<input type="text" bind:value={addForm.nickname} autocomplete="off" class:invalid={fieldErr.nickname} />
+			{#if fieldErr.nickname}<span class="field-err">{fieldErr.nickname}</span>{/if}
 		</label>
 		<label>
-			E-mail Address:
-			<input type="email" bind:value={addForm.email} autocomplete="off" required />
+			<span class="label-text">E-mail Address: <span class="required">*</span></span>
+			<input type="email" bind:value={addForm.email} autocomplete="off" class:invalid={fieldErr.email} />
+			{#if fieldErr.email}<span class="field-err">{fieldErr.email}</span>{/if}
 		</label>
 		<label>
-			Phone Number:
+			<span class="label-text">Phone Number:</span>
 			<input type="text" bind:value={addForm.phone} autocomplete="off" />
 		</label>
+		<div class="field">
+			<span class="field-title">Department(s): <span class="required">*</span></span>
+			<div class="check-row" class:invalid-group={fieldErr.department}>
+				{#each DEPARTMENTS as dept (dept)}
+					<label class="check-option">
+						<input type="checkbox" value={dept} bind:group={addForm.department} />
+						{dept}
+					</label>
+				{/each}
+			</div>
+			{#if fieldErr.department}<span class="field-err">{fieldErr.department}</span>{/if}
+		</div>
 		<label>
-			Department(s) (comma-separated):
-			<input type="text" bind:value={addForm.department} autocomplete="off" />
+			<span class="label-text">Position: <span class="required">*</span></span>
+			<input type="text" bind:value={addForm.position} autocomplete="off" class:invalid={fieldErr.position} />
+			{#if fieldErr.position}<span class="field-err">{fieldErr.position}</span>{/if}
 		</label>
 		<label>
-			Position:
-			<input type="text" bind:value={addForm.position} autocomplete="off" />
-		</label>
-		<label>
-			Region:
-			<input type="text" bind:value={addForm.region} autocomplete="off" />
+			<span class="label-text">Region: <span class="required">*</span></span>
+			<input type="text" bind:value={addForm.region} autocomplete="off" class:invalid={fieldErr.region} />
+			{#if fieldErr.region}<span class="field-err">{fieldErr.region}</span>{/if}
 		</label>
 		<div class="field">
-			<label for="temp-password">Temporary Password:</label>
+			<label for="temp-password"
+				><span class="label-text">Temporary Password: <span class="required">*</span></span></label
+			>
 			<div class="password-row">
 				<input
 					id="temp-password"
 					type={showTempPassword ? 'text' : 'password'}
 					bind:value={addForm.temporaryPassword}
-					minlength="8"
 					maxlength="72"
 					autocomplete="new-password"
-					required
+					class:invalid={fieldErr.temporaryPassword}
 				/>
 				<button
 					type="button"
@@ -448,6 +536,7 @@
 					<RefreshCw size={18} />
 				</button>
 			</div>
+			{#if fieldErr.temporaryPassword}<span class="field-err">{fieldErr.temporaryPassword}</span>{/if}
 			<p class="hint">
 				At least 8 characters. The user is asked to choose a new password the first time they sign
 				in with this one.
@@ -544,9 +633,39 @@
 		gap: 6px;
 	}
 
-	.field > label {
+	.field > label,
+	.field-title {
 		font-size: 13px;
 		font-weight: 600;
+	}
+
+	.check-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px 22px;
+	}
+
+	.edit-form .check-option {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 14px;
+		font-weight: 500;
+		cursor: pointer;
+	}
+
+	.edit-form .check-option input {
+		width: 18px;
+		height: 18px;
+		padding: 0;
+		margin: 0;
+		cursor: pointer;
+	}
+
+	.check-row.invalid-group {
+		padding: 8px 10px;
+		border: 1px solid var(--danger);
+		border-radius: var(--r-md);
 	}
 
 	.password-row {
