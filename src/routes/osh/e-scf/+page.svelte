@@ -2,6 +2,8 @@
 	import ChevronsLeft from '@lucide/svelte/icons/chevrons-left';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import ChevronsRight from '@lucide/svelte/icons/chevrons-right';
+	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 	import Plus from '@lucide/svelte/icons/plus';
@@ -20,10 +22,16 @@
 	const ATTACHMENT_FOLDER = 'maps_screenshot';
 
 	const SITE_ALLOWANCE_OPTIONS = [
-		{ value: '30', label: 'Peninsular (Hometown) to Klang Valley (KL & Selangor) (Site) ~ RM30 / Day' },
-		{ value: '50', label: 'Peninsular (Hometown) to Other States in Peninsular (Site) ~ RM50 / Day' },
-		{ value: '65', label: 'Peninsular (Hometown) to Sabah/Sarawak (Site) ~ RM65 / Day' }
+		{ id: 'r1', value: '30', label: 'Peninsular (Hometown) to Klang Valley (KL & Selangor) (Site) ~ RM30 / Day' },
+		{ id: 'r2', value: '50', label: 'Peninsular (Hometown) to Other States in Peninsular (Site) ~ RM50 / Day' },
+		{ id: 'r3', value: '65', label: 'Peninsular (Hometown) to Sabah/Sarawak (Site) ~ RM65 / Day' },
+		{ id: 'r4', value: '50', label: 'Sabah (Hometown) to Sabah (Site) ~ RM50 / Day' },
+		{ id: 'r5', value: '50', label: 'Sarawak (Hometown) to Sarawak (Site) ~ RM50 / Day' },
+		{ id: 'r6', value: '65', label: 'Sabah (Hometown) to Sarawak (Site) ~ RM65 / Day' },
+		{ id: 'r7', value: '65', label: 'Sarawak (Hometown) to Sabah (Site) ~ RM65 / Day' },
+		{ id: 'r8', value: '65', label: 'Sabah/Sarawak (Hometown) to Peninsular (Site) ~ RM65 / Day' }
 	];
+	const LEGACY_ROUTE = 'legacy';
 
 	const AMOUNT_FIELDS = [
 		{ key: 'site_allowance', label: 'Site Allowance' },
@@ -62,6 +70,7 @@
 	let loading = $state(false);
 	let pageError = $state('');
 	let loadToken = 0;
+	let expanded = $state({});
 
 	let showClaimModal = $state(false);
 	let modalMode = $state('create');
@@ -70,6 +79,7 @@
 	let attachmentFile = $state(null);
 	let fileInput = $state(null);
 	let formError = $state('');
+	let siteRoute = $state('');
 	let fieldErr = $state({});
 	let submitted = $state(false);
 	let saving = $state(false);
@@ -93,7 +103,8 @@
 			return {
 				day,
 				key: dateKey(viewYear, viewMonth, day),
-				label: `${date.toLocaleDateString('en-GB', { weekday: 'long' })}, ${pad(day)} ${monthNames[viewMonth]}`,
+				label: `${date.toLocaleDateString('en-GB', { weekday: 'long' })}, ${pad(day)}/${pad(viewMonth + 1)}/${viewYear}`,
+				shortLabel: `${date.toLocaleDateString('en-GB', { weekday: 'short' })}, ${pad(day)}/${pad(viewMonth + 1)}/${viewYear}`,
 				isToday:
 					today.getFullYear() === viewYear &&
 					today.getMonth() === viewMonth &&
@@ -170,6 +181,29 @@
 	function clean(v) {
 		const s = v === null || v === undefined ? '' : String(v).trim();
 		return s === '' ? null : s;
+	}
+
+	function money2(v) {
+		const text = clean(v);
+		if (text === null) return null;
+		const n = Number(text);
+		return Number.isFinite(n) ? n.toFixed(2) : text;
+	}
+
+	function claimsOn(key) {
+		return claimsByDate[key] ?? [];
+	}
+
+	// Open or close ONE day (the others in the same row stay as they are)
+	function toggleDay(key) {
+		expanded[key] = !expanded[key];
+	}
+
+	function pickRoute(id) {
+		siteRoute = id;
+		const option = SITE_ALLOWANCE_OPTIONS.find((o) => o.id === id);
+		if (option) form.site_allowance = option.value;
+		else if (id !== LEGACY_ROUTE) form.site_allowance = '';
 	}
 
 	function fileName(path) {
@@ -280,6 +314,7 @@
 		modalMode = 'create';
 		editingClaim = null;
 		form = emptyForm(key);
+		siteRoute = '';
 		attachmentFile = null;
 		formError = '';
 		fieldErr = {};
@@ -302,6 +337,9 @@
 			claim_other: claim.claim_other ?? '',
 			claim_remarks: claim.claim_remarks ?? ''
 		};
+		siteRoute = !hasValue(form.site_allowance)
+			? ''
+			: (SITE_ALLOWANCE_OPTIONS.find((o) => o.value === String(form.site_allowance))?.id ?? LEGACY_ROUTE);
 		attachmentFile = null;
 		formError = '';
 		fieldErr = {};
@@ -399,11 +437,11 @@
 				project_no: clean(form.project_no),
 				description: clean(form.description),
 				site_allowance: clean(form.site_allowance),
-				accommodation: clean(form.accommodation),
-				toll_fare: clean(form.toll_fare),
-				claim_mileage: clean(form.claim_mileage),
-				site_purchase: clean(form.site_purchase),
-				claim_other: clean(form.claim_other),
+				accommodation: money2(form.accommodation),
+				toll_fare: money2(form.toll_fare),
+				claim_mileage: money2(form.claim_mileage),
+				site_purchase: money2(form.site_purchase),
+				claim_other: money2(form.claim_other),
 				claim_remarks: clean(form.claim_remarks)
 			};
 
@@ -454,6 +492,7 @@
 				}
 			}
 
+			expanded[fields.claim_date] = true;
 			saving = false;
 			closeClaimModal();
 			toast.success(successMessage);
@@ -573,20 +612,39 @@
 			<section class="day" class:today={d.isToday}>
 				<div class="day-header">
 					<h2 class="day-label">
-						<span class="day-icon"><CalendarDays size={22} /></span>
-						{d.label}
+						<span class="day-icon"><CalendarDays size={20} /></span>
+						<span class="label-long">{d.label}</span>
+						<span class="label-short">{d.shortLabel}</span>
+						<span class="claim-count">
+							{claimsOn(d.key).length}
+						</span>
 					</h2>
-					<button
-						class="button-add"
-						onclick={() => openCreateModal(d.key)}
-						aria-label={`Create claim for ${d.label}`}
-						title="Create claim"
-					>
-						<Plus size={22} />
-					</button>
+					<div class="day-actions">
+						<button
+							class="button-toggle"
+							onclick={() => toggleDay(d.key)}
+							aria-expanded={!!expanded[d.key]}
+							aria-label={`${expanded[d.key] ? 'Collapse' : 'Expand'} ${d.label}`}
+							title={expanded[d.key] ? 'Collapse' : 'Expand'}
+						>
+							{#if expanded[d.key]}<ChevronDown size={20} />{:else}<ChevronLeft size={20} />{/if}
+						</button>
+						<button
+							class="button-add"
+							onclick={() => openCreateModal(d.key)}
+							aria-label={`Add claim for ${d.label}`}
+							title="Add claim"
+						>
+							<Plus size={20} />
+						</button>
+					</div>
 				</div>
 
-				{#each claimsByDate[d.key] ?? [] as claim (claim.id)}
+				{#if expanded[d.key] && claimsOn(d.key).length === 0}
+					<p class="no-claims">No claims yet.</p>
+				{/if}
+
+				{#each expanded[d.key] ? claimsOn(d.key) : [] as claim (claim.id)}
 					<div class="claim-card">
 						<div class="claim-card-header">
 							<div class="claim-heading">
@@ -597,20 +655,20 @@
 							</div>
 							<div class="claim-actions">
 								<button
-									class="icon-button icon-edit"
-									onclick={() => openEditModal(claim)}
-									aria-label="Edit claim"
-									title="Edit claim"
-								>
-									<Pencil size={18} />
-								</button>
-								<button
-									class="icon-button icon-delete"
+									class="icon-button bg-danger"
 									onclick={() => openDeleteModal(claim)}
 									aria-label="Delete claim"
 									title="Delete claim"
 								>
 									<Trash2 size={18} />
+								</button>
+								<button
+									class="icon-button bg-teal"
+									onclick={() => openEditModal(claim)}
+									aria-label="Edit claim"
+									title="Edit claim"
+								>
+									<Pencil size={18} />
 								</button>
 							</div>
 						</div>
@@ -619,7 +677,7 @@
 							{#each AMOUNT_FIELDS.filter((f) => hasValue(claim[f.key])) as field (field.key)}
 								<div class="claim-detail">
 									<p class="detail-label">{field.label}</p>
-									<p class="detail-value">RM {claim[field.key]}</p>
+									<p class="detail-value">RM {field.key === 'site_allowance' ? claim[field.key] : money2(claim[field.key])}</p>
 								</div>
 							{/each}
 
@@ -650,7 +708,7 @@
 
 <Modal
 	open={showClaimModal}
-	title={`${modalMode === 'create' ? 'Create Claim' : 'Edit Claim'} (${formatShortDate(form.claim_date)})`}
+	title={`${modalMode === 'create' ? 'Add Claim' : 'Edit Claim'} (${formatShortDate(form.claim_date)})`}
 	busy={saving}
 	onclose={closeClaimModal}
 >
@@ -699,19 +757,20 @@
 		</div>
 
 		<div class="field">
-			<label for="scf-site-allowance">Site Allowance <span class="required">*</span></label>
+			<label for="scf-site-allowance">Site Allowance (RM) <span class="required">*</span></label>
 			<select
 				id="scf-site-allowance"
 				class:invalid={fieldErr.site_allowance}
-				bind:value={form.site_allowance}
+				value={siteRoute}
+				onchange={(e) => pickRoute(e.currentTarget.value)}
 				disabled={siteAllowanceTaken && !hasValue(form.site_allowance)}
 			>
 				<option value=""></option>
-				{#each SITE_ALLOWANCE_OPTIONS as opt (opt.value)}
-					<option value={opt.value}>{opt.label}</option>
+				{#each SITE_ALLOWANCE_OPTIONS as opt (opt.id)}
+					<option value={opt.id}>{opt.label}</option>
 				{/each}
-				{#if hasValue(form.site_allowance) && !SITE_ALLOWANCE_OPTIONS.some((o) => o.value === form.site_allowance)}
-					<option value={form.site_allowance}>RM {form.site_allowance}</option>
+				{#if siteRoute === LEGACY_ROUTE}
+					<option value={LEGACY_ROUTE}>RM {form.site_allowance}</option>
 				{/if}
 			</select>
 			{#if siteAllowanceTaken}
@@ -722,7 +781,7 @@
 		</div>
 
 		<div class="field">
-			<label for="scf-accommodation">Accommodation <span class="required">*</span></label>
+			<label for="scf-accommodation">Accommodation (RM) <span class="required">*</span></label>
 			<input
 				id="scf-accommodation"
 				type="number"
@@ -736,7 +795,7 @@
 		</div>
 
 		<div class="field">
-			<label for="scf-toll">Toll Fare <span class="required">*</span></label>
+			<label for="scf-toll">Toll Fare (RM) <span class="required">*</span></label>
 			<input
 				id="scf-toll"
 				type="number"
@@ -750,7 +809,7 @@
 		</div>
 
 		<div class="field">
-			<label for="scf-mileage">Mileage / Petrol / Diesel <span class="required">*</span></label>
+			<label for="scf-mileage">Mileage / Petrol / Diesel (RM) <span class="required">*</span></label>
 			<input
 				id="scf-mileage"
 				type="number"
@@ -764,7 +823,7 @@
 		</div>
 
 		<div class="field">
-			<label for="scf-site-purchase">Site Purchase <span class="required">*</span></label>
+			<label for="scf-site-purchase">Site Purchase (RM) <span class="required">*</span></label>
 			<input
 				id="scf-site-purchase"
 				type="number"
@@ -778,7 +837,7 @@
 		</div>
 
 		<div class="field">
-			<label for="scf-other">Other</label>
+			<label for="scf-other">Other (RM)</label>
 			<input
 				id="scf-other"
 				type="number"
@@ -854,7 +913,7 @@
 			{#if saving}
 				Saving...
 			{:else}
-				{modalMode === 'create' ? 'Confirm' : 'Save Changes'}
+				{modalMode === 'create' ? 'Add Claim' : 'Save Changes'}
 			{/if}
 		</button>
 	{/snippet}
@@ -1048,12 +1107,42 @@
 		color: var(--ink);
 	}
 
+	.label-short {
+		display: none;
+	}
+
 	.day.today .day-label,
 	.day.today .day-icon {
 		color: var(--link);
 	}
 
-	.button-add {
+	.day-actions {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		flex-shrink: 0;
+	}
+
+	.claim-count {
+		flex-shrink: 0;
+		padding: 2px 8px;
+		border-radius: 999px;
+		background-color: var(--brand-tint);
+		color: var(--link);
+		font-size: 12px;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+
+	.no-claims {
+		margin: 10px 0 0;
+		padding-left: 6px;
+		font-size: 13px;
+		color: var(--muted);
+	}
+
+	.button-add,
+	.button-toggle {
 		width: 40px;
 		height: 40px;
 		padding: 0;
@@ -1066,7 +1155,8 @@
 		flex-shrink: 0;
 	}
 
-	.button-add:hover {
+	.button-add:hover,
+	.button-toggle:hover {
 		background-color: var(--brand-tint-hover);
 	}
 
@@ -1102,29 +1192,31 @@
 
 	.claim-actions {
 		display: flex;
-		gap: 4px;
+		gap: 6px;
 		flex-shrink: 0;
 	}
 
 	.icon-button {
-		background: transparent;
-		padding: 6px;
-		border-radius: 50%;
+		width: 40px;
+		height: 32px;
+		padding: 0;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		color: #ffffff;
+		flex-shrink: 0;
 	}
 
 	.icon-button:hover {
-		background: var(--hover-tint);
+		opacity: 0.8;
 	}
 
-	.icon-edit {
-		color: var(--link);
+	.bg-teal {
+		background-color: var(--brand);
 	}
 
-	.icon-delete {
-		color: var(--danger);
+	.bg-danger {
+		background-color: var(--danger-solid);
 	}
 
 	.claim-details {
@@ -1288,7 +1380,91 @@
 		word-break: break-word;
 	}
 
+	@media (min-width: 1025px) {
+		.day-list {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			align-items: start;
+			gap: 12px;
+			padding-top: 14px;
+		}
+
+		.day {
+			padding: 10px 12px;
+			border: 1px solid var(--line);
+			border-radius: var(--r-lg);
+			background-color: var(--mist);
+		}
+
+		.day.today {
+			border-color: var(--link);
+		}
+
+		.day-label {
+			gap: 6px;
+			font-size: 14px;
+			padding-left: 0;
+		}
+
+		.button-add,
+		.button-toggle {
+			width: 32px;
+			height: 32px;
+		}
+
+		.claim-count {
+			font-size: 11px;
+			padding: 1px 7px;
+		}
+
+		.no-claims {
+			margin-top: 8px;
+			padding-left: 0;
+		}
+
+		.claim-card {
+			padding: 8px 10px;
+			margin-top: 8px;
+		}
+
+		.claim-card-header {
+			padding-bottom: 6px;
+		}
+
+		.claim-heading h3 {
+			font-size: 14px;
+		}
+
+		.claim-description {
+			margin-top: 2px;
+			font-size: 13px;
+		}
+
+		.claim-details {
+			gap: 6px 10px;
+			padding-top: 6px;
+		}
+
+		.detail-label {
+			font-size: 11px;
+		}
+
+		.detail-value {
+			margin-top: 0;
+			font-size: 13px;
+		}
+	}
+
 	@media (max-width: 600px) {
+		.label-long {
+			display: none;
+		}
+
+		.label-short {
+			display: inline;
+			white-space: nowrap;
+		}
+
 		.note ol {
 			padding-left: 30px;
 		}

@@ -1,12 +1,12 @@
 import { writable } from "svelte/store";
 
 export const STORAGE_KEY = 'bme-theme';
-const META_COLOR = { light: '#091747', dark: '$0a1230' };
+const META_COLOR = { light: '#091747', dark: '#1f2e3c' };
 
 export const theme = writable('light');
 
 function apply(value) {
-    if (typeof document === undefined) return;
+    if (typeof document === 'undefined') return;
     const root = document.documentElement;
     if (value === 'dark') root.setAttribute('data-theme', 'dark');
     else root.removeAttribute('data-theme');

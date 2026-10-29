@@ -321,7 +321,7 @@
 		<button
 			class="action-button bg-teal"
 			aria-label="Mails"
-			title="Send Staff Claim Form to the Users' E-mails"
+			title="Send Staff Claim Form to All Users' E-mails"
 			disabled={!!reportBusy}
 			onclick={() => runReportAction('staff', 'all')}
 		>

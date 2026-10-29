@@ -955,7 +955,7 @@
 
 <Modal
 	open={isAdmin && showHolidayModal}
-	title={holidayMode === 'create' ? 'Create Holiday' : 'Edit Holiday'}
+	title={holidayMode === 'create' ? 'Add Holiday' : 'Edit Holiday'}
 	busy={holidaySaving}
 	onclose={closeHolidayModal}
 >
@@ -1036,7 +1036,7 @@
 			{#if holidaySaving}
 				Saving...
 			{:else}
-				{holidayMode === 'create' ? 'Create' : 'Update'}
+				{holidayMode === 'create' ? 'Add' : 'Update'}
 			{/if}
 		</button>
 	{/snippet}

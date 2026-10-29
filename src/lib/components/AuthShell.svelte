@@ -44,7 +44,7 @@
 		overflow: hidden;
 		background:
 			repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.055) 0 16px, transparent 16px 46px),
-			linear-gradient(160deg, #091747 0%, #093d85 135%);
+			linear-gradient(160deg, var(--panel-from) 0%, var(--panel-to) 135%);
 		color: #ffffff;
 	}
 
