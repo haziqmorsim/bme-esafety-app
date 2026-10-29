@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { getSupabaseAdmin } from '$lib/server/supabase-admin.js';
-import { FORMS, commonFields, makeReportId } from './payloads.js';
+import { FORMS, commonFields, makeReportId } from './payload.js';
 
 const SIGNED_URL_SECONDS = 60 * 60 * 24 * 7;
 const MAKE_TIMEOUT_MS = 20_000;
