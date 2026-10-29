@@ -4,6 +4,7 @@
 	import { supabase } from '$lib/supabase';
 	import { goto } from '$app/navigation';
 	import { toast } from '$lib/stores/toast';
+	import { REGIONS } from '$lib/data/regions';
 
 	let first_name = '';
 	let last_name = '';
@@ -338,11 +339,10 @@
 				<p><label for="region">Region</label></p>
 				<p>
 					<select name="region" id="region" bind:value={region} class="input-box select-box" required>
-						<option value="" disabled>Choose a Region</option>
-						<option value="Local">Local</option>
-						<option value="Overseas">Overseas</option>
-						<option value="Sabah">Sabah</option>
-						<option value="Sarawak">Sarawak</option>
+						<option value="" disabled>Select a region</option>
+						{#each REGIONS as option (option)}
+							<option value={option}>{option}</option>
+						{/each}
 					</select>
 				</p>
 				{#if error}

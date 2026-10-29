@@ -10,6 +10,7 @@
 	import { requireUser } from '$lib/auth-guard';
 	import { toast } from '$lib/stores/toast';
 	import Modal from '$lib/components/Modal.svelte';
+	import { REGIONS } from '$lib/data/regions';
 
 	const STATUS_OPTIONS = [
 		'Commissioning',
@@ -432,7 +433,15 @@
 			</label>
 			<label>
 				<span class="label-text">Region: <span class="required">*</span></span>
-				<input type="text" bind:value={form.region} class:invalid={fieldErr.region} />
+				<select bind:value={form.region} class:invalid={fieldErr.region}>
+					<option value="" disabled>Select a region</option>
+					{#each REGIONS as option (option)}
+						<option value={option}>{option}</option>
+					{/each}
+					{#if form.region && !REGIONS.includes(form.region)}
+						<option value={form.region}>{form.region}</option>
+					{/if}
+				</select>
 				{#if fieldErr.region}<span class="field-err">{fieldErr.region}</span>{/if}
 			</label>
 			<label>

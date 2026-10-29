@@ -10,6 +10,7 @@
 	import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 	import { supabase } from '$lib/supabase';
 	import { requireUser } from '$lib/auth-guard';
+	import { REGIONS } from '$lib/data/regions';
 	import { toast } from '$lib/stores/toast';
 	import Modal from '$lib/components/Modal.svelte';
 
@@ -433,7 +434,15 @@
 		</label>
 		<label>
 			<span class="label-text">Region: <span class="required">*</span></span>
-			<input type="text" bind:value={editForm.region} class:invalid={fieldErr.region} />
+			<select bind:value={editForm.region} class:invalid={fieldErr.region}>
+				<option value="">Select a region</option>
+				{#each REGIONS as option (option)}
+					<option value={option}>{option}</option>
+				{/each}
+				{#if editForm.region && !REGIONS.includes(editForm.region)}
+					<option value={editForm.region}>{editForm.region}</option>
+				{/if}
+			</select>
 			{#if fieldErr.region}<span class="field-err">{fieldErr.region}</span>{/if}
 		</label>
 	</form>
@@ -501,7 +510,15 @@
 		</label>
 		<label>
 			<span class="label-text">Region: <span class="required">*</span></span>
-			<input type="text" bind:value={addForm.region} autocomplete="off" class:invalid={fieldErr.region} />
+			<select bind:value={addForm.region} class:invalid={fieldErr.region}>
+				<option value="" disabled>Select a region</option>
+				{#each REGIONS as option (option)}
+					<option value={option}>{option}</option>
+				{/each}
+				{#if addForm.region && !REGIONS.includes(addForm.region)}
+					<option value={addForm.region}>{addForm.region}</option>
+				{/if}
+			</select>
 			{#if fieldErr.region}<span class="field-err">{fieldErr.region}</span>{/if}
 		</label>
 		<div class="field">

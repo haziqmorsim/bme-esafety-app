@@ -194,7 +194,6 @@
 		return claimsByDate[key] ?? [];
 	}
 
-	// Open or close ONE day (the others in the same row stay as they are)
 	function toggleDay(key) {
 		expanded[key] = !expanded[key];
 	}
@@ -268,7 +267,7 @@
 				.lte('claim_date', end)
 				.order('created_at', { ascending: true });
 
-			if (token !== loadToken) return; // a newer month was requested meanwhile
+			if (token !== loadToken) return;
 			if (error) throw error;
 
 			claims = data ?? [];

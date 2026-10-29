@@ -1,4 +1,5 @@
 <script>
+	import { REGIONS } from '$lib/data/regions';
 	import ChevronsLeft from '@lucide/svelte/icons/chevrons-left';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import ChevronsRight from '@lucide/svelte/icons/chevrons-right';
@@ -39,25 +40,6 @@
 		'November',
 		'December'
 	];
-
-	const REGIONS = [
-		'Sabah',
-		'Sarawak',
-		'Selangor',
-		'Melaka',
-		'Pulau Pinang',
-		'Johor',
-		'Kedah',
-		'Kelantan',
-		'Negeri Sembilan',
-		'Pahang',
-		'Perak',
-		'Perlis',
-		'Terengganu',
-		'W.P Kuala Lumpur',
-		'W.P Labuan',
-		'W.P Putrajaya'
-	].sort((a, b) => a.localeCompare(b));
 
 	let showSubmissionsModal = $state(false);
 	let selectedDay = $state(null);
@@ -988,8 +970,8 @@
 				disabled={availableRegions.length === 0}
 				class:invalid={fieldErr.regions}
 			>
-				<option value="">
-					{availableRegions.length === 0 ? 'All regions selected' : 'Choose an option...'}
+				<option value="" disabled>
+					{availableRegions.length === 0 ? 'All regions selected' : 'Select a region'}
 				</option>
 				{#each availableRegions as region (region)}
 					<option value={region}>{region}</option>
