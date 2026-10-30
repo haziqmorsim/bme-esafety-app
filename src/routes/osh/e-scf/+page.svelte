@@ -993,7 +993,7 @@
 	.button-confirm {
 		background-color: var(--fill);
 		font-weight: 600;
-		padding: 8px 20px;
+		padding: 0 18px;
 	}
 
 	.button-confirm:hover:not(:disabled) {

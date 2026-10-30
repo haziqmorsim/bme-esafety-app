@@ -41,6 +41,7 @@
 	const emptyAddForm = () => ({
 		first_name: '',
 		last_name: '',
+		employee_no: '',
 		nickname: '',
 		email: '',
 		phone: '',
@@ -53,6 +54,7 @@
 	let editForm = {
 		first_name: '',
 		last_name: '',
+		employee_no: '',
 		nickname: '',
 		email: '',
 		phone: '',
@@ -85,7 +87,7 @@
 		const { data, error } = await supabase
 			.from('profiles')
 			.select(
-				'id, first_name, last_name, nickname, email, phone, department, position, region, created_at'
+				'id, first_name, last_name, nickname, email, phone, department, position, region, created_at, employee_no'
 			)
 			.order('first_name');
 
@@ -107,6 +109,7 @@
 		editForm = {
 			first_name: user.first_name ?? '',
 			last_name: user.last_name ?? '',
+			employee_no: user.employee_no ?? '',
 			nickname: user.nickname ?? '',
 			email: user.email ?? '',
 			phone: user.phone ?? '',
@@ -165,6 +168,7 @@
 		const blank = (v) => !String(v ?? '').trim();
 		if (blank(form.first_name)) e.first_name = 'First name is required.';
 		if (blank(form.last_name)) e.last_name = 'Last name is required.';
+		if (blank(form.employee_no)) e.employee_no = 'Employee No. is required.';
 		if (blank(form.nickname)) e.nickname = 'Nickname is required.';
 		if (blank(form.email)) e.email = 'E-mail address is required.';
 		else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
@@ -262,6 +266,7 @@
 		const payload = {
 			first_name: editForm.first_name.trim() || null,
 			last_name: editForm.last_name.trim() || null,
+			employee_no: editForm.employee_no.trim() || null,
 			nickname: editForm.nickname.trim() || null,
 			email: editForm.email.trim() || null,
 			phone: editForm.phone.trim() || null,
@@ -363,7 +368,10 @@
 	{#each filteredUsers as u (u.id)}
 		<div class="user-card">
 			<div class="user-info">
-				<h3>{`${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || '—'}</h3>
+				<div class="user-heading">
+					<h3>{`${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || '—'}</h3>
+					<h3>{`${u.employee_no ?? '-'}`}</h3>
+				</div>
 				<p><b>E-mail:</b> {u.email}</p>
 				<p><b>Phone:</b> {u.phone ?? '-'}</p>
 				<p><b>Department:</b> {u.department?.join(', ') ?? '-'}</p>
@@ -400,6 +408,11 @@
 			<span class="label-text">Last Name: <span class="required">*</span></span>
 			<input type="text" bind:value={editForm.last_name} class:invalid={fieldErr.last_name} />
 			{#if fieldErr.last_name}<span class="field-err">{fieldErr.last_name}</span>{/if}
+		</label>
+		<label>
+			<span class="label-text">Employee No.: <span class="required">*</span></span>
+			<input type="text" bind:value={editForm.employee_no} autocomplete="off" class:invalid={fieldErr.employee_no} />
+			{#if fieldErr.employee_no}<span class="field-err">{fieldErr.employee_no}</span>{/if}
 		</label>
 		<label>
 			<span class="label-text">Nickname: <span class="required">*</span></span>
@@ -476,6 +489,11 @@
 			<span class="label-text">Last Name: <span class="required">*</span></span>
 			<input type="text" bind:value={addForm.last_name} autocomplete="off" class:invalid={fieldErr.last_name} />
 			{#if fieldErr.last_name}<span class="field-err">{fieldErr.last_name}</span>{/if}
+		</label>
+		<label>
+			<span class="label-text">Employee No.: <span class="required">*</span></span>
+			<input type="text" bind:value={addForm.employee_no} autocomplete="off" class:invalid={fieldErr.employee_no} />
+			{#if fieldErr.employee_no}<span class="field-err">{fieldErr.employee_no}</span>{/if}
 		</label>
 		<label>
 			<span class="label-text">Nickname: <span class="required">*</span></span>
@@ -605,11 +623,10 @@
 
 	.button-modify {
 		display: flex;
-		flex-direction: column;
+		flex-direction: row;
 		gap: 8px;
-		width: 20%;
 		min-width: 96px;
-		align-self: flex-start;
+		align-self: flex-end;
 	}
 
 	.button-edit,
@@ -729,12 +746,18 @@
 	}
 
 	h3 {
+		font-size: 16px;
 		font-weight: 600;
+	}
+
+	.user-heading {
+		margin-bottom: 10px;
 	}
 
 	.user-card {
 		display: flex;
-		align-items: center;
+		flex-direction: column;
+		align-items: start;
 		gap: 16px;
 		background-color: var(--surface);
 		border: 1px solid var(--line);
@@ -745,7 +768,7 @@
 	}
 
 	.user-info {
-		width: 80%;
+		width: 100%;
 	}
 
 	.user-info p {

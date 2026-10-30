@@ -17,7 +17,7 @@
     }
 
     const FOCUSABLE = 
-        'a[href], button:not([disabled]), input:([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="1"])';
+        'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 </script>
 
 <script>
@@ -53,7 +53,7 @@
         untrack(() => dialogEl)?.focus({ preventScroll: true });
 
         return () => {
-            openStack = openStack.filter((t) => 1 !== token);
+            openStack = openStack.filter((t) => t !== token);
             unlockScroll();
             if (previous instanceof HTMLElement && document.contains(previous)) {
                 previous.focus({ preventScroll: true });
@@ -123,7 +123,7 @@
                         {@render header()}
                     {:else}
                         {#if title}
-                            <h2 id={title} class="modal-title">{title}</h2>
+                            <h2 id={titleId} class="modal-title">{title}</h2>
                         {/if}
                         {#if subtitle}
                             <p class="modal-subtitle">{subtitle}</p>

@@ -304,19 +304,21 @@
 		<br />
 		<hr />
 		<h2 class="heading">Report for the Day</h2>
-		{#each reportItem as item (item.key)}
-			<div class="report-type">
-				<label for={item.key} class="report-label"><b>{item.label}</b></label>
-				<input required
-					type="number"
-					id={item.key}
-					min="0"
-					pattern="[0-9]*"
-					class="report-count"
-					bind:value={report_day[item.key]}
-				/>
-			</div>
-		{/each}
+		<div class="report-group">
+			{#each reportItem as item (item.key)}
+				<div class="report-type">
+					<label for={item.key} class="report-label"><b>{item.label}</b></label>
+					<input required
+						type="number"
+						id={item.key}
+						min="0"
+						pattern="[0-9]*"
+						class="report-count"
+						bind:value={report_day[item.key]}
+					/>
+				</div>
+			{/each}
+		</div>
 		<hr />
 		<h2 class="heading">Remarks</h2>
 		<p>
@@ -324,7 +326,7 @@
 				name="remarks"
 				id="remarks"
 				cols="30"
-				rows="10"
+				rows="5"
 				class="remarks"
 				placeholder="Remarks"
 				bind:value={remarks}
@@ -378,6 +380,11 @@
 
 	.note {
 		margin-bottom: 10px;
+	}
+
+	.report-group {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
 	.report-count {
@@ -438,6 +445,14 @@
 	@media (max-width: 600px) {
 		.container {
 			gap: 10px;
+		}
+
+		.report-group {
+			display: block;
+		}
+
+		.report-type {
+			gap: 20px;
 		}
 	}
 </style>

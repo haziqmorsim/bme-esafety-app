@@ -8,7 +8,7 @@
 	.footer {
 		border-top: 1px solid var(--line-soft);
 		background-color: var(--surface);
-		border-bottom: 4px solid var(--ink);
+		border-bottom: 4px solid var(--brand);
 	}
 
 	.footer-inner {

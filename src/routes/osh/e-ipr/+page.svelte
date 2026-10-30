@@ -288,7 +288,7 @@
 				name="observations"
 				id="observations"
 				cols="30"
-				rows="10"
+				rows="5"
 				class="observations"
 				placeholder="Observations"
 				bind:value={observations}
@@ -341,6 +341,10 @@
 	ul {
 		list-style-type: circle;
 		margin: 0 0 10px 15px;
+	}
+
+	.upload {
+		margin-top: 10px;
 	}
 
 	@media (max-width: 1024px) {

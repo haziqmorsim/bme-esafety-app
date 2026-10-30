@@ -1,5 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
+	import { beforeNavigate, goto } from '$app/navigation';
+	import Modal from '$lib/components/Modal.svelte';
 	import { supabase } from '$lib/supabase';
 	import { menuSections } from '$lib/data/menu';
 	import { requireUser } from '$lib/auth-guard';
@@ -54,6 +56,24 @@
 		}
 	};
 
+	const lockedRoutes = allMenuItems.filter((i) => i.disabled).map((i) => i.route);
+	const keepLocked = () => selectedMenuAccess.filter((r) => lockedRoutes.includes(r));
+
+	const selectAll = () => {
+		if (!selectedUser) return;
+		selectedMenuAccess = [
+			...keepLocked(),
+			...allMenuItems.filter((i) => !i.disabled).map((i) => i.route)
+		];
+	};
+
+	const clearAll = () => {
+		if (!selectedUser) return;
+		selectedMenuAccess = keepLocked();
+	};
+
+	const sameAccess = (a, b) => a.length === b.length && a.every((r) => b.includes(r));
+
 	const saveMenuAccess = async (successMessage) => {
 		if (!selectedUser) return;
 
@@ -96,7 +116,7 @@
 			toast.success(
 				typeof successMessage === 'string'
 					? successMessage
-					: `Access updated successfully for ${getUserName(user ?? {}) || 'the user'}.`
+					: `Changes saved for ${getUserName(user ?? {}) || 'the user'}.`
 			);
 		} catch (e) {
 			errorMsg = e?.message ?? String(e);
@@ -105,11 +125,41 @@
 		}
 	};
 
-	const removeAllAccess = async () => {
-		if (!selectedUser) return;
+	const discardChanges = () => {
+		if (!selectedUser || !hasChanges) return;
 		const user = users.find((u) => u.id === selectedUser);
-		selectedMenuAccess = [];
-		await saveMenuAccess(`All access removed from ${getUserName(user ?? {}) || 'the user'}.`);
+		syncSelectedMenuAccess();
+		errorMsg = '';
+		toast.info(`Changes discarded for ${getUserName(user ?? {}) || 'the user'}.`);
+	};
+
+	let showLeaveModal = false;
+	let pendingUrl = null;
+	let leaveConfirmed = false;
+
+	beforeNavigate((navigation) => {
+		if (leaveConfirmed || !hasChanges) return;
+
+		navigation.cancel();
+
+		if (navigation.willUnload || !navigation.to) return;
+
+		pendingUrl = navigation.to.url;
+		showLeaveModal = true;
+	});
+
+	const cancelLeave = () => {
+		showLeaveModal = false;
+		pendingUrl = null;
+	};
+
+	const confirmLeave = async () => {
+		const url = pendingUrl;
+		leaveConfirmed = true;
+		showLeaveModal = false;
+		pendingUrl = null;
+		if (url) await goto(url);
+		else leaveConfirmed = false;
 	};
 
 	onMount(async () => {
@@ -135,6 +185,16 @@
 
 	$: if (selectedUser) syncSelectedMenuAccess();
 	else selectedMenuAccess = [];
+
+	$: savedAccess = users.find((u) => u.id === selectedUser)?.menu_access ?? [];
+	$: hasChanges = !!selectedUser && !sameAccess(selectedMenuAccess, savedAccess);
+
+	$: allSelected = allMenuItems
+		.filter((i) => !i.disabled)
+		.every((i) => selectedMenuAccess.includes(i.route));
+	$: noneSelected = allMenuItems
+		.filter((i) => !i.disabled)
+		.every((i) => !selectedMenuAccess.includes(i.route));
 </script>
 
 <svelte:head>
@@ -164,6 +224,25 @@
 	</div>
 </div>
 
+<div class="access-tools">
+	<button
+		type="button"
+		class="button-inverted tool-button"
+		on:click={selectAll}
+		disabled={!selectedUser || isSaving || allSelected}
+	>
+		Select All
+	</button>
+	<button
+		type="button"
+		class="button-inverted tool-button"
+		on:click={clearAll}
+		disabled={!selectedUser || isSaving || noneSelected}
+	>
+		Clear All
+	</button>
+</div>
+
 <div class="access-grid">
 	{#each allMenuItems as item (item.route)}
 		<div class="menu-card">
@@ -191,21 +270,32 @@
 </div>
 
 <div class="button-modify">
-	<button class="button-inverted" on:click={removeAllAccess} disabled={!selectedUser || isSaving}>
-		Remove All Access From This User
+	<button class="button-inverted" on:click={discardChanges} disabled={!hasChanges || isSaving}>
+		Discard Changes
 	</button>
 	<button
 		class="button-assign"
 		on:click={() => saveMenuAccess()}
-		disabled={!selectedUser || isSaving}
+		disabled={!hasChanges || isSaving}
 	>
-		{isSaving ? 'Saving...' : 'Assign Access To This User'}
+		{isSaving ? 'Saving...' : 'Save Changes'}
 	</button>
 </div>
 
 {#if errorMsg}
 	<p class="error">{errorMsg}</p>
 {/if}
+
+<Modal open={showLeaveModal} title="Unsaved Changes" size="sm" onclose={cancelLeave}>
+	<p>Are you sure you want to leave this page? Your changes will not be saved.</p>
+
+	{#snippet footer()}
+		<button type="button" class="button-inverted" on:click={cancelLeave}>Cancel</button>
+		<button type="button" class="button-primary button-confirm" on:click={confirmLeave}>
+			Confirm
+		</button>
+	{/snippet}
+</Modal>
 
 <style>
 	.access-check {
@@ -215,26 +305,46 @@
 		gap: 5px;
 	}
 
+	.access-tools {
+		display: flex;
+		justify-content: flex-end;
+		gap: 10px;
+		margin: 10px 10px 0;
+	}
+
+	.tool-button {
+		min-height: 36px;
+		padding: 0 16px;
+		font-size: 14px;
+	}
+
+	.tool-button:disabled {
+		cursor: default;
+	}
+
+	.button-confirm {
+		margin: 0;
+	}
+
 	.access-grid {
 		margin: 10px;
 		padding: 10px 0;
 	}
 
 	.button-assign {
-		width: 250px;
+		width: 150px;
 		height: 40px;
 	}
 
-	.button-inverted {
-		width: 250px;
+	.button-modify .button-inverted {
+		width: 150px;
 		height: 40px;
 	}
 
 	.button-modify {
 		display: flex;
-		width: 40%;
-		padding: 10px 0 10px 10px;
-		justify-content: space-between;
+		padding: 10px 0 20px 10px;
+		gap: 15px;
 	}
 
 	.circle-checkbox {
@@ -399,7 +509,7 @@
 		}
 
 		.button-assign,
-		.button-inverted {
+		.button-modify .button-inverted {
 			width: 100%;
 		}
 	}
@@ -435,7 +545,7 @@
 		}
 
 		.button-modify {
-			flex-direction: column;
+			margin-bottom: 20px;
 		}
 	}
 </style>

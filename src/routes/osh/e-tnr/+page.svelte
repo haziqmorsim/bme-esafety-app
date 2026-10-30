@@ -260,7 +260,7 @@
 				name="topic"
 				id="topic"
 				cols="30"
-				rows="10"
+				rows="5"
 				class="topic"
 				placeholder="Topic"
 				bind:value={topic}
@@ -272,7 +272,7 @@
 				name="description"
 				id="description"
 				cols="30"
-				rows="10"
+				rows="5"
 				class="description"
 				placeholder="Description"
 				bind:value={description}
@@ -314,7 +314,7 @@
 				name="remarks"
 				id="remarks"
 				cols="30"
-				rows="10"
+				rows="5"
 				class="remarks"
 				placeholder="Remarks"
 				bind:value={remarks}
@@ -372,6 +372,10 @@
 	ul {
 		list-style-type: circle;
 		margin: 0 0 10px 15px;
+	}
+
+	.upload {
+		margin-top: 10px;
 	}
 
 	@media (max-width: 1024px) {

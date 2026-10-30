@@ -200,6 +200,10 @@
             <input data-message="Select a project using Search Project." required type="text" class="forms-input" bind:value={project_name} readonly />
         </div>
         <div class="forms-p">
+			<label for="project-no" class="forms-label">Project No.:</label>
+			<input required type="text" class="forms-input" bind:value={project_no} readonly />
+		</div>
+        <div class="forms-p">
             <label for="project-date" class="forms-label">Activity Date:</label>
             <input type="date" class="forms-input forms-date" bind:value={activity_date} onfocus={(e) => e.target.showPicker?.()} required />
         </div>
@@ -269,7 +273,7 @@
         <hr />
         <h2 class="heading">Remarks</h2>
         <p>
-            <textarea name="remarks" id="remarks" cols="30" rows="10" class="remarks" placeholder="Remarks" bind:value={remarks}></textarea>
+            <textarea name="remarks" id="remarks" cols="30" rows="5" class="remarks" placeholder="Remarks" bind:value={remarks}></textarea>
         </p>
         <h2 class="heading" data-label-for="checkbox">Acknowledgement and Submission</h2>
         <div class="container" data-field>
@@ -320,6 +324,10 @@
 		list-style-type: circle;
 		margin: 0 0 10px 15px;
 	}
+
+    .upload {
+        margin-top: 10px;
+    }
 
 	@media (max-width: 600px) {
 		.type-select {

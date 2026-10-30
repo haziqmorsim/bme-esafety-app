@@ -753,7 +753,7 @@
 				name="remarks"
 				id="remarks"
 				cols="30"
-				rows="10"
+				rows="5"
 				class="remarks"
 				placeholder="Remarks"
 				bind:value={remarks}
@@ -812,6 +812,10 @@
 		display: flex;
 		align-items: center;
 		gap: 10px;
+	}
+
+	.button-primary {
+		margin: 10px 0;
 	}
 
 	.categories {

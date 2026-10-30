@@ -386,7 +386,7 @@
 			{/snippet}
 		</Modal>
 		{#if showAdditionalTraveller}
-			<h3 class="heading">Additional Traveller Information</h3>
+			<h3 class="heading additional">Additional Traveller Information</h3>
 			<div class="forms-p">
 				<label for="traveller-2-name" class="forms-label">Traveller Name:</label>
 				<input required id="traveller-2-name" type="text" class="forms-input" />
@@ -468,12 +468,21 @@
 </div>
 
 <style>
+	.forms-label {
+		width: 180px;
+	}
+
 	#button-search {
 		height: 30px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		gap: 8px;
+		margin: 0;
+	}
+
+	.additional {
+		margin-top: 15px !important;
 	}
 
 	.container {
@@ -483,7 +492,7 @@
 
 	.select {
 		height: 30px;
-		width: 500px;
+		width: 350px;
 		font-size: 14px;
 	}
 

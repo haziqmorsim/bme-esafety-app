@@ -279,7 +279,7 @@
 					name="description"
 					id="description"
 					cols="30"
-					rows="10"
+					rows="5"
 					class="issue"
 					placeholder="Issue"
 					bind:value={form_description}
@@ -294,7 +294,7 @@
 					name="action"
 					id="action"
 					cols="30"
-					rows="10"
+					rows="5"
 					class="action"
 					placeholder="Action Taken"
 					bind:value={action_taken}
@@ -318,7 +318,7 @@
 				name="remarks"
 				id="remarks"
 				cols="30"
-				rows="10"
+				rows="5"
 				class="remarks"
 				placeholder="Remarks"
 				bind:value={remarks}
@@ -384,11 +384,14 @@
 		margin: 10px;
 	}
 
+	.issue, .action {
+		margin-top: 10px;
+	}
+
 	.issue,
 	.action,
 	.remarks {
 		width: 100%;
-		height: 200px;
 	}
 
 	.section {

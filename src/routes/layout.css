@@ -422,7 +422,7 @@ button svg {
 
 .project-box {
 	margin: 0 10px 24px;
-	padding: 28px 32px 32px;
+	padding: 28px 32px;
 	border: 1px solid var(--line-soft);
 	border-radius: var(--r-xl);
 	background-color: var(--surface);
@@ -470,7 +470,7 @@ button svg {
 
 .forms-input {
 	height: var(--control-h);
-	width: min(100%, 520px);
+	width: min(100%, 350px);
 	font-size: 14px;
 }
 
@@ -482,7 +482,6 @@ button svg {
 .remarks {
 	width: 100%;
 	height: auto;
-	min-height: 160px;
 }
 
 .note {
@@ -538,10 +537,7 @@ button svg {
 }
 
 .upload {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	height: 200px;
+	width: fit-content;
 	padding: 16px;
 	border: 2px dashed var(--line-strong);
 	border-radius: var(--r-lg);
@@ -803,10 +799,6 @@ input[type='file']::file-selector-button:hover {
 
 	.filter-input {
 		width: 100%;
-	}
-
-	.upload {
-		height: 180px;
 	}
 
 	.declaration p {

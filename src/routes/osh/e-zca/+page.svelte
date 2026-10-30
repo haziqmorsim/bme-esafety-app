@@ -696,7 +696,7 @@
 				name="remarks"
 				id="remarks"
 				cols="30"
-				rows="10"
+				rows="5"
 				class="remarks"
 				placeholder="Remarks"
 				bind:value={remarks}
