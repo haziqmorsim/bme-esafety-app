@@ -16,6 +16,7 @@
 	let fromDate = $state('');
 	let toDate = $state('');
 	let open = $state({});
+	let allowedRoutes = $state(null);
 
 	function toggle(key) {
 		open = { ...open, [key]: !open[key] };
@@ -87,6 +88,7 @@
 	const SECTIONS = [
 		{
 			key: 'TBM',
+			group: 'daily',
 			title: 'Tool Box Meeting (e-TBM)',
 			table: 'tbm_submissions',
 			bucket: 'tbm_uploads',
@@ -103,6 +105,7 @@
 		},
 		{
 			key: 'PPE',
+			group: 'daily',
 			title: 'PPE Visual Inspections (e-PPE)',
 			table: 'ppe_submissions',
 			bucket: 'ppe_uploads',
@@ -114,6 +117,7 @@
 		},
 		{
 			key: 'HKP',
+			group: 'daily',
 			title: 'Housekeeping Report (e-HKP)',
 			table: 'hkp_submissions',
 			bucket: 'hkp_uploads',
@@ -301,6 +305,28 @@
 		}
 	].sort((a, b) => a.title.localeCompare(b.title));
 
+	const GROUPS = [
+		{ key: 'daily', label: 'Daily Submissions' },
+		{ key: 'additional', label: 'Additional Submissions' }
+	];
+	const GROUPED_SECTIONS = GROUPS.map((g, i) => ({
+		...g,
+		sections: SECTIONS.filter((s) =>
+			i === GROUPS.length - 1
+				? s.group === g.key || !GROUPS.some((x) => x.key === s.group)
+				: s.group === g.key
+		)
+	})).filter((g) => g.sections.length > 0);
+
+	const sectionRoute = (s) => `/osh/e-${s.key.toLowerCase()}`;
+
+	const visibleGroups = $derived(
+		GROUPED_SECTIONS.map((g) => ({
+			...g,
+			sections: g.sections.filter((s) => allowedRoutes?.has(sectionRoute(s)))
+		})).filter((g) => g.sections.length > 0)
+	);
+
 	const show = (v) => (v === null || v === undefined || v === '' ? '-' : v);
 
 	async function loadHistory() {
@@ -316,8 +342,18 @@
 			const { supabase, user } = auth;
 			if (!user) throw new Error('Not signed in.');
 
+			const { data: profile, error: profileError } = await supabase
+				.from('profiles')
+				.select('menu_access')
+				.eq('id', user.id)
+				.single();
+			if (profileError) throw profileError;
+
+			allowedRoutes = new Set(profile?.menu_access ?? []);
+			const allowed = SECTIONS.filter((s) => allowedRoutes.has(sectionRoute(s)));
+
 			const results = await Promise.all(
-				SECTIONS.map(async (s) => {
+				allowed.map(async (s) => {
 					try {
 						const { data, error } = await supabase
 							.from(s.table)
@@ -449,64 +485,73 @@
 
 	{#if loading}
 		<Spinner inline size={140} label="Loading submissions" />
+	{:else if allowedRoutes && !errorMsg && visibleGroups.length === 0}
+		<p class="empty">
+			You don't have access to any submission forms yet. Ask an admin to grant access.
+		</p>
 	{/if}
 
 	<div class="accordion" class:is-loading={loading}>
-		{#each SECTIONS as s (s.key)}
-			{@const list = rows[s.key] ?? []}
-			<div class="acc-section">
-				<button type="button" class="acc-header" onclick={() => toggle(s.key)}>
-					<span>{s.title} ({list.length})</span>
-					<span class="acc-icon">
+		{#each visibleGroups as group (group.key)}
+			<h2 class="group-title">{group.label}</h2>
+			<div class="acc-list">
+				{#each group.sections as s (s.key)}
+					{@const list = rows[s.key] ?? []}
+					<div class="acc-section">
+						<button type="button" class="acc-header" onclick={() => toggle(s.key)}>
+							<span>{s.title} ({list.length})</span>
+							<span class="acc-icon">
+								{#if open[s.key]}
+									<ChevronDown />
+								{:else}
+									<ChevronLeft />
+								{/if}
+							</span>
+						</button>
+
 						{#if open[s.key]}
-							<ChevronDown />
-						{:else}
-							<ChevronLeft />
-						{/if}
-					</span>
-				</button>
+							<div class="acc-body">
+								{#if sectionErrors[s.key]}
+									<p class="error">Could not load {s.title}: {sectionErrors[s.key]}</p>
+								{:else if list.length === 0}
+									<p class="empty">No submissions</p>
+								{:else}
+									<div class="card-grid">
+										{#each list as r (r.id)}
+											<div class="history-card">
+												<p class="card-title">{show(s.cardTitle(r))}</p>
+												{#each s.fields as [label, get] (label)}
+													<p><b>{label}:</b> {show(get(r))}</p>
+												{/each}
 
-				{#if open[s.key]}
-					<div class="acc-body">
-						{#if sectionErrors[s.key]}
-							<p class="error">Could not load {s.title}: {sectionErrors[s.key]}</p>
-						{:else if list.length === 0}
-							<p class="empty">No submissions</p>
-						{:else}
-							<div class="card-grid">
-								{#each list as r (r.id)}
-									<div class="history-card">
-										<p class="card-title">{show(s.cardTitle(r))}</p>
-										{#each s.fields as [label, get] (label)}
-											<p><b>{label}:</b> {show(get(r))}</p>
-										{/each}
+												{#each s.files ?? [] as [label, column] (column)}
+													<p class="doc-line">
+														<b>{label}:</b>
+														{#if r[column]}
+															<button
+																type="button"
+																class="photo-link"
+																onclick={() => openFile(s.bucket, r[column])}>View Photo</button
+															>
+														{:else}
+															-
+														{/if}
+													</p>
+												{/each}
 
-										{#each s.files ?? [] as [label, column] (column)}
-											<p class="doc-line">
-												<b>{label}:</b>
-												{#if r[column]}
-													<button
-														type="button"
-														class="photo-link"
-														onclick={() => openFile(s.bucket, r[column])}>View Photo</button
-													>
-												{:else}
-													-
+												{#if s.email}
+													<button type="button" class="button-email" onclick={() => openEmail(s.key, r)}>
+														E-mail PDF
+													</button>
 												{/if}
-											</p>
+											</div>
 										{/each}
-
-										{#if s.email}
-											<button type="button" class="button-email" onclick={() => openEmail(s.key, r)}>
-												E-mail PDF
-											</button>
-										{/if}
 									</div>
-								{/each}
+								{/if}
 							</div>
 						{/if}
 					</div>
-				{/if}
+				{/each}
 			</div>
 		{/each}
 	</div>
@@ -558,7 +603,26 @@
 	.accordion {
 		display: flex;
 		flex-direction: column;
+	}
+
+	.acc-list {
+		display: flex;
+		flex-direction: column;
 		gap: 10px;
+	}
+
+	.group-title {
+		margin: 22px 0 12px;
+		padding-left: 10px;
+		border-left: 3px solid var(--line-strong);
+		color: var(--ink);
+		font-size: 15px;
+		font-weight: 600;
+		line-height: 1.2;
+	}
+
+	.group-title:first-child {
+		margin-top: 4px;
 	}
 
 	.accordion.is-loading {

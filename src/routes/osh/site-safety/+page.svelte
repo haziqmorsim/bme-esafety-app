@@ -661,13 +661,13 @@
 	loadForms();
 </script>
 
-<h1 class="title">Site Safety eForm Information</h1>
+<h1 class="title">Site Safety e-Form Information</h1>
 
 <div class="filter-bar">
 	<div>
-		<p>eForm Type</p>
+		<p>e-Form Type</p>
 		<select id="eform-type" class="form-select" bind:value={formType} onchange={loadForms}>
-			<option value="">Select eForm</option>
+			<option value="">Select e-Form</option>
 			{#each formOptions as option (option.key)}
 				<option value={option.key}>{option.label} Data</option>
 			{/each}
@@ -708,9 +708,9 @@
 </div>
 
 {#if !formType}
-	<p class="hint">Please choose an eForm data.</p>
+	<p class="hint">Please choose an e-Form data.</p>
 {:else if loading}
-	<Spinner inline size={140} label="Loading eForm data" />
+	<Spinner inline size={140} label="Loading e-Form data" />
 {:else if errorMsg}
 	<p class="error">{errorMsg}</p>
 {:else if rows.length === 0}
@@ -773,7 +773,7 @@
 			{/if}
 		</div>
 	{/each}
-	<Modal open={showDetailsModal} title="eForm Details" onclose={closeDetailsModal} closeOnBackdrop>
+	<Modal open={showDetailsModal} title="e-Form Details" onclose={closeDetailsModal} closeOnBackdrop>
 		{#if modalLoading}
 			<Spinner inline size={140} label="Loading details" />
 		{:else if modalError}
