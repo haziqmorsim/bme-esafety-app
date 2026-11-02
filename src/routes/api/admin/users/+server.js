@@ -15,7 +15,7 @@ function toDepartment(value) {
     return list.map((v) => String(v).trim()).filter(Boolean);
 }
 
-async function assertAdmin(admin, user) {
+async function assertAdmin(admin, user, action = 'add users') {
     const { data: me, error: e } = await admin
         .from('profiles')
         .select('department')
@@ -26,7 +26,34 @@ async function assertAdmin(admin, user) {
     const depts = (Array.isArray(me?.department) ? me.department : [me?.department]).map((d) => 
         String(d ?? '').trim().toLowerCase()
     );
-    if (!depts.includes('admin')) error(403, 'Only Admin users can add users.');
+    if (!depts.includes('admin')) error(403, `Only Admin users can ${action}.`);
+}
+
+export async function GET({ request }) {
+    const caller = await getRequestUser(request);
+    if (!caller) error(401, 'Please sign in again.');
+    if (caller.app_metadata?.must_change_password) {
+        error(403, 'Change your temporary password before using this page.');
+    }
+
+    const admin = getSupabaseAdmin();
+    await assertAdmin(admin, caller, 'view sign-in times');
+
+    const lastSignIn = {};
+    const perPage = 1000;
+    for (let page = 1; page <= 100; page++) {
+        const { data, error: listError } = await admin.auth.admin.listUsers({ page, perPage });
+        if (listError) {
+            console.error('[admin/users] listUsers failed:', listError);
+            error(502, listError.message);
+        }
+
+        const list = data?.users ?? [];
+        for (const u of list) lastSignIn[u.id] = u.last_sign_in_at ?? null;
+        if (list.length < perPage) break;
+    }
+
+    return json({ last_sign_in: lastSignIn });
 }
 
 export async function POST({ request }) {
@@ -50,6 +77,7 @@ export async function POST({ request }) {
     const password = typeof body?.temporaryPassword === 'string' ? body.temporaryPassword : '';
     const first_name = clean(body?.first_name);
     const last_name = clean(body?.last_name);
+    const employee_no = clean(body?.employee_no);
     const nickname = clean(body?.nickname);
     const phone = clean(body?.phone);
     const position = clean(body?.position);
@@ -69,7 +97,7 @@ export async function POST({ request }) {
         email,
         password,
         email_confirm: true,
-        user_metadata: { first_name, last_name, nickname, phone, department, position, region },
+        user_metadata: { first_name, last_name, employee_no, nickname, phone, department, position, region },
         app_metadata: { must_change_password: true }
     });
 
@@ -87,10 +115,10 @@ export async function POST({ request }) {
     const { data: profile, error: profileError } = await admin
         .from('profiles')
         .upsert(
-            { id, email, first_name, last_name, nickname, phone, department, position, region }, 
+            { id, email, first_name, last_name, employee_no, nickname, phone, department, position, region }, 
             { onConflict: 'id' }
         )
-        .select('id, email, first_name, last_name, nickname, phone, department, position, region, created_at')
+        .select('id, email, first_name, last_name, employee_no, nickname, phone, department, position, region, created_at')
         .single();
 
     if (profileError) {

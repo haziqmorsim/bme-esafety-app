@@ -6,7 +6,6 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { authUser } from '$lib/auth-store';
 	import Search from '@lucide/svelte/icons/search';
-	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import X from '@lucide/svelte/icons/x';
 
 	let allowedMenuAccess = [];
@@ -30,24 +29,55 @@
 	function buildGroups(section, items) {
 		const categories = section.categories ?? [];
 		if (categories.length === 0) {
-			return [{ key: 'all', label: null, items }];
+			return [{ key: 'all', label: null, items, subgroups: [{ key: 'all', label: null, items }] }];
 		}
 
 		const known = new Set(categories.map((c) => c.key));
 		const groups = categories
-			.map((c) => ({
-				key: c.key,
-				label: c.label,
-				items: items.filter((item) => item.category === c.key)
-			}))
+			.map((c) => {
+				const categoryItems = items.filter((item) => item.category === c.key);
+				return {
+					key: c.key,
+					label: c.label,
+					items: categoryItems,
+					subgroups: buildSubgroups(c, categoryItems)
+				};
+			})
 			.filter((group) => group.items.length > 0);
 
 		const uncategorised = items.filter((item) => !known.has(item.category));
 		if (uncategorised.length > 0) {
-			groups.push({ key: 'other', label: null, items: uncategorised });
+			groups.push({
+				key: 'other',
+				label: null,
+				items: uncategorised,
+				subgroups: [{ key: 'all', label: null, items: uncategorised }]
+			});
 		}
 
 		return groups;
+	}
+
+	function buildSubgroups(category, items) {
+		const subs = category.subcategories ?? [];
+		if (subs.length === 0) {
+			return [{ key: 'all', label: null, items }];
+		}
+
+		const known = new Set(subs.map((s) => s.key));
+		const lastKey = subs[subs.length - 1].key;
+
+		return subs
+			.map((sub) => ({
+				key: sub.key,
+				label: sub.label,
+				items: items.filter((item) =>
+					sub.key === lastKey
+						? item.subcategory === sub.key || !known.has(item.subcategory)
+						: item.subcategory === sub.key
+				)
+			}))
+			.filter((subgroup) => subgroup.items.length > 0);
 	}
 
 	let query = '';
@@ -164,29 +194,34 @@
 				<h3 class="category-title">{group.label}</h3>
 			{/if}
 
-			<div class="grid">
-				{#each group.items as item (item.route)}
-					<div class="menu-card" class:is-disabled={item.disabled}>
-						<span class="icon-tile">
-							<img src={item.icon} alt="" class="menu-icon" />
-						</span>
-						<div class="menu-info">
-							<h4>{item.title}</h4>
-							<p>{item.description}</p>
+			{#each group.subgroups as subgroup (subgroup.key)}
+				{#if subgroup.label}
+					<h4 class="subcategory-title">{subgroup.label}</h4>
+				{/if}
+
+				<div class="grid">
+					{#each subgroup.items as item (item.route)}
+						<div class="menu-card" class:is-disabled={item.disabled}>
+							<span class="icon-tile">
+								<img src={item.icon} alt="" class="menu-icon" />
+							</span>
+							<div class="menu-info">
+								<h4>{item.title}</h4>
+								<p>{item.description}</p>
+							</div>
+							<button
+								type="button"
+								class="open"
+								disabled={item.disabled}
+								aria-label={`Open ${item.title}`}
+								on:click={() => !item.disabled && goto(item.route)}
+							>
+								<span>Open</span>
+							</button>
 						</div>
-						<button
-							type="button"
-							class="open"
-							disabled={item.disabled}
-							aria-label={`Open ${item.title}`}
-							on:click={() => !item.disabled && goto(item.route)}
-						>
-							<span>Open</span>
-							<ChevronRight size={16} />
-						</button>
-					</div>
-				{/each}
-			</div>
+					{/each}
+				</div>
+			{/each}
 		{/each}
 	</section>
 {/each}
@@ -204,8 +239,6 @@
 	.page-head .title {
 		margin-bottom: 0;
 	}
-
-	/* ---- Search ---- */
 
 	.finder {
 		position: relative;
@@ -253,8 +286,6 @@
 		color: var(--ink);
 	}
 
-	/* ---- Departments & groups ---- */
-
 	.dept {
 		margin: 0 10px 36px;
 	}
@@ -297,7 +328,7 @@
 		gap: 10px;
 		margin: 22px 0 12px;
 		color: var(--link);
-		font-size: 15px;
+		font-size: 17px;
 		font-weight: 600;
 	}
 
@@ -309,19 +340,37 @@
 		background: var(--stripes);
 	}
 
-	/* ---- Cards ---- */
+	.subcategory-title {
+		margin: 15px 0;
+		padding-left: 10px;
+		border-left: 3px solid var(--line-strong);
+		color: var(--ink);
+		font-size: 15px;
+		font-weight: 600;
+		line-height: 1.2;
+	}
+
+	.category-title + .subcategory-title {
+		margin-top: 4px;
+	}
+
+	.grid + .subcategory-title {
+		margin-top: 22px;
+	}
 
 	.grid {
 		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
+		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: 12px;
 	}
 
 	.menu-card {
 		position: relative;
-		display: flex;
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		grid-template-rows: auto 1fr auto;
 		align-items: center;
-		gap: 16px;
+		gap: 12px 14px;
 		min-width: 0;
 		padding: 16px 18px;
 		border: 1px solid var(--line-soft);
@@ -343,13 +392,16 @@
 		box-shadow: none;
 	}
 
-	.menu-card.is-disabled .menu-info,
+	.menu-card.is-disabled .menu-info h4,
+	.menu-card.is-disabled .menu-info p,
 	.menu-card.is-disabled .icon-tile {
 		opacity: 0.55;
 	}
 
 	.icon-tile {
 		display: grid;
+		grid-column: 1;
+		grid-row: 1;
 		place-items: center;
 		flex-shrink: 0;
 		width: 52px;
@@ -366,11 +418,13 @@
 	}
 
 	.menu-info {
-		flex: 1 1 auto;
-		min-width: 0;
+		display: contents;
 	}
 
 	.menu-info h4 {
+		grid-column: 2;
+		grid-row: 1;
+		min-width: 0;
 		margin: 0;
 		font-size: 15px;
 		font-weight: 600;
@@ -378,14 +432,19 @@
 	}
 
 	.menu-info p {
-		margin: 3px 0 0;
+		grid-column: 1 / -1;
+		grid-row: 2;
+		align-self: start;
+		min-width: 0;
+		margin: 0;
 		color: var(--muted);
 		font-size: 13px;
 		line-height: 1.45;
 	}
 
 	.open {
-		flex: 0 0 auto;
+		grid-column: 1 / -1;
+		grid-row: 3;
 		gap: 4px;
 		padding: 8px 10px 8px 14px;
 		background-color: var(--mist);
@@ -442,7 +501,7 @@
 		}
 
 		.menu-card {
-			gap: 12px;
+			gap: 10px 12px;
 			padding: 12px;
 		}
 
@@ -454,10 +513,6 @@
 		.menu-icon {
 			width: 28px;
 			height: 28px;
-		}
-
-		.open span {
-			display: none;
 		}
 
 		.open {

@@ -40,13 +40,20 @@ export const menuSections = [
 		department: 'Occupational Safety & Health (OSH)',
 		categories: [
 			{ key: 'information', label: 'Information Section' },
-			{ key: 'submission', label: 'Submission Section' }
+			{
+				key: 'submission',
+				label: 'Submission Section',
+				subcategories: [
+					{ key: 'daily', label: 'Daily Submissions' },
+					{ key: 'additional', label: 'Additional Submissions' }
+				]
+			}
 		],
 		items: [
 			{
 				icon: '/icons/database.png',
-				title: 'Site Safety eForm Information',
-				description: 'For admins to view site safety eForm data',
+				title: 'Site Safety e-Form Information',
+				description: 'For admins to view site safety e-Form data',
 				route: '/osh/site-safety',
 				category: 'information'
 			},
@@ -90,7 +97,8 @@ export const menuSections = [
 				title: 'Housekeeping Report (e-HKP) Submission',
 				description: 'For OSH engineers to submit housekeeping report',
 				route: '/osh/e-hkp',
-				category: 'submission'
+				category: 'submission',
+				subcategory: 'daily'
 			},
 			{
 				icon: '/icons/eIDF.png',
@@ -111,7 +119,8 @@ export const menuSections = [
 				title: 'PPE Visual Inspections (e-PPE) Submission',
 				description: 'For OSH engineers to submit PPE visual inspections report',
 				route: '/osh/e-ppe',
-				category: 'submission'
+				category: 'submission',
+				subcategory: 'daily'
 			},
 			{
 				icon: '/icons/eSAC.png',
@@ -153,7 +162,8 @@ export const menuSections = [
 				title: 'Tool Box Meeting (e-TBM) Submission',
 				description: 'For OSH engineers to submit tool box meeting report',
 				route: '/osh/e-tbm',
-				category: 'submission'
+				category: 'submission',
+				subcategory: 'daily'
 			},
 			{
 				icon: '/icons/eTRF.png',

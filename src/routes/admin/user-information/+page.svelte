@@ -38,6 +38,8 @@
 	let showAddModal = false;
 	let showTempPassword = false;
 	let selectedUser = null;
+	let lastSignIn = {};
+	let lastSignInLoaded = false;
 	const emptyAddForm = () => ({
 		first_name: '',
 		last_name: '',
@@ -98,7 +100,42 @@
 		}
 
 		users = data ?? [];
+		loadLastSignIn(supabase);
 	});
+
+	const loadLastSignIn = async (supabase) => {
+		try {
+			const {
+				data: { session }
+			} = await supabase.auth.getSession();
+			if (!session?.access_token) return;
+
+			const res = await fetch('/api/admin/users', {
+				headers: { Authorization: `Bearer ${session.access_token}` }
+			});
+			const result = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(result?.message ?? `HTTP ${res.status}`);
+
+			lastSignIn = result.last_sign_in ?? {};
+			lastSignInLoaded = true;
+		} catch (e) {
+			toast.error(`Could not load the last sign-in times: ${e?.message ?? e}`);
+		}
+	};
+
+	const formatSignIn = (iso) => {
+		const gmt8 = new Date(new Date(iso).getTime() + 8 * 60 * 60 * 1000);
+		const day = String(gmt8.getUTCDate()).padStart(2, '0');
+		const month = gmt8.toLocaleString('en-GB', { month: 'short', timeZone: 'UTC' });
+		const hours = String(gmt8.getUTCHours()).padStart(2, '0');
+		const minutes = String(gmt8.getUTCMinutes()).padStart(2, '0');
+		return `${day} ${month} ${gmt8.getUTCFullYear()} ${hours}:${minutes}`;
+	};
+
+	const lastSignInText = (id, times, loaded) => {
+		if (!loaded) return '-';
+		return times[id] ? formatSignIn(times[id]) : 'Never';
+	};
 
 	const fullName = (user) => `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim() || user?.email || 'User';
 
@@ -378,6 +415,7 @@
 				<p><b>Position:</b> {u.position ?? '-'}</p>
 				<p><b>Region:</b> {u.region ?? '-'}</p>
 			</div>
+			<p class="last-signin"><b>Last sign in at:</b> {lastSignInText(u.id, lastSignIn, lastSignInLoaded)}</p>
 			<div class="button-modify">
 				<button class="button-edit" onclick={() => openEditModal(u)}>
 					<Pencil size={16} /><span>Edit</span>
@@ -775,6 +813,15 @@
 		font-size: 14px;
 	}
 
+	.last-signin {
+		width: 100%;
+		margin: 0;
+		padding-top: 8px;
+		border-top: 1px solid var(--line-soft);
+		color: var(--muted);
+		font-size: 13px;
+	}
+
 	.edit-form {
 		display: grid;
 		gap: 12px;
@@ -861,6 +908,7 @@
 			width: 100%;
 		}
 
+		.last-signin,
 		.user-info p,
 		.user-info h3 {
 			word-break: break-word;
