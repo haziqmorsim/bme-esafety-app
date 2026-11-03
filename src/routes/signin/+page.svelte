@@ -3,7 +3,9 @@
 	import { supabase } from '$lib/supabase';
 	import { authUser } from '$lib/auth-store';
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import { toast } from '$lib/stores/toast';
+	import { callEdgeFunction } from '$lib/edge-functions';
 	import AuthShell from '$lib/components/AuthShell.svelte';
 
 	let email = '';
@@ -11,10 +13,57 @@
 	let error = '';
 	let showPassword = false;
 	let signingIn = false;
+	let needsConfirmation = false;
+	let resending = false;
+
+	onMount(async () => {
+		const url = new URL(window.location.href);
+		if (url.searchParams.get('confirmed') !== '1') return;
+
+		const hashError = new URLSearchParams(window.location.hash.slice(1)).get('error_description');
+		url.searchParams.delete('confirmed');
+		goto(url.pathname + url.search, { replaceState: true, noScroll: true, keepFocus: true });
+
+		const { data } = await supabase.auth.getSession();
+		const user = data?.session?.user;
+
+		if (user?.email_confirmed_at && !hashError) {
+			email = user.email ?? '';
+			await supabase.auth.signOut({ scope: 'local' });
+			toast.success('Your e-mail address has been confirmed. Please sign in.');
+		} else {
+			error =
+				'This confirmation link is invalid or has expired. Sign in with your e-mail and password to get a new link.';
+		}
+	});
+
+	async function resendConfirmation() {
+		if (resending) return;
+		const cleanEmail = email.trim();
+		if (!cleanEmail) {
+			error = 'Enter your e-mail address first.';
+			return;
+		}
+
+		resending = true;
+		const result = await callEdgeFunction('confirm-account', { email: cleanEmail, resend: true });
+		resending = false;
+
+		if (!result.ok) {
+			if (result.code === 'already_confirmed') needsConfirmation = false;
+			error = result.message;
+			return;
+		}
+
+		needsConfirmation = false;
+		error = '';
+		toast.success('A new confirmation link has been sent. Please check your e-mail.');
+	}
 
 	async function signIn() {
 		if (signingIn) return;
 		error = '';
+		needsConfirmation = false;
 		signingIn = true;
 
 		try {
@@ -33,7 +82,11 @@
 		});
 
 		if (signInError) {
-			error = signInError.message;
+			needsConfirmation =
+				signInError.code === 'email_not_confirmed' || /not confirmed/i.test(signInError.message ?? '');
+			error = needsConfirmation
+				? 'Your e-mail address has not been confirmed yet. Use the link in the confirmation e-mail, or send a new one below.'
+				: signInError.message;
 			return;
 		}
 
@@ -195,6 +248,13 @@
 		{#if error}
 			<p class="error">{error}</p>
 		{/if}
+		{#if needsConfirmation}
+			<p class="resend">
+				<button type="button" class="resend-button" on:click={resendConfirmation} disabled={resending}>
+					{resending ? 'Sending…' : 'Resend confirmation e-mail'}
+				</button>
+			</p>
+		{/if}
 		<button type="submit" class="button-primary" disabled={signingIn}>
 			{signingIn ? 'Signing in…' : 'Sign in'}
 		</button>
@@ -203,3 +263,30 @@
 		</p> -->
 	</form>
 </AuthShell>
+
+<style>
+	.resend {
+		margin: 0 0 12px;
+	}
+
+	.resend-button {
+		padding: 0;
+		border: none;
+		background: none;
+		color: var(--link);
+		font-size: 14px;
+		font-weight: 600;
+		text-decoration: underline;
+		cursor: pointer;
+	}
+
+	.resend-button:hover:not(:disabled) {
+		color: var(--link-hover);
+		background: none;
+	}
+
+	.resend-button:disabled {
+		opacity: 0.6;
+		cursor: default;
+	}
+</style>

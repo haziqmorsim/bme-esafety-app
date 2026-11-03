@@ -1,7 +1,7 @@
 <script>
 	import { validation } from '$lib/validation';
 	import AuthShell from '$lib/components/AuthShell.svelte';
-	import { supabase } from '$lib/supabase';
+	import { callEdgeFunction } from '$lib/edge-functions';
 	import { goto } from '$app/navigation';
 	import { toast } from '$lib/stores/toast';
 	import { REGIONS } from '$lib/data/regions';
@@ -66,32 +66,22 @@
 		}
 
 		submitting = true;
-		const { data, error: signUpError } = await supabase.auth.signUp({
-			email,
+		const result = await callEdgeFunction('confirm-account', {
+			email: email.trim(),
 			password,
-			options: {
-				data: {
-					first_name,
-					last_name,
-					nickname,
-					employee_no,
-					phone,
-					department: [],
-					position,
-					region
-				}
-			}
+			first_name,
+			last_name,
+			nickname,
+			employee_no,
+			phone,
+			position,
+			region
 		});
 
 		submitting = false;
 
-		if (signUpError) {
-			error = signUpError.message;
-			return;
-		}
-
-		if (Array.isArray(data?.user?.identities) && data.user.identities.length === 0) {
-			error = 'This e-mail address is already registered. Please sign in instead.';
+		if (!result.ok) {
+			error = result.message;
 			return;
 		}
 

@@ -1,11 +1,9 @@
 <script>
 	import { validation } from '$lib/validation';
-	import { getSupabase } from '$lib/supabase';
+	import { callEdgeFunction } from '$lib/edge-functions';
 	import { goto } from '$app/navigation';
 	import { toast } from '$lib/stores/toast';
 	import AuthShell from '$lib/components/AuthShell.svelte';
-
-	const supabase = getSupabase();
 
 	let email = '';
 	let errorMsg = '';
@@ -23,11 +21,11 @@
 				return;
 			}
 
-			const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-				redirectTo: `${window.location.origin}/auth/resetpw`
-			});
-
-			if (error) throw error;
+			const result = await callEdgeFunction('reset-password', { email: cleanEmail });
+			if (!result.ok) {
+				errorMsg = result.message;
+				return;
+			}
 
 			toast.success('Password reset link sent. Please check your e-mail.');
 			goto('/auth/forgotpw/confirm');

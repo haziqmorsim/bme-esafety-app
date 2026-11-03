@@ -43,6 +43,67 @@
 		}))
 	);
 
+	function buildGroups(section) {
+		const items = section.items ?? [];
+		const categories = section.categories ?? [];
+		if (categories.length === 0) {
+			return [{ key: 'all', label: null, subgroups: [{ key: 'all', label: null, items }] }];
+		}
+
+		const known = new Set(categories.map((c) => c.key));
+		const groups = categories
+			.map((c) => ({
+				key: c.key,
+				label: c.label,
+				subgroups: buildSubgroups(
+					c,
+					items.filter((item) => item.category === c.key)
+				)
+			}))
+			.filter((group) => group.subgroups.length > 0);
+
+		const uncategorised = items.filter((item) => !known.has(item.category));
+		if (uncategorised.length > 0) {
+			groups.push({
+				key: 'other',
+				label: null,
+				subgroups: [{ key: 'all', label: null, items: uncategorised }]
+			});
+		}
+
+		return groups;
+	}
+
+	function buildSubgroups(category, items) {
+		const subs = category.subcategories ?? [];
+		if (subs.length === 0) {
+			return items.length ? [{ key: 'all', label: null, items }] : [];
+		}
+
+		const known = new Set(subs.map((s) => s.key));
+		const lastKey = subs[subs.length - 1].key;
+
+		return subs
+			.map((sub) => ({
+				key: sub.key,
+				label: sub.label,
+				items: items.filter((item) =>
+					sub.key === lastKey
+						? item.subcategory === sub.key || !known.has(item.subcategory)
+						: item.subcategory === sub.key
+				)
+			}))
+			.filter((subgroup) => subgroup.items.length > 0);
+	}
+
+	const groupedSections = menuSections
+		.filter((section) => (section.items ?? []).length > 0)
+		.map((section) => ({
+			key: section.key,
+			department: section.department,
+			groups: buildGroups(section)
+		}));
+
 	const syncSelectedMenuAccess = () => {
 		const user = users.find((u) => u.id === selectedUser);
 		selectedMenuAccess = user?.menu_access ? [...user.menu_access] : [];
@@ -243,31 +304,50 @@
 	</button>
 </div>
 
-<div class="access-grid">
-	{#each allMenuItems as item (item.route)}
-		<div class="menu-card">
-			<div class="menu-access">
-				<div class="menu-info">
-					<p><b>Department:</b> {item.sectionLabel}</p>
-					<p><b>Page Name:</b> {item.title}</p>
-					<p><b>Description:</b> {item.description}</p>
-				</div>
-
-				<div class="access-check">
-					<label class="circle-checkbox">
-						<input
-							type="checkbox"
-							checked={selectedMenuAccess.includes(item.route)}
-							on:change={() => toggleMenuItem(item.route)}
-							disabled={!selectedUser || isSaving || item.disabled}
-						/>
-						<span class="checkmark" aria-hidden="true"></span>
-					</label>
-				</div>
-			</div>
+{#each groupedSections as section (section.key)}
+	<section class="dept">
+		<div class="dept-head">
+			<h2 class="department">{section.department}</h2>
 		</div>
-	{/each}
-</div>
+
+		{#each section.groups as group (group.key)}
+			{#if group.label}
+				<h3 class="category-title">{group.label}</h3>
+			{/if}
+
+			{#each group.subgroups as subgroup (subgroup.key)}
+				{#if subgroup.label}
+					<h4 class="subcategory-title">{subgroup.label}</h4>
+				{/if}
+
+				<div class="access-grid">
+					{#each subgroup.items as item (item.route)}
+						<div class="menu-card">
+							<div class="menu-access">
+								<div class="menu-info">
+									<p><b>Page Name:</b> {item.title}</p>
+									<p><b>Description:</b> {item.description}</p>
+								</div>
+
+								<div class="access-check">
+									<label class="circle-checkbox">
+										<input
+											type="checkbox"
+											checked={selectedMenuAccess.includes(item.route)}
+											on:change={() => toggleMenuItem(item.route)}
+											disabled={!selectedUser || isSaving || item.disabled}
+										/>
+										<span class="checkmark" aria-hidden="true"></span>
+									</label>
+								</div>
+							</div>
+						</div>
+					{/each}
+				</div>
+			{/each}
+		{/each}
+	</section>
+{/each}
 
 <div class="button-modify">
 	<button class="button-inverted" on:click={discardChanges} disabled={!hasChanges || isSaving}>
@@ -326,9 +406,65 @@
 		margin: 0;
 	}
 
-	.access-grid {
-		margin: 10px;
-		padding: 10px 0;
+	.dept {
+		margin: 0 10px 36px;
+	}
+
+	.dept-head {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin-bottom: 16px;
+	}
+
+	.dept-head::after {
+		content: '';
+		flex: 1;
+		height: 1px;
+		background: var(--line);
+	}
+
+	.department {
+		margin: 0;
+		font-size: 20px;
+		font-weight: 600;
+		letter-spacing: -0.015em;
+	}
+
+	.category-title {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin: 22px 0 12px;
+		color: var(--link);
+		font-size: 17px;
+		font-weight: 600;
+	}
+
+	.category-title::before {
+		content: '';
+		width: 18px;
+		height: 8px;
+		border-radius: 2px;
+		background: var(--stripes);
+	}
+
+	.subcategory-title {
+		margin: 15px 0;
+		padding-left: 10px;
+		border-left: 3px solid var(--line-strong);
+		color: var(--ink);
+		font-size: 15px;
+		font-weight: 600;
+		line-height: 1.2;
+	}
+
+	.category-title + .subcategory-title {
+		margin-top: 4px;
+	}
+
+	.access-grid + .subcategory-title {
+		margin-top: 22px;
 	}
 
 	.button-assign {
@@ -519,6 +655,11 @@
 		.user-select {
 			width: 100%;
 			box-sizing: border-box;
+		}
+
+		.dept {
+			margin-left: 4px;
+			margin-right: 4px;
 		}
 
 		.menu-card {

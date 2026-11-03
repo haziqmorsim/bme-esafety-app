@@ -1,0 +1,5 @@
+[functions.confirm-account]
+verify-jwt = false
+
+[functions.reset-password]
+verify-jwt = false

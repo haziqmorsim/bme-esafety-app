@@ -62,7 +62,9 @@
 		phone: '',
 		department: [],
 		position: '',
-		region: ''
+		region: '',
+		resetPassword: false,
+		temporaryPassword: ''
 	};
 	let editOtherDepartments = [];
 
@@ -137,6 +139,9 @@
 		return times[id] ? formatSignIn(times[id]) : 'Never';
 	};
 
+	$: canResetTempPassword =
+		!!selectedUser && lastSignInLoaded && !lastSignIn[selectedUser.id];
+
 	const fullName = (user) => `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim() || user?.email || 'User';
 
 	const openEditModal = (user) => {
@@ -152,8 +157,11 @@
 			phone: user.phone ?? '',
 			department: chosen,
 			position: user.position ?? '',
-			region: user.region ?? ''
+			region: user.region ?? '',
+			resetPassword: false,
+			temporaryPassword: ''
 		};
+		showTempPassword = false;
 		modalError = '';
 		fieldErr = {};
 		submitted = false;
@@ -196,8 +204,22 @@
 			const j = buf[0] % (i + 1);
 			[out[i], out[j]] = [out[j], out[i]];
 		}
-		addForm.temporaryPassword = out.join('');
+		const password = out.join('');
+		if (showEditModal) editForm.temporaryPassword = password;
+		else addForm.temporaryPassword = password;
 		showTempPassword = true;
+		revalidate();
+	};
+
+	const toggleResetPassword = (checked) => {
+		editForm.resetPassword = checked;
+		if (!checked) {
+			editForm.temporaryPassword = '';
+			showTempPassword = false;
+			const rest = { ...fieldErr };
+			delete rest.temporaryPassword;
+			fieldErr = rest;
+		}
 	};
 
 	function validate(form, isNew) {
@@ -214,7 +236,7 @@
 		if (!form.department?.length) e.department = 'Select at least one department.';
 		if (blank(form.position)) e.position = 'Position is required.';
 		if (blank(form.region)) e.region = 'Region is required.';
-		if (isNew) {
+		if (isNew || form.resetPassword) {
 			if (!form.temporaryPassword) e.temporaryPassword = 'Temporary password is required.';
 			else if (form.temporaryPassword.length < 8) {
 				e.temporaryPassword = 'The temporary password must be at least 8 characters.';
@@ -300,6 +322,7 @@
 		isSaving = true;
 
 		const id = selectedUser.id;
+		const resetPassword = canResetTempPassword && editForm.resetPassword;
 		const payload = {
 			first_name: editForm.first_name.trim() || null,
 			last_name: editForm.last_name.trim() || null,
@@ -312,7 +335,29 @@
 			region: editForm.region.trim() || null
 		};
 
+		let passwordChanged = false;
 		try {
+			if (resetPassword) {
+				const {
+					data: { session }
+				} = await supabase.auth.getSession();
+				if (!session?.access_token) throw new Error('Your session has expired. Please sign in again.');
+
+				const res = await fetch(`/api/admin/users/${id}`, {
+					method: 'PATCH',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${session.access_token}`
+					},
+					body: JSON.stringify({ temporaryPassword: editForm.temporaryPassword })
+				});
+				const result = await res.json().catch(() => ({}));
+				if (!res.ok) {
+					throw new Error(result?.message ?? `Could not set the temporary password (${res.status}).`);
+				}
+				passwordChanged = true;
+			}
+
 			const { data, error } = await supabase
 				.from('profiles')
 				.update(payload)
@@ -327,9 +372,20 @@
 			users = users.map((user) => (user.id === id ? { ...user, ...payload } : user));
 			isSaving = false;
 			closeEditModal();
-			toast.success(`User "${fullName(payload)}" updated successfully.`);
+			toast.success(
+				passwordChanged
+					? `User "${fullName(payload)}" updated. The new temporary password must be changed at first sign-in.`
+					: `User "${fullName(payload)}" updated successfully.`
+			);
 		} catch (error) {
-			modalError = error?.message ?? String(error);
+			const message = error?.message ?? String(error);
+			modalError = passwordChanged
+				? `The new temporary password was saved, but the user details were not: ${message}`
+				: message;
+			if (passwordChanged) {
+				editForm.resetPassword = false;
+				editForm.temporaryPassword = '';
+			}
 		} finally {
 			isSaving = false;
 		}
@@ -496,6 +552,56 @@
 			</select>
 			{#if fieldErr.region}<span class="field-err">{fieldErr.region}</span>{/if}
 		</label>
+		{#if canResetTempPassword}
+			<div class="field reset-password">
+				<label class="check-option">
+					<input
+						type="checkbox"
+						checked={editForm.resetPassword}
+						onchange={(e) => toggleResetPassword(e.currentTarget.checked)}
+					/>
+					Generate New Temporary Password
+				</label>
+				{#if editForm.resetPassword}
+					<label for="edit-temp-password">
+						<span class="label-text">Temporary Password: <span class="required">*</span></span>
+					</label>
+					<div class="password-row">
+						<input
+							id="edit-temp-password"
+							type={showTempPassword ? 'text' : 'password'}
+							bind:value={editForm.temporaryPassword}
+							maxlength="72"
+							autocomplete="new-password"
+							class:invalid={fieldErr.temporaryPassword}
+						/>
+						<button
+							type="button"
+							class="icon-button"
+							onclick={() => (showTempPassword = !showTempPassword)}
+							aria-label={showTempPassword ? 'Hide temporary password' : 'Show temporary password'}
+							title={showTempPassword ? 'Hide' : 'Show'}
+						>
+							{#if showTempPassword}<EyeOff size={18} />{:else}<Eye size={18} />{/if}
+						</button>
+						<button
+							type="button"
+							class="icon-button"
+							onclick={generateTempPassword}
+							aria-label="Generate a random temporary password"
+							title="Generate a random password"
+						>
+							<RefreshCw size={18} />
+						</button>
+					</div>
+					{#if fieldErr.temporaryPassword}<span class="field-err">{fieldErr.temporaryPassword}</span>{/if}
+					<p class="hint">
+						At least 8 characters. This replaces the current temporary password, and the user is
+						asked to choose a new password the first time they sign in with this one.
+					</p>
+				{/if}
+			</div>
+		{/if}
 	</form>
 	{#if modalError}
 		<p class="error modal-error">{modalError}</p>
@@ -743,6 +849,11 @@
 	.password-row {
 		display: flex;
 		gap: 8px;
+	}
+
+	.reset-password {
+		padding-top: 12px;
+		border-top: 1px solid var(--line-soft);
 	}
 
 	.password-row input {
