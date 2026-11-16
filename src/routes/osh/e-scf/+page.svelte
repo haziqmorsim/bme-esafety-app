@@ -15,7 +15,7 @@
 	import { supabase } from '$lib/supabase';
 	import { requireUser } from '$lib/auth-guard';
 	import { toast } from '$lib/stores/toast';
-	import { sendToMake } from '$lib/make';
+	import { getSubmitLocation, sendToMake, warnIfNoLocation } from '$lib/make';
 	import Modal from '$lib/components/Modal.svelte';
 
 	const BUCKET = 'scf_uploads';
@@ -423,6 +423,8 @@
 		let savedId = null;
 
 		try {
+			const locationPromise = modalMode === 'create' ? getSubmitLocation() : null;
+
 			const auth = await requireUser();
 			if (!auth) return;
 			const { user } = auth;
@@ -449,6 +451,9 @@
 			}
 
 			if (modalMode === 'create') {
+				const submit_location = await locationPromise;
+				warnIfNoLocation(submit_location);
+
 				const { data, error } = await supabase
 					.from('scf_submissions')
 					.insert({
@@ -456,6 +461,7 @@
 						staff_name: clean(staffInfo.staff_name),
 						staff_position: clean(staffInfo.staff_position),
 						department: clean(staffInfo.department),
+						submit_location: submit_location || null,
 						created_by: user.id
 					})
 					.select()

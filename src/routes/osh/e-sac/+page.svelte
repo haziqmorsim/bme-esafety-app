@@ -8,6 +8,7 @@
 	import { requireUser } from '$lib/auth-guard';
 	import Modal from '$lib/components/Modal.svelte';
 	import { toast } from '$lib/stores/toast';
+	import { getSubmitLocation, warnIfNoLocation } from '$lib/make';
 
 	let showProjectModal = false;
 	let projects = [];
@@ -66,6 +67,8 @@
 		saving = true;
 
 		try {
+			const locationPromise = getSubmitLocation();
+
 			const auth = await requireUser();
 			if (!auth) return;
 
@@ -85,6 +88,9 @@
 
 			const sac_image_path = await withTimeout(uploadToBucket(sac_image_file, 'sac_image'), 60000);
 
+			const submit_location = await locationPromise;
+			warnIfNoLocation(submit_location);
+
 			const payload = {
 				project_name,
 				project_no,
@@ -93,7 +99,8 @@
 				remarks,
 				acknowledged,
 				created_by: user.id,
-				created_by_name: submitterName
+				created_by_name: submitterName,
+				submit_location: submit_location || null
 			};
 
 			const { error: insErr } = await withTimeout(

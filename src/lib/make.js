@@ -1,35 +1,104 @@
 import { getSupabase } from "./supabase";
+import { toast } from "$lib/stores/toast";
 
 const REQUEST_TIMEOUT_MS = 30_000;
 
-export function getSubmitLocation(timeoutMs = 10_000) {
+const LOCATION_MAX_AGE_MS = 5 * 60 * 1000;
+const LOCATION_HARD_LIMIT_MS = 30_000;
+
+const LOCATION_HINTS = {
+	unsupported:
+		'Your submission location could not be recorded because this browser cannot share its location. Open the app in Chrome or Safari.',
+	insecure:
+		'Your submission location could not be recorded because the page is not using a secure (https) connection.',
+	denied:
+		'Your submission location could not be recorded because location access is blocked for this site. Allow location for this site in your browser settings (and turn on Location Services on your phone), then submit again next time.',
+	unavailable:
+		'Your submission location could not be recorded because your device could not find its position. Turn on Location Services / GPS and try again next time.',
+	timeout:
+		'Your submission location could not be recorded because finding your position took too long. Make sure Location Services / GPS is on.'
+};
+
+let cachedLocation = null;
+let pendingLocation = null;
+let lastLocationIssue = '';
+
+function requestPosition(options) {
 	return new Promise((resolve) => {
-		if (typeof navigator === 'undefined' || !navigator.geolocation) {
-			console.warn('[location] Geolocation is not available in this browser.');
-			return resolve('');
-		}
- 
-		const timer = setTimeout(() => {
-			console.warn('[location] Timed out waiting for the browser location.');
-			resolve('');
-		}, timeoutMs + 500);
- 
 		navigator.geolocation.getCurrentPosition(
-			(pos) => {
-				clearTimeout(timer);
-				const { latitude, longitude } = pos.coords;
-				resolve(`${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
-			},
-			(err) => {
-				console.warn(`[location] Could not get the location (code ${err?.code}): ${err?.message}`);
-				clearTimeout(timer);
-				resolve('');
-			},
-			{ enableHighAccuracy: false, timeout: timeoutMs, maximumAge: 300_000 }
+			(pos) => resolve({ pos }),
+			(err) => resolve({ err }),
+			options
 		);
 	});
 }
- 
+
+async function readLocation(timeoutMs) {
+	lastLocationIssue = '';
+
+	if (typeof navigator === 'undefined' || !navigator.geolocation) {
+		lastLocationIssue = 'unsupported';
+		return '';
+	}
+	if (typeof window !== 'undefined' && window.isSecureContext === false) {
+		lastLocationIssue = 'insecure';
+		return '';
+	}
+
+	let result = await requestPosition({
+		enableHighAccuracy: false,
+		timeout: timeoutMs,
+		maximumAge: LOCATION_MAX_AGE_MS
+	});
+	if (result.err && result.err.code !== 1) {
+		result = await requestPosition({ enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 0 });
+	}
+
+	if (result.pos) {
+		const { latitude, longitude } = result.pos.coords;
+		const value = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+		cachedLocation = { value, at: Date.now() };
+		return value;
+	}
+
+	const code = result.err?.code;
+	lastLocationIssue = code === 1 ? 'denied' : code === 2 ? 'unavailable' : 'timeout';
+	console.warn(`[location] Could not get the location (code ${code}): ${result.err?.message}`);
+	return '';
+}
+
+export function getSubmitLocation(timeoutMs = 12_000) {
+	if (cachedLocation && Date.now() - cachedLocation.at < LOCATION_MAX_AGE_MS) {
+		return Promise.resolve(cachedLocation.value);
+	}
+	if (pendingLocation) return pendingLocation;
+
+	const hardLimit = new Promise((resolve) =>
+		setTimeout(() => {
+			lastLocationIssue = lastLocationIssue || 'timeout';
+			resolve('');
+		}, LOCATION_HARD_LIMIT_MS)
+	);
+
+	pendingLocation = Promise.race([readLocation(timeoutMs), hardLimit])
+		.catch(() => '')
+		.finally(() => {
+			pendingLocation = null;
+		});
+
+	return pendingLocation;
+}
+
+export function warmUpLocation() {
+	if (typeof window === 'undefined') return;
+	getSubmitLocation().catch(() => {});
+}
+
+export function warnIfNoLocation(location) {
+	if (location) return;
+	toast.info(LOCATION_HINTS[lastLocationIssue] ?? LOCATION_HINTS.unavailable, { duration: 10_000 });
+}
+
 async function accessToken() {
 	const supabase = getSupabase();
 	const {

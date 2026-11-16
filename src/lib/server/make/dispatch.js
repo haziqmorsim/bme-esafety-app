@@ -129,10 +129,12 @@ export async function dispatchSubmission({
 		return { status: 'already-sent', reportId: row.report_id };
 	}
 
+	const rawLocation = String(row.submit_location || submitLocation || '').trim();
+
 	const [profile, project, address] = await Promise.all([
 		loadProfile(row.created_by),
 		loadProject(row.project_no),
-		submitLocation && !row.submit_location ? toAddress(String(submitLocation)) : null
+		rawLocation ? toAddress(rawLocation) : null
 	]);
 	if (address) row.submit_location = address.slice(0, 300);
 

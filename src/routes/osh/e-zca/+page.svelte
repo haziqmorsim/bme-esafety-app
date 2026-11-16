@@ -14,7 +14,7 @@
 	import { requireUser } from '$lib/auth-guard';
 	import Modal from '$lib/components/Modal.svelte';
 	import { toast } from '$lib/stores/toast';
-	import { getSubmitLocation, sendToMake } from '$lib/make';
+	import { getSubmitLocation, sendToMake, warnIfNoLocation } from '$lib/make';
 
 	let showProjectModal = false;
 	let projects = [];
@@ -390,6 +390,9 @@
 			const submitterName =
 				`${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || user.email;
 
+			const submit_location = await locationPromise;
+			warnIfNoLocation(submit_location);
+
 			const payload = {
 				project_name,
 				project_no,
@@ -401,6 +404,7 @@
 				acknowledged,
 				created_by: user.id,
 				created_by_name: submitterName,
+				submit_location: submit_location || null,
 				overall_total: calculateOverallTotal(subsections),
 				overall_max: calculateOverallMax(subsections),
 				overall_percent: calculateOverallPercentage(subsections)
@@ -414,7 +418,7 @@
 			if (insError) throw insError;
 
 			const sent = await sendToMake('zca', saved.id, {
-				submitLocation: await locationPromise
+				submitLocation: submit_location
 			});
 			if (sent.ok) toast.success('e-ZCA submitted successfully.');
 			else toast.error(`e-ZCA was saved, but it could not be sent to Make: ${sent.error}`);

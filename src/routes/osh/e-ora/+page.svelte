@@ -5,6 +5,7 @@
 	import { goto } from '$app/navigation';
 	import { requireUser } from '$lib/auth-guard';
 	import { toast } from '$lib/stores/toast';
+	import { getSubmitLocation, warnIfNoLocation } from '$lib/make';
 
 	let employee_name = '';
 	let employee_no = '';
@@ -43,6 +44,8 @@
 		saving = true;
 
 		try {
+			const locationPromise = getSubmitLocation();
+
 			const auth = await requireUser();
 			if (!auth) return;
 
@@ -59,6 +62,9 @@
 
 			const submitterName =
 				`${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || user.email;
+
+			const submit_location = await locationPromise;
+			warnIfNoLocation(submit_location);
 
 			const payload = {
 				employee_name,
@@ -77,7 +83,8 @@
 				remarks,
 				acknowledged,
 				created_by: user.id,
-				created_by_name: submitterName
+				created_by_name: submitterName,
+				submit_location: submit_location || null
 			};
 
 			const { error: insError } = await withTimeout(

@@ -8,6 +8,7 @@
 	import { requireUser } from '$lib/auth-guard';
 	import Modal from '$lib/components/Modal.svelte';
 	import { toast } from '$lib/stores/toast';
+	import { getSubmitLocation, warnIfNoLocation } from '$lib/make';
 
 	let showProjectModal = false;
 	let projects = [];
@@ -66,6 +67,8 @@
 		saving = true;
 
 		try {
+			const locationPromise = getSubmitLocation();
+
 			const auth = await requireUser();
 			if (!auth) return;
 
@@ -85,6 +88,9 @@
 
 			const submitterName =
 				`${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || user.email;
+
+			const submit_location = await locationPromise;
+			warnIfNoLocation(submit_location);
 
 			const payload = {
 				requestor_name,
@@ -109,7 +115,8 @@
 				meal_onboard_required,
 				acknowledged,
 				created_by: user.id,
-				created_by_name: submitterName
+				created_by_name: submitterName,
+				submit_location: submit_location || null
 			};
 
 			const { error: insErr } = await withTimeout(

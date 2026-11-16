@@ -10,6 +10,7 @@
 	import { goto } from '$app/navigation';
 	import { requireUser } from '$lib/auth-guard';
 	import { toast } from '$lib/stores/toast';
+	import { getSubmitLocation, warnIfNoLocation } from '$lib/make';
 
 	let permit_date = '';
 	let location_allowed = '';
@@ -76,6 +77,8 @@
 		saving = true;
 
 		try {
+			const locationPromise = getSubmitLocation();
+
 			const auth = await requireUser();
 			if (!auth) return;
 
@@ -93,6 +96,9 @@
 			const submitterName =
 				`${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || user.email;
 
+			const submit_location = await locationPromise;
+			warnIfNoLocation(submit_location);
+
 			const payload = {
 				permit_date,
 				location_allowed,
@@ -107,7 +113,8 @@
 				officer_name,
 				acknowledged,
 				created_by: user.id,
-				created_by_name: submitterName
+				created_by_name: submitterName,
+				submit_location: submit_location || null
 			};
 
 			const { error: insError } = await withTimeout(

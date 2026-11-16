@@ -38,7 +38,8 @@
 			details: [
 				{ label: 'Meeting Topics', key: 'meeting_topics', type: 'array' },
 				{ label: 'Competency', key: 'competency', type: 'competency' },
-				{ label: 'Attendance', key: 'attendance', type: 'attendance' }
+				{ label: 'Attendance', key: 'attendance', type: 'attendance' },
+				{ label: 'Submit Location', key: 'submit_location' }
 			]
 		},
 		ePPE: {
@@ -50,7 +51,10 @@
 			submittedBy: true,
 			summary: [{ label: 'Activity Date', key: 'activity_date', type: 'date' }],
 			files: [{ label: 'PPE Photo', key: 'ppe_photo_path' }],
-			details: [{ label: 'Attendance', key: 'attendance', type: 'attendance' }]
+			details: [
+				{ label: 'Attendance', key: 'attendance', type: 'attendance' },
+				{ label: 'Submit Location', key: 'submit_location' }
+			]
 		},
 		eHKP: {
 			label: 'e-HKP',
@@ -61,7 +65,10 @@
 			submittedBy: true,
 			summary: [{ label: 'Activity Date', key: 'activity_date', type: 'date' }],
 			files: [{ label: 'HKP Photo', key: 'hkp_photo_path' }],
-			details: [{ label: 'Report Day', key: 'report_day', type: 'reportday' }]
+			details: [
+				{ label: 'Report Day', key: 'report_day', type: 'reportday' },
+				{ label: 'Submit Location', key: 'submit_location' }
+			]
 		},
 		eZCA: {
 			label: 'e-ZCA',
@@ -72,7 +79,10 @@
 			submittedBy: true,
 			summary: [{ label: 'Audit Date', key: 'audit_date', type: 'date' }],
 			files: [],
-			details: [{ label: 'Subsections', key: 'subsections', type: 'subsections' }]
+			details: [
+				{ label: 'Subsections', key: 'subsections', type: 'subsections' },
+				{ label: 'Submit Location', key: 'submit_location' }
+			]
 		},
 		eCAR: {
 			label: 'e-CAR',
@@ -92,7 +102,8 @@
 				{ label: 'Weather', key: 'weather' },
 				{ label: 'Form Description', key: 'form_description' },
 				{ label: 'Action Taken', key: 'action_taken' },
-				{ label: 'Remarks', key: 'remarks' }
+				{ label: 'Remarks', key: 'remarks' },
+				{ label: 'Submit Location', key: 'submit_location' }
 			],
 			search: ['form_no', 'assigned_to']
 		},
@@ -127,7 +138,8 @@
 				{ label: 'Contractor Phone No.', key: 'contractor_phone_no' },
 				{ label: 'Contractor E-mail', key: 'contractor_email' },
 				{ label: 'Contractor Certification', key: 'contractor_certification', type: 'date' },
-				{ label: 'Remarks', key: 'remarks' }
+				{ label: 'Remarks', key: 'remarks' },
+				{ label: 'Submit Location', key: 'submit_location' }
 			],
 			search: ['contractor_name', 'supervisor_name']
 		},
@@ -150,7 +162,8 @@
 				{ label: 'Phone No.', key: 'phone_no' },
 				{ label: 'Coordinator Name', key: 'coordinator_name' },
 				{ label: 'Officer Name', key: 'officer_name' },
-				{ label: 'Hot Work Checklist', key: 'subsections', type: 'subsections' }
+				{ label: 'Hot Work Checklist', key: 'subsections', type: 'subsections' },
+				{ label: 'Submit Location', key: 'submit_location' }
 			],
 			search: ['contractor_name', 'company_name', 'location_allowed']
 		},
@@ -219,7 +232,8 @@
 				{ label: 'Actual Out Time', key: 'actual_out_time' },
 				{ label: 'Actual Hours', key: 'actual_hours' },
 				{ label: 'Reason', key: 'reason' },
-				{ label: 'Remarks', key: 'remarks' }
+				{ label: 'Remarks', key: 'remarks' },
+				{ label: 'Submit Location', key: 'submit_location' }
 			],
 			search: ['employee_name', 'employee_no', 'department', 'claim_type']
 		},
@@ -231,7 +245,10 @@
 			projectName: true,
 			summary: [{ label: 'Activity Date', key: 'activity_date', type: 'date' }],
 			files: [{ label: 'SAC Image', key: 'sac_image_path' }],
-			details: [{ label: 'Remarks', key: 'remarks' }]
+			details: [
+				{ label: 'Remarks', key: 'remarks' },
+				{ label: 'Submit Location', key: 'submit_location' }
+			]
 		},
 		eSCF: {
 			label: 'e-SCF',
@@ -274,7 +291,8 @@
 			files: [],
 			details: [
 				{ label: 'Remarks', key: 'remarks' },
-				{ label: 'Subsections', key: 'subsections', type: 'subsections' }
+				{ label: 'Subsections', key: 'subsections', type: 'subsections' },
+				{ label: 'Submit Location', key: 'submit_location' }
 			]
 		},
 		eTNR: {
@@ -328,7 +346,8 @@
 				{ label: 'Airline', key: 'travel_airline' },
 				{ label: 'Flight No.', key: 'travel_flight_no' },
 				{ label: 'Baggage Required', key: 'travel_baggage_required' },
-				{ label: 'Meal Onboard Required', key: 'meal_onboard_required' }
+				{ label: 'Meal Onboard Required', key: 'meal_onboard_required' },
+				{ label: 'Submit Location', key: 'submit_location' }
 			],
 			search: ['requestor_name', 'traveller_name']
 		}
@@ -633,6 +652,11 @@
 		return `${value} km`;
 	}
 
+	function mapsUrl(value) {
+		const m = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/.exec(String(value ?? ''));
+		return m ? `https://www.google.com/maps?q=${m[1]},${m[2]}` : '';
+	}
+
 	function formatValue(value, type) {
 		switch (type) {
 			case 'date':
@@ -781,7 +805,15 @@
 		{:else}
 			{#each FORMS[formType].details as field (field.key)}
 				<p><b>{field.label}:</b></p>
-				<p class="form-details">{formatValue(details?.[field.key], field.type)}</p>
+				{#if field.key === 'submit_location' && mapsUrl(details?.[field.key])}
+					<p class="form-details">
+						<a href={mapsUrl(details?.[field.key])} target="_blank" rel="noopener" class="file-url">
+							{details?.[field.key]}
+						</a>
+					</p>
+				{:else}
+					<p class="form-details">{formatValue(details?.[field.key], field.type)}</p>
+				{/if}
 			{/each}
 		{/if}
 

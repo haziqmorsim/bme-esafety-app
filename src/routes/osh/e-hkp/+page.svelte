@@ -8,7 +8,7 @@
 	import { requireUser } from '$lib/auth-guard';
 	import Modal from '$lib/components/Modal.svelte';
 	import { toast } from '$lib/stores/toast';
-	import { getSubmitLocation, sendToMake } from '$lib/make';
+	import { getSubmitLocation, sendToMake, warnIfNoLocation } from '$lib/make';
 
 	let showProjectModal = false;
 	let projects = [];
@@ -117,6 +117,9 @@
 
 			const hkp_photo_path = await withTimeout(uploadToBucket(hkp_photo_file, 'hkp_site'));
 
+			const submit_location = await locationPromise;
+			warnIfNoLocation(submit_location);
+
 			const payload = {
 				project_name,
 				project_no,
@@ -129,7 +132,8 @@
 				remarks,
 				acknowledged,
 				created_by: user.id,
-				created_by_name: submitterName
+				created_by_name: submitterName,
+				submit_location: submit_location || null
 			};
 
 			const { data: saved, error: insErr } = await withTimeout(
@@ -139,7 +143,7 @@
 			if (insErr) throw insErr;
 
 			const sent = await sendToMake('hkp', saved.id, {
-				submitLocation: await locationPromise
+				submitLocation: submit_location
 			});
 			if (sent.ok) toast.success('e-HKP submitted successfully.');
 			else toast.error(`e-HKP was saved, but it could not be sent to Make: ${sent.error}`);
