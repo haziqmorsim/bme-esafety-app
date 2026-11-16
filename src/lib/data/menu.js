@@ -20,18 +20,12 @@ export const menuSections = [
 				title: 'User Access Management',
 				description: 'For admins to manage user access to various app features',
 				route: '/admin/user-access'
-			}
-		]
-	},
-	{
-		key: 'Project',
-		department: 'Project Management',
-		items: [
+			},
 			{
 				icon: '/icons/project_info.png',
 				title: 'Project Information Management',
 				description: 'For admins to create and update project information',
-				route: '/project/project-information'
+				route: '/admin/project-information'
 			}
 		]
 	},
