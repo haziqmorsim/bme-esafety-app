@@ -10,10 +10,10 @@ export const menuSections = [
 			// 	route: '/admin/departments'
 			// },
 			{
-				icon: '/icons/uim.png',
-				title: 'User Information Management',
-				description: 'For admins to edit user information',
-				route: '/admin/user-information'
+				icon: '/icons/project_info.png',
+				title: 'Project Information Management',
+				description: 'For admins to create and update project information',
+				route: '/admin/project-information'
 			},
 			{
 				icon: '/icons/uam.jpg',
@@ -22,10 +22,10 @@ export const menuSections = [
 				route: '/admin/user-access'
 			},
 			{
-				icon: '/icons/project_info.png',
-				title: 'Project Information Management',
-				description: 'For admins to create and update project information',
-				route: '/admin/project-information'
+				icon: '/icons/uim.png',
+				title: 'User Information Management',
+				description: 'For admins to edit user information',
+				route: '/admin/user-information'
 			}
 		]
 	},
@@ -44,18 +44,12 @@ export const menuSections = [
 			}
 		],
 		items: [
+			// Information Section
 			{
 				icon: '/icons/database.png',
 				title: 'Site Safety e-Form Information',
 				description: 'For admins to view site safety e-Form data',
 				route: '/osh/site-safety',
-				category: 'information'
-			},
-			{
-				icon: '/icons/eWDA.png',
-				title: 'Working Day Attendance (e-WDA) Record',
-				description: 'For admins to view site safety supervisor attendance record',
-				route: '/osh/e-wda',
 				category: 'information'
 			},
 			{
@@ -65,6 +59,40 @@ export const menuSections = [
 				route: '/osh/claim-dashboard',
 				category: 'information'
 			},
+			{
+				icon: '/icons/eWDA.png',
+				title: 'Working Day Attendance (e-WDA) Record',
+				description: 'For admins to view site safety supervisor attendance record',
+				route: '/osh/e-wda',
+				category: 'information'
+			},
+			// Submission Section
+			// -- Daily Submissions --
+			{
+				icon: '/icons/eTBM.jpg',
+				title: 'Tool Box Meeting (e-TBM) Submission',
+				description: 'For OSH engineers to submit tool box meeting report',
+				route: '/osh/e-tbm',
+				category: 'submission',
+				subcategory: 'daily'
+			},
+			{
+				icon: '/icons/ePPE.png',
+				title: 'PPE Visual Inspections (e-PPE) Submission',
+				description: 'For OSH engineers to submit PPE visual inspections report',
+				route: '/osh/e-ppe',
+				category: 'submission',
+				subcategory: 'daily'
+			},
+			{
+				icon: '/icons/eHKP.jpg',
+				title: 'Housekeeping Report (e-HKP) Submission',
+				description: 'For OSH engineers to submit housekeeping report',
+				route: '/osh/e-hkp',
+				category: 'submission',
+				subcategory: 'daily'
+			},
+			// -- Additional Submissions --
 			{
 				icon: '/icons/eCTR.jpg',
 				title: 'Competency Register (e-CTR) Submission',
@@ -87,14 +115,6 @@ export const menuSections = [
 				category: 'submission'
 			},
 			{
-				icon: '/icons/eHKP.jpg',
-				title: 'Housekeeping Report (e-HKP) Submission',
-				description: 'For OSH engineers to submit housekeeping report',
-				route: '/osh/e-hkp',
-				category: 'submission',
-				subcategory: 'daily'
-			},
-			{
 				icon: '/icons/eIDF.png',
 				title: 'Induction Form (e-IDF) Submission',
 				description: 'For OSH engineers to submit induction form',
@@ -107,14 +127,6 @@ export const menuSections = [
 				description: 'For OSH engineers to submit overtime requisition and approval form',
 				route: '/osh/e-ora',
 				category: 'submission'
-			},
-			{
-				icon: '/icons/ePPE.png',
-				title: 'PPE Visual Inspections (e-PPE) Submission',
-				description: 'For OSH engineers to submit PPE visual inspections report',
-				route: '/osh/e-ppe',
-				category: 'submission',
-				subcategory: 'daily'
 			},
 			{
 				icon: '/icons/eSAC.png',
@@ -150,14 +162,6 @@ export const menuSections = [
 				description: 'For OSH engineers to submit staff claim form',
 				route: '/osh/e-scf',
 				category: 'submission'
-			},
-			{
-				icon: '/icons/eTBM.jpg',
-				title: 'Tool Box Meeting (e-TBM) Submission',
-				description: 'For OSH engineers to submit tool box meeting report',
-				route: '/osh/e-tbm',
-				category: 'submission',
-				subcategory: 'daily'
 			},
 			{
 				icon: '/icons/eTRF.png',

@@ -329,6 +329,11 @@
 
 	const show = (v) => (v === null || v === undefined || v === '' ? '-' : v);
 
+	const mapsUrl = (v) => {
+		const m = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/.exec(String(v ?? ''));
+		return m ? `https://www.google.com/maps?q=${m[1]},${m[2]}` : '';
+	};
+
 	async function loadHistory() {
 		loading = true;
 		errorMsg = '';
@@ -357,7 +362,7 @@
 					try {
 						const { data, error } = await supabase
 							.from(s.table)
-							.select(s.columns)
+							.select(s.columns === '*' ? '*' : `${s.columns}, submit_location`)
 							.eq('created_by', user.id)
 							.order('created_at', { ascending: false });
 						if (error) throw error;
@@ -523,6 +528,19 @@
 												{#each s.fields as [label, get] (label)}
 													<p><b>{label}:</b> {show(get(r))}</p>
 												{/each}
+												<p class="location-line">
+													<b>Submit Location:</b>
+													{#if mapsUrl(r.submit_location)}
+														<a
+															href={mapsUrl(r.submit_location)}
+															target="_blank"
+															rel="noopener"
+															class="photo-link">{r.submit_location}</a
+														>
+													{:else}
+														{show(r.submit_location)}
+													{/if}
+												</p>
 
 												{#each s.files ?? [] as [label, column] (column)}
 													<p class="doc-line">
@@ -585,6 +603,10 @@
 		gap: 12px;
 		margin: 10px;
 		padding: 10px;
+	}
+
+	.location-line {
+		overflow-wrap: anywhere;
 	}
 
 	.photo-link {

@@ -22,6 +22,7 @@
 	import Modal from '$lib/components/Modal.svelte';
 	import Pagination, { pageSlice } from '$lib/components/Pagination.svelte';
 	import { sendReport, downloadReport } from '$lib/make';
+	import { DAILY_FORMS, submissionTiming, mergeTiming } from '$lib/submission-timing';
 
 	const startYear = 2026;
 	const endYear = 2028;
@@ -44,7 +45,7 @@
 	let showSubmissionsModal = $state(false);
 	let selectedDay = $state(null);
 	let selectedDateKey = $state('');
-	let submissionStatus = $state({ tbm: false, ppe: false, hkp: false });
+	let submissionStatus = $state({ tbm: null, ppe: null, hkp: null });
 	let submissionsLoading = $state(false);
 	let submissionsError = $state('');
 	let dayStatusByDate = $state({});
@@ -149,18 +150,6 @@
 		return `${weekday}, ${dateStr}`;
 	}
 
-	function localDayRangeISO(year, month, day) {
-		const start = new Date(year, month, day, 0, 0, 0, 0);
-		const end = new Date(year, month, day, 23, 59, 59, 999);
-		return { startISO: start.toISOString(), endISO: end.toISOString() };
-	}
-
-	function monthRangeISO(year, month) {
-		const start = new Date(year, month, 1, 0, 0, 0, 0);
-		const end = new Date(year, month + 1, 0, 23, 59, 59, 999);
-		return { startISO: start.toISOString(), endISO: end.toISOString() };
-	}
-
 	// @ts-ignore
 	function getWeeks(year, month) {
 		const first = new Date(year, month, 1);
@@ -205,6 +194,11 @@
 		'not-working': 'Not Working'
 	};
 
+	function submissionLabel(timing) {
+		if (timing === 'late') return 'Submitted (Late)';
+		return timing ? 'Submitted' : 'Not submitted';
+	}
+
 	function getUserName(user) {
 		return `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.email || '-';
 	}
@@ -234,7 +228,7 @@
 	const loadSubmissionStatus = async (day, year, month) => {
 		submissionsLoading = true;
 		submissionsError = '';
-		submissionStatus = { tbm: false, ppe: false, hkp: false };
+		submissionStatus = { tbm: null, ppe: null, hkp: null };
 
 		try {
 			const auth = await requireUser();
@@ -242,44 +236,30 @@
 
 			const { supabase } = auth;
 			const userId = isAdmin ? selectedUserId || auth.user.id : auth.user.id;
+			const dateKey = getDateKey(year, month, day);
 
-			const { startISO, endISO } = localDayRangeISO(year, month, day);
+			const results = await Promise.all(
+				Object.entries(DAILY_FORMS).map(async ([key, form]) => {
+					const { data, error } = await supabase
+						.from(form.table)
+						.select(`created_at, ${form.dateColumn}`)
+						.eq('created_by', userId)
+						.eq(form.dateColumn, dateKey);
 
-			const [tbmRes, ppeRes, hkpRes] = await Promise.all([
-				supabase
-					.from('tbm_submissions')
-					.select('id')
-					.eq('created_by', userId)
-					.gte('created_at', startISO)
-					.lte('created_at', endISO)
-					.limit(1),
-				supabase
-					.from('ppe_submissions')
-					.select('id')
-					.eq('created_by', userId)
-					.gte('created_at', startISO)
-					.lte('created_at', endISO)
-					.limit(1),
-				supabase
-					.from('hkp_submissions')
-					.select('id')
-					.eq('created_by', userId)
-					.gte('created_at', startISO)
-					.lte('created_at', endISO)
-					.limit(1)
-			]);
+					if (error) throw error;
+					return { key, form, data: data ?? [] };
+				})
+			);
 
-			if (tbmRes.error) throw tbmRes.error;
-			if (ppeRes.error) throw ppeRes.error;
-			if (hkpRes.error) throw hkpRes.error;
+			const status = { tbm: null, ppe: null, hkp: null };
+			for (const { key, form, data } of results) {
+				for (const row of data) {
+					status[key] = mergeTiming(status[key], submissionTiming(row, form.dateColumn));
+				}
+			}
 
-			const status = {
-				tbm: (tbmRes.data ?? []).length > 0,
-				ppe: (ppeRes.data ?? []).length > 0,
-				hkp: (hkpRes.data ?? []).length > 0
-			};
 			submissionStatus = status;
-			dayStatusByDate = { ...dayStatusByDate, [getDateKey(year, month, day)]: status };
+			dayStatusByDate = { ...dayStatusByDate, [dateKey]: status };
 		} catch (error) {
 			submissionsError = error?.message ?? String(error);
 		} finally {
@@ -295,47 +275,39 @@
 		if (!userId) return;
 
 		try {
-			const { startISO, endISO } = monthRangeISO(year, month);
+			const firstDay = getDateKey(year, month, 1);
+			const lastDay = getDateKey(year, month, new Date(year, month + 1, 0).getDate());
 
-			const [tbmRes, ppeRes, hkpRes] = await Promise.all([
-				supabase
-					.from('tbm_submissions')
-					.select('created_at')
-					.eq('created_by', userId)
-					.gte('created_at', startISO)
-					.lte('created_at', endISO),
-				supabase
-					.from('ppe_submissions')
-					.select('created_at')
-					.eq('created_by', userId)
-					.gte('created_at', startISO)
-					.lte('created_at', endISO),
-				supabase
-					.from('hkp_submissions')
-					.select('created_at')
-					.eq('created_by', userId)
-					.gte('created_at', startISO)
-					.lte('created_at', endISO)
-			]);
+			const results = await Promise.all(
+				Object.entries(DAILY_FORMS).map(async ([key, form]) => {
+					const { data, error } = await supabase
+						.from(form.table)
+						.select(`created_at, ${form.dateColumn}`)
+						.eq('created_by', userId)
+						.gte(form.dateColumn, firstDay)
+						.lte(form.dateColumn, lastDay);
+
+					if (error) throw error;
+					return { key, form, data: data ?? [] };
+				})
+			);
 
 			if (token !== monthLoadToken) return;
 
-			if (tbmRes.error) throw tbmRes.error;
-			if (ppeRes.error) throw ppeRes.error;
-			if (hkpRes.error) throw hkpRes.error;
-
 			const statusMap = {};
 
-			const mark = (row, key) => {
-				const date = new Date(row.created_at);
-				const dateKey = getDateKey(date.getFullYear(), date.getMonth(), date.getDate());
-				statusMap[dateKey] = statusMap[dateKey] || { tbm: false, ppe: false, hkp: false };
-				statusMap[dateKey][key] = true;
-			};
+			for (const { key, form, data } of results) {
+				for (const row of data) {
+					const dateKey = String(row[form.dateColumn] ?? '').slice(0, 10);
+					if (!dateKey) continue;
 
-			(tbmRes.data ?? []).forEach((row) => mark(row, 'tbm'));
-			(ppeRes.data ?? []).forEach((row) => mark(row, 'ppe'));
-			(hkpRes.data ?? []).forEach((row) => mark(row, 'hkp'));
+					statusMap[dateKey] ??= { tbm: null, ppe: null, hkp: null };
+					statusMap[dateKey][key] = mergeTiming(
+						statusMap[dateKey][key],
+						submissionTiming(row, form.dateColumn)
+					);
+				}
+			}
 
 			dayStatusByDate = statusMap;
 		} catch (error) {
@@ -915,20 +887,32 @@
 		{:else}
 			<div class="submissions-info">
 				<p>Tool Box Meeting (e-TBM):</p>
-				<p class:status-ok={submissionStatus.tbm} class:status-bad={!submissionStatus.tbm}>
-					{submissionStatus.tbm ? 'Submitted' : 'Not submitted'}
+				<p
+					class:status-ok={submissionStatus.tbm === 'on-time'}
+					class:status-late={submissionStatus.tbm === 'late'}
+					class:status-bad={!submissionStatus.tbm}
+				>
+					{submissionLabel(submissionStatus.tbm)}
 				</p>
 			</div>
 			<div class="submissions-info">
 				<p>PPE Visual Inspections (e-PPE):</p>
-				<p class:status-ok={submissionStatus.ppe} class:status-bad={!submissionStatus.ppe}>
-					{submissionStatus.ppe ? 'Submitted' : 'Not submitted'}
+				<p
+					class:status-ok={submissionStatus.ppe === 'on-time'}
+					class:status-late={submissionStatus.ppe === 'late'}
+					class:status-bad={!submissionStatus.ppe}
+				>
+					{submissionLabel(submissionStatus.ppe)}
 				</p>
 			</div>
 			<div class="submissions-info">
 				<p>Housekeeping (e-HKP):</p>
-				<p class:status-ok={submissionStatus.hkp} class:status-bad={!submissionStatus.hkp}>
-					{submissionStatus.hkp ? 'Submitted' : 'Not submitted'}
+				<p
+					class:status-ok={submissionStatus.hkp === 'on-time'}
+					class:status-late={submissionStatus.hkp === 'late'}
+					class:status-bad={!submissionStatus.hkp}
+				>
+					{submissionLabel(submissionStatus.hkp)}
 				</p>
 			</div>
 		{/if}
@@ -1214,7 +1198,8 @@
 		font-weight: 600;
 	}
 
-	.status-incomplete {
+	.status-incomplete,
+	.status-late {
 		color: var(--warn);
 		font-weight: 600;
 	}
