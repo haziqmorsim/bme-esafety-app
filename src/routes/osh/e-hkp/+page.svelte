@@ -5,6 +5,7 @@
 	import FileText from '@lucide/svelte/icons/file-text';
 	import { supabase } from '$lib/supabase';
 	import { goto } from '$app/navigation';
+	import { tick } from 'svelte';
 	import { requireUser } from '$lib/auth-guard';
 	import Modal from '$lib/components/Modal.svelte';
 	import { toast } from '$lib/stores/toast';
@@ -28,6 +29,7 @@
 		site_walk: 0,
 		high_risk: 0,
 		uauc: 0,
+		good_practice: 0,
 		stop_work: 0,
 		lt_injuries: 0,
 		nlt_injuries: 0,
@@ -37,22 +39,105 @@
 		sd_occurrence: 0
 	};
 	let remarks = '';
+
+	let uauc_description = '';
+	let uauc_corrective_action = '';
+	let good_practice_details = '';
+	let stop_work_description = '';
+	let injury_remarks = '';
 	let acknowledged = false;
 	let created_at = '';
 	let created_by = '';
 
-	const reportItem = [
-		{ key: 'site_walk', label: 'No. of Site Walk:' },
-		{ key: 'high_risk', label: 'No. of High-risk Activities Observed:' },
-		{ key: 'uauc', label: 'No. of Unsafe Act Unsafe Condition (UAUC):' },
-		{ key: 'stop_work', label: 'No. of Stop Work:' },
-		{ key: 'lt_injuries', label: 'No. of Accidents (Lost Time Injuries):' },
-		{ key: 'nlt_injuries', label: 'No. of Accidents (No Lost Time Injuries):' },
-		{ key: 'opd', label: 'No. of Established Occupational Poisoning or Disease (OPD):' },
-		{ key: 'near_miss', label: 'No. of Near Miss Incident:' },
-		{ key: 'non_compliance', label: 'No. of Non Compliance:' },
-		{ key: 'sd_occurrence', label: 'No. of Significant Safety Occurrence / Dangerous Occurrence:' }
+	const reportBlocks = [
+		{
+			title: '',
+			items: [
+				{ key: 'site_walk', label: 'No. of Site Walk:' },
+				{ key: 'high_risk', label: 'No. of High-risk Activities Observed:' },
+				{ key: 'uauc', label: 'No. of Unsafe Act Unsafe Condition (UAUC):' },
+				{ key: 'good_practice', label: 'Good Practice:' },
+				{ key: 'stop_work', label: 'No. of Stop Work:' }
+			]
+		},
+		{
+			title: 'Injuries',
+			items: [
+				{ key: 'lt_injuries', label: 'No. of Accidents (Lost Time Injuries):' },
+				{ key: 'nlt_injuries', label: 'No. of Accidents (No Lost Time Injuries):' }
+			]
+		},
+		{
+			title: 'Non-Injuries',
+			items: [
+				{ key: 'opd', label: 'No. of Established Occupational Poisoning or Disease (OPD):' },
+				{ key: 'near_miss', label: 'No. of Near Miss Incident:' },
+				{ key: 'non_compliance', label: 'No. of Non Compliance:' }
+			]
+		},
+		{
+			title: '',
+			items: [
+				{
+					key: 'sd_occurrence',
+					label: 'No. of Significant Safety Occurrence / Dangerous Occurrence:'
+				}
+			]
+		}
 	];
+
+	const INJURY_KEYS = ['lt_injuries', 'nlt_injuries', 'opd', 'near_miss', 'non_compliance'];
+
+	function toCount(value) {
+		const n = Number(value);
+		return Number.isFinite(n) ? n : 0;
+	}
+
+	$: showUauc = toCount(report_day.uauc) >= 1;
+	$: showGoodPractice = toCount(report_day.good_practice) >= 1;
+	$: showStopWork = toCount(report_day.stop_work) >= 1;
+	$: showInjuryRemarks = INJURY_KEYS.some((key) => toCount(report_day[key]) >= 1);
+
+	let uaucSection;
+	let goodPracticeSection;
+	let stopWorkSection;
+	let injurySection;
+
+	const wasShown = {};
+	async function revealSection(name, shown, getElement) {
+		const justOpened = shown && !wasShown[name];
+		wasShown[name] = shown;
+		if (!justOpened) return;
+		await tick();
+		const el = getElement();
+		if (!el) return;
+		const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+		el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+	}
+
+	$: revealSection('uauc', showUauc, () => uaucSection);
+	$: revealSection('good_practice', showGoodPractice, () => goodPracticeSection);
+	$: revealSection('stop_work', showStopWork, () => stopWorkSection);
+	$: revealSection('injury', showInjuryRemarks, () => injurySection);
+
+	let uauc_photo_file = null;
+	let good_practice_photo_file = null;
+	let stop_work_photo_file = null;
+
+	$: if (!showUauc) {
+		uauc_photo_file = null;
+		uauc_description = '';
+		uauc_corrective_action = '';
+	}
+	$: if (!showGoodPractice) {
+		good_practice_photo_file = null;
+		good_practice_details = '';
+	}
+	$: if (!showStopWork) {
+		stop_work_photo_file = null;
+		stop_work_description = '';
+	}
+	$: if (!showInjuryRemarks) injury_remarks = '';
 
 	let hkp_photo_file;
 
@@ -117,6 +202,14 @@
 
 			const hkp_photo_path = await withTimeout(uploadToBucket(hkp_photo_file, 'hkp_site'));
 
+			const [uauc_photo_path, good_practice_photo_path, stop_work_photo_path] = await Promise.all([
+				showUauc ? withTimeout(uploadToBucket(uauc_photo_file, 'hkp_uauc')) : null,
+				showGoodPractice
+					? withTimeout(uploadToBucket(good_practice_photo_file, 'hkp_good_practice'))
+					: null,
+				showStopWork ? withTimeout(uploadToBucket(stop_work_photo_file, 'hkp_stop_work')) : null
+			]);
+
 			const submit_location = await locationPromise;
 			warnIfNoLocation(submit_location);
 
@@ -129,6 +222,14 @@
 				weather,
 				hkp_photo_path,
 				report_day,
+				uauc_description: showUauc ? uauc_description.trim() : null,
+				uauc_corrective_action: showUauc ? uauc_corrective_action.trim() : null,
+				uauc_photo_path,
+				good_practice_details: showGoodPractice ? good_practice_details.trim() : null,
+				good_practice_photo_path,
+				stop_work_description: showStopWork ? stop_work_description.trim() : null,
+				stop_work_photo_path,
+				injury_remarks: showInjuryRemarks ? injury_remarks.trim() : null,
 				remarks,
 				acknowledged,
 				created_by: user.id,
@@ -309,20 +410,153 @@
 		<hr />
 		<h2 class="heading">Report for the Day</h2>
 		<div class="report-group">
-			{#each reportItem as item (item.key)}
-				<div class="report-type">
-					<label for={item.key} class="report-label"><b>{item.label}</b></label>
-					<input required
-						type="number"
-						id={item.key}
-						min="0"
-						pattern="[0-9]*"
-						class="report-count"
-						bind:value={report_day[item.key]}
-					/>
+			{#each reportBlocks as block}
+				<div class="report-block" class:report-category={block.title}>
+					{#if block.title}
+						<h3 class="report-category-title">{block.title}</h3>
+					{/if}
+					<div class="report-grid">
+						{#each block.items as item (item.key)}
+							<div class="report-type">
+								<label for={item.key} class="report-label"><b>{item.label}</b></label>
+								<input required
+									type="number"
+									id={item.key}
+									min="0"
+									pattern="[0-9]*"
+									class="report-count"
+									bind:value={report_day[item.key]}
+								/>
+							</div>
+						{/each}
+					</div>
 				</div>
 			{/each}
 		</div>
+
+		{#if showUauc}
+			<div class="detail-box" bind:this={uaucSection}>
+				<h3 class="detail-title">Unsafe Act Unsafe Conditions Details</h3>
+				<div class="detail-field">
+					<label for="uauc_description" class="forms-label">Description:</label>
+					<textarea
+						id="uauc_description"
+						rows="4"
+						class="remarks"
+						placeholder="Description"
+						bind:value={uauc_description}
+						required
+					></textarea>
+				</div>
+				<div class="detail-field">
+					<label for="uauc_corrective_action" class="forms-label">Corrective Action:</label>
+					<textarea
+						id="uauc_corrective_action"
+						rows="4"
+						class="remarks"
+						placeholder="Corrective Action"
+						bind:value={uauc_corrective_action}
+						required
+					></textarea>
+				</div>
+				<div class="detail-field">
+					<h4 class="detail-label" data-label-for="uauc_photo">Photo of UAUC:</h4>
+					<div class="upload">
+						<p class="upload-text">
+							<input
+								type="file"
+								id="uauc_photo"
+								name="uauc_photo"
+								accept="image/png, image/jpeg"
+								onchange={(e) => onFile(e, (f) => (uauc_photo_file = f))}
+								required
+							/>
+						</p>
+					</div>
+				</div>
+			</div>
+		{/if}
+
+		{#if showGoodPractice}
+			<div class="detail-box" bind:this={goodPracticeSection}>
+				<h3 class="detail-title">Good Practice</h3>
+				<div class="detail-field">
+					<label for="good_practice_details" class="forms-label">Details:</label>
+					<textarea
+						id="good_practice_details"
+						rows="4"
+						class="remarks"
+						placeholder="Details"
+						bind:value={good_practice_details}
+						required
+					></textarea>
+				</div>
+				<div class="detail-field">
+					<h4 class="detail-label" data-label-for="good_practice_photo">Photo of Practice:</h4>
+					<div class="upload">
+						<p class="upload-text">
+							<input
+								type="file"
+								id="good_practice_photo"
+								name="good_practice_photo"
+								accept="image/png, image/jpeg"
+								onchange={(e) => onFile(e, (f) => (good_practice_photo_file = f))}
+								required
+							/>
+						</p>
+					</div>
+				</div>
+			</div>
+		{/if}
+
+		{#if showStopWork}
+			<div class="detail-box" bind:this={stopWorkSection}>
+				<h3 class="detail-title">Stop Work Details</h3>
+				<div class="detail-field">
+					<label for="stop_work_description" class="forms-label">Description:</label>
+					<textarea
+						id="stop_work_description"
+						rows="4"
+						class="remarks"
+						placeholder="Description"
+						bind:value={stop_work_description}
+						required
+					></textarea>
+				</div>
+				<div class="detail-field">
+					<h4 class="detail-label" data-label-for="stop_work_photo">Photo of Stop Work:</h4>
+					<div class="upload">
+						<p class="upload-text">
+							<input
+								type="file"
+								id="stop_work_photo"
+								name="stop_work_photo"
+								accept="image/png, image/jpeg"
+								onchange={(e) => onFile(e, (f) => (stop_work_photo_file = f))}
+								required
+							/>
+						</p>
+					</div>
+				</div>
+			</div>
+		{/if}
+
+		{#if showInjuryRemarks}
+			<div class="detail-box" bind:this={injurySection}>
+				<h3 class="detail-title">Injuries or Non-Injuries Details</h3>
+				<div class="detail-field">
+					<label for="injury_remarks" class="forms-label">Remark:</label>
+					<textarea
+						id="injury_remarks"
+						rows="4"
+						class="remarks"
+						placeholder="Remark"
+						bind:value={injury_remarks}
+						required
+					></textarea>
+				</div>
+			</div>
+		{/if}
 		<hr />
 		<h2 class="heading">Remarks</h2>
 		<p>
@@ -386,9 +620,54 @@
 		margin-bottom: 10px;
 	}
 
-	.report-group {
+	.report-grid {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.report-category {
+		margin: 14px 0 6px;
+	}
+
+	.report-category-title {
+		margin: 0;
+		font-size: 16px;
+		font-weight: 700;
+	}
+
+	.report-category .report-label::before {
+		content: "\2022";
+		font-weight: bold;
+		display: inline-block;
+		width: 1em;
+	}
+
+	.detail-box {
+		margin: 18px 0;
+		padding: 16px 18px;
+		border: 2px solid var(--brand);
+		border-radius: var(--r-lg);
+		background-color: var(--surface);
+		scroll-margin-top: 90px;
+	}
+
+	.detail-title {
+		margin: 0 0 12px;
+		font-size: 17px;
+		font-weight: 700;
+	}
+
+	.detail-field {
+		margin-bottom: 14px;
+	}
+
+	.detail-field .forms-label,
+	.detail-label {
+		display: block;
+		width: auto;
+		margin: 0 0 6px;
+		font-size: 14px;
+		font-weight: 600;
 	}
 
 	.report-count {
@@ -451,7 +730,7 @@
 			gap: 10px;
 		}
 
-		.report-group {
+		.report-grid {
 			display: block;
 		}
 

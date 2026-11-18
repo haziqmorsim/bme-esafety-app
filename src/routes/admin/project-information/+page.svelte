@@ -10,8 +10,10 @@
 	import { requireUser } from '$lib/auth-guard';
 	import { toast } from '$lib/stores/toast';
 	import Modal from '$lib/components/Modal.svelte';
+	import Combobox from '$lib/components/Combobox.svelte';
 	import Pagination, { pageSlice } from '$lib/components/Pagination.svelte';
 	import { REGIONS } from '$lib/data/regions';
+	import { MYDateKey } from '$lib/submission-timing';
 
 	const PAGE_SIZE = 9;
 
@@ -39,11 +41,50 @@
 		location: '',
 		start_date: '',
 		end_date: '',
-		pic_name: '',
-		pic_position: '',
-		pic_start_date: '',
-		pic_end_date: ''
+		project_engineer_name: '',
+		project_engineer_start_date: '',
+		project_engineer_end_date: '',
+		project_site_supervisor_name: '',
+		project_site_supervisor_start_date: '',
+		project_site_supervisor_end_date: '',
+		project_certified_oshc_name: '',
+		project_certified_oshc_start_date: '',
+		project_certified_oshc_end_date: '',
+		site_safety_supervisor_name: '',
+		site_safety_supervisor_start_date: '',
+		site_safety_supervisor_end_date: ''
 	};
+
+	const ROLES = [
+		{ key: 'project_engineer', label: 'Project Engineer' },
+		{ key: 'project_site_supervisor', label: 'Project Site Supervisor' },
+		{ key: 'project_certified_oshc', label: 'Project Certified OSH-C' },
+		{ key: 'site_safety_supervisor', label: 'Site Safety Supervisor' }
+	];
+
+	const CSV_HEADERS = [
+		'Project ID',
+		'Project Name',
+		'Status',
+		'Region',
+		'Location',
+		'Start Date',
+		'End Date',
+		'Project Engineer',
+		'Start Date',
+		'End Date',
+		'Project Site Supervisor',
+		'Start Date',
+		'End Date',
+		'Project Certified OSH-C',
+		'Start Date',
+		'End Date',
+		'Site Safety Supervisor',
+		'Start Date',
+		'End Date',
+		'Created By',
+		'Created At'
+	];
 
 	let projects = $state([]);
 	let loading = $state(true);
@@ -53,6 +94,7 @@
 	let selectedDataOption = $state('All');
 	let currentUserName = $state('');
 	let currentPage = $state(1);
+	let users = $state([]);
 
 	let showFormModal = $state(false);
 	let formMode = $state('create'); // 'create' | 'edit'
@@ -108,9 +150,14 @@
 		})
 	);
 
+	const userNames = $derived(
+		[...new Set(users.map((u) => `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim()).filter(Boolean))].sort(
+			(a, b) => a.localeCompare(b)
+		)
+	);
+
 	const paginatedProjects = $derived(pageSlice(filteredProjects, currentPage, PAGE_SIZE));
 
-	// Go back to the first page whenever a filter or the search text changes.
 	$effect(() => {
 		selectedStatus;
 		selectedDataOption;
@@ -141,7 +188,7 @@
 		const { data, error } = await supabase
 			.from('projects')
 			.select(
-				'id, project_name, project_id, status, region, location, start_date, end_date, pic_name, pic_position, pic_start_date, pic_end_date, created_at, created_by'
+				'id, project_name, project_id, status, region, location, start_date, end_date, project_engineer_name, project_engineer_start_date, project_engineer_end_date, project_site_supervisor_name, project_site_supervisor_start_date, project_site_supervisor_end_date, project_certified_oshc_name, project_certified_oshc_start_date, project_certified_oshc_end_date, site_safety_supervisor_name, site_safety_supervisor_start_date, site_safety_supervisor_end_date, created_at, created_by'
 			)
 			.order('project_name', { ascending: true });
 
@@ -154,6 +201,12 @@
 		}
 
 		projects = data ?? [];
+
+		const { data: profileRows } = await supabase
+			.from('profiles')
+			.select('first_name, last_name')
+			.order('first_name');
+		users = profileRows ?? [];
 	});
 
 	function openCreateModal() {
@@ -193,11 +246,20 @@
 			location: text(form.location),
 			start_date: form.start_date || null,
 			end_date: form.end_date || null,
-			pic_name: text(form.pic_name),
-			pic_position: text(form.pic_position),
-			pic_start_date: form.pic_start_date || null,
-			pic_end_date: form.pic_end_date || null
+			...Object.fromEntries(
+				ROLES.flatMap(({ key }) => [
+					[`${key}_name`, canonicalName(form[`${key}_name`])],
+					[`${key}_start_date`, form[`${key}_start_date`] || null],
+					[`${key}_end_date`, form[`${key}_end_date`] || null]
+				])
+			)
 		};
+	}
+
+	function canonicalName(value) {
+		const name = String(value ?? '').trim();
+		if (!name) return null;
+		return userNames.find((n) => n.toLowerCase() === name.toLowerCase()) ?? name;
 	}
 
 	function validate() {
@@ -210,6 +272,23 @@
 		if (blank(form.location)) e.location = 'Location is required.';
 		if (!form.start_date) e.start_date = 'Start date is required.';
 		if (!form.end_date) e.end_date = 'End date is required.';
+
+		for (const { key, label } of ROLES) {
+			const name = String(form[`${key}_name`] ?? '').trim();
+			const start = form[`${key}_start_date`];
+			const end = form[`${key}_end_date`];
+			if (name) {
+				const known = userNames.some((n) => n.toLowerCase() === name.toLowerCase());
+				if (userNames.length > 0 && !known) {
+					e[`${key}_name`] = `Select a name from the user list for ${label}.`;
+				}
+			} else if (start || end) {
+				e[`${key}_name`] = `Enter the ${label} name for these dates.`;
+			}
+			if (start && end && end < start) {
+				e[`${key}_end_date`] = 'End date cannot be before the start date.';
+			}
+		}
 		fieldErr = e;
 		return Object.keys(e).length === 0;
 	}
@@ -268,6 +347,66 @@
 		} finally {
 			isSaving = false;
 		}
+	}
+
+	const csvDate = (v) => String(v ?? '').slice(0, 10);
+
+	function csvDateTime(iso) {
+		const time = new Date(iso).getTime();
+		if (!iso || Number.isNaN(time)) return '';
+		return new Date(time + 8 * 60 * 60 * 1000).toISOString().slice(0, 16).replace('T', ' ');
+	}
+
+	function csvText(v) {
+		let text = String(v ?? '');
+		if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+		return csvQuote(text);
+	}
+
+	function csvQuote(text) {
+		return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+	}
+
+	function projectCsvRow(p) {
+		return [
+			csvText(p.project_id),
+			csvText(p.project_name),
+			csvText(p.status),
+			csvText(p.region),
+			csvText(p.location),
+			csvDate(p.start_date),
+			csvDate(p.end_date),
+			...ROLES.flatMap(({ key }) => [
+				csvText(p[`${key}_name`]),
+				csvDate(p[`${key}_start_date`]),
+				csvDate(p[`${key}_end_date`])
+			]),
+			csvText(p.created_by),
+			csvDateTime(p.created_at)
+		].join(',');
+	}
+
+	function exportProjects() {
+		if (projects.length === 0) {
+			toast.error('There are no projects to export.');
+			return;
+		}
+
+		const lines = [CSV_HEADERS.map(csvQuote).join(','), ...projects.map(projectCsvRow)];
+		const blob = new Blob(['\uFEFF' + lines.join('\r\n') + '\r\n'], {
+			type: 'text/csv;charset=utf-8'
+		});
+
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = `ProjectInformation_${MYDateKey(new Date())}.csv`;
+		document.body.appendChild(link);
+		link.click();
+		link.remove();
+		URL.revokeObjectURL(url);
+
+		toast.success(`Exported ${projects.length} project${projects.length === 1 ? '' : 's'}.`);
 	}
 
 	function openDeleteModal(project) {
@@ -368,7 +507,13 @@
 	<button class="button-assign" onclick={openCreateModal}>
 		<Plus size={20} /><span>Add Project</span>
 	</button>
-	<button class="button-download"><ArrowDownToLine size={20} /><span>Excel</span></button>
+	<button
+		class="button-download"
+		onclick={exportProjects}
+		disabled={loading || projects.length === 0}
+	>
+		<ArrowDownToLine size={20} /><span>Excel</span>
+	</button>
 </div>
 
 {#if loading}
@@ -392,8 +537,9 @@
 				<p><b>Start Date:</b> {formatDate(p.start_date)}</p>
 				<p><b>End Date:</b> {formatDate(p.end_date)}</p>
 				<p class="pic">Person In Charge</p>
-				<p><b>Name:</b> {p.pic_name ?? '-'}</p>
-				<p><b>Position:</b> {p.pic_position ?? '-'}</p>
+				{#each ROLES as role (role.key)}
+					<p><b>{role.label}:</b> {p[`${role.key}_name`] ?? '-'}</p>
+				{/each}
 			</div>
 			<div class="card-actions">
 				<button class="button-edit" onclick={() => openEditModal(p)}>
@@ -488,23 +634,38 @@
 		<h3 class="form-section">
 			{formMode === 'create' ? 'Person In Charge Information' : 'Edit Person In Charge Information'}
 		</h3>
-		<div class="form-grid">
-			<label>
-				Full Name:
-				<input type="text" bind:value={form.pic_name} />
-			</label>
-			<label>
-				Position:
-				<input type="text" bind:value={form.pic_position} />
-			</label>
-			<label>
-				Start Date:
-				{@render dateInput('pic_start_date')}
-			</label>
-			<label>
-				End Date:
-				{@render dateInput('pic_end_date')}
-			</label>
+		<p class="form-note">
+			Assign person in charge to project roles with their assignment periods
+		</p>
+
+		<div class="role-list">
+			{#each ROLES as role (role.key)}
+				<div class="role-block">
+					<label>
+						<span class="label-text">{role.label} Name:</span>
+						<Combobox
+							options={userNames}
+							placeholder="Type to search users"
+							emptyText="No matching users"
+							bind:value={form[`${role.key}_name`]}
+							invalid={!!fieldErr[`${role.key}_name`]}
+						/>
+						{#if fieldErr[`${role.key}_name`]}
+							<span class="field-err">{fieldErr[`${role.key}_name`]}</span>
+						{/if}
+					</label>
+					<div class="date-row">
+						<label>
+							Start Date:
+							{@render dateInput(`${role.key}_start_date`)}
+						</label>
+						<label>
+							End Date:
+							{@render dateInput(`${role.key}_end_date`)}
+						</label>
+					</div>
+				</div>
+			{/each}
 		</div>
 
 		{#if formError}
@@ -717,8 +878,52 @@
 	}
 
 	.form-section {
-		margin: 20px 0 12px;
+		margin: 20px 0 4px;
 		font-size: 16px;
+	}
+
+	.form-note {
+		margin: 0 0 12px;
+		color: var(--muted);
+		font-size: 13px;
+	}
+
+	.role-list {
+		display: grid;
+		gap: 12px;
+	}
+
+	.role-block {
+		display: grid;
+		gap: 12px;
+		padding: 12px;
+		border: 1px solid var(--line);
+		border-radius: var(--r-lg);
+		background-color: var(--surface-alt);
+	}
+
+	.date-row {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 12px;
+	}
+
+	.role-block label {
+		display: grid;
+		gap: 6px;
+		min-width: 0;
+		font-size: 13px;
+		font-weight: 600;
+	}
+
+	.role-block input {
+		width: 100%;
+		min-width: 0;
+		border: 1px solid var(--line);
+		border-radius: var(--r-md);
+		padding: 8px 10px;
+		font-size: 14px;
+		font-weight: normal;
 	}
 
 	.form-grid label {

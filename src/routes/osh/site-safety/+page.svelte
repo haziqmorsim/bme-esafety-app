@@ -3,6 +3,9 @@
 	import { supabase } from '$lib/supabase';
 	import Modal from '$lib/components/Modal.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
+	import Pagination, { pageSlice } from '$lib/components/Pagination.svelte';
+	import { toast } from '$lib/stores/toast';
+	import { csvDate, csvDateTime, downloadCsv } from '$lib/csv';
 
 	let formType = '';
 	let fromDate = '';
@@ -21,6 +24,11 @@
 
 	let loadToken = 0;
 
+	const PAGE_SIZE = 10;
+	const BATCH_SIZE = 1000;
+	let currentPage = 1;
+	let exporting = false;
+
 	const FORMS = {
 		eTBM: {
 			label: 'e-TBM',
@@ -29,6 +37,8 @@
 			projectNo: true,
 			projectName: true,
 			submittedBy: true,
+			titleDateKey: 'meeting_date',
+			showLocation: true,
 			summary: [{ label: 'Meeting Date', key: 'meeting_date', type: 'date' }],
 			files: [
 				{ label: 'TBM Form', key: 'tbm_form_path' },
@@ -38,8 +48,38 @@
 			details: [
 				{ label: 'Meeting Topics', key: 'meeting_topics', type: 'array' },
 				{ label: 'Competency', key: 'competency', type: 'competency' },
-				{ label: 'Attendance', key: 'attendance', type: 'attendance' },
-				{ label: 'Submit Location', key: 'submit_location' }
+				{ label: 'Attendance', key: 'attendance', type: 'attendance' }
+			],
+			exportColumns: [
+				['id'],
+				['created_at', 'timestamp'],
+				['created_by'],
+				['project_name'],
+				['project_no'],
+				['region'],
+				['location'],
+				['meeting_date', 'date'],
+				['weather'],
+				['meeting_topics', 'array'],
+				['other_topic'],
+				['competency', 'competency'],
+				['attendance', 'attendance'],
+				['conducted_by'],
+				['conducted_position'],
+				['remarks'],
+				['acknowledged', 'boolean'],
+				['tbm_form_path'],
+				['tbm_photo_path'],
+				['ptw_form_path'],
+				['other_doc_path'],
+				['created_by_name'],
+				['report_id'],
+				['submit_location'],
+				['make_status'],
+				['make_sent_at', 'timestamp'],
+				['make_completed_at', 'timestamp'],
+				['make_error'],
+				['report_url']
 			]
 		},
 		ePPE: {
@@ -49,11 +89,35 @@
 			projectNo: true,
 			projectName: true,
 			submittedBy: true,
+			titleDateKey: 'activity_date',
+			showLocation: true,
 			summary: [{ label: 'Activity Date', key: 'activity_date', type: 'date' }],
 			files: [{ label: 'PPE Photo', key: 'ppe_photo_path' }],
-			details: [
-				{ label: 'Attendance', key: 'attendance', type: 'attendance' },
-				{ label: 'Submit Location', key: 'submit_location' }
+			details: [{ label: 'Attendance', key: 'attendance', type: 'attendanceall' }],
+			exportColumns: [
+				['id'],
+				['project_name'],
+				['project_no'],
+				['region'],
+				['location'],
+				['activity_date', 'date'],
+				['weather'],
+				['conducted_by'],
+				['conducted_position'],
+				['attendance', 'attendanceall'],
+				['ppe_photo_path'],
+				['remarks'],
+				['acknowledged', 'boolean'],
+				['created_at', 'timestamp'],
+				['created_by'],
+				['created_by_name'],
+				['report_id'],
+				['submit_location'],
+				['make_status'],
+				['make_sent_at', 'timestamp'],
+				['make_completed_at', 'timestamp'],
+				['make_error'],
+				['report_url']
 			]
 		},
 		eHKP: {
@@ -63,11 +127,41 @@
 			projectNo: true,
 			projectName: true,
 			submittedBy: true,
+			titleDateKey: 'activity_date',
+			showLocation: true,
 			summary: [{ label: 'Activity Date', key: 'activity_date', type: 'date' }],
 			files: [{ label: 'HKP Photo', key: 'hkp_photo_path' }],
-			details: [
-				{ label: 'Report Day', key: 'report_day', type: 'reportday' },
-				{ label: 'Submit Location', key: 'submit_location' }
+			details: [{ label: 'Report Day', key: 'report_day', type: 'reportday' }],
+			exportColumns: [
+				['project_name'],
+				['project_no'],
+				['region'],
+				['location'],
+				['activity_date', 'date'],
+				['weather'],
+				['hkp_photo_path'],
+				['report_day', 'reportday'],
+				['remarks'],
+				['acknowledged', 'boolean'],
+				['created_at', 'timestamp'],
+				['created_by'],
+				['created_by_name'],
+				['id'],
+				['report_id'],
+				['submit_location'],
+				['make_status'],
+				['make_sent_at', 'timestamp'],
+				['make_completed_at', 'timestamp'],
+				['make_error'],
+				['report_url'],
+				['uauc_description'],
+				['uauc_corrective_action'],
+				['uauc_photo_path'],
+				['good_practice_details'],
+				['good_practice_photo_path'],
+				['stop_work_description'],
+				['stop_work_photo_path'],
+				['injury_remarks']
 			]
 		},
 		eZCA: {
@@ -353,6 +447,14 @@
 		}
 	};
 
+	const REPORT_DAY_LABELS = {
+		opd: 'OPD',
+		uauc: 'UAUC',
+		lt_injuries: 'LT Injuries',
+		nlt_injuries: 'NLT Injuries',
+		sd_occurrence: 'SD Occurrence'
+	};
+
 	const formOptions = Object.entries(FORMS).map(([key, form]) => ({ key, label: form.label }));
 
 	const REPORT_STATUS = {
@@ -368,6 +470,8 @@
 		if (form.projectNo) cols.add('project_no');
 		if (form.projectName) cols.add('project_name');
 		if (form.titleKey) cols.add(form.titleKey);
+		if (form.titleDateKey) cols.add(form.titleDateKey);
+		if (form.showLocation) cols.add('submit_location');
 		if (form.report) {
 			cols.add('report_url');
 			cols.add('make_status');
@@ -457,10 +561,16 @@
 		return p.split('/').pop() || p;
 	}
 
+	function formatTitleDate(value) {
+		const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value ?? ''));
+		return m ? `${m[3]}${m[2]}${m[1].slice(2)}` : '';
+	}
+
 	function cardTitle(row) {
 		const form = FORMS[formType];
 		const head = form.projectNo ? (row.project_no ?? '-') : (row[form.titleKey] ?? '-');
-		return `${head} ${formType}`;
+		const date = form.titleDateKey ? formatTitleDate(row[form.titleDateKey]) : '';
+		return [head, formType, date].filter(Boolean).join(' ');
 	}
 
 	function filterRows(list, text, type) {
@@ -479,6 +589,29 @@
 	}
 
 	$: rows = filterRows(allRows, searchText, formType);
+	$: pageRows = pageSlice(rows, currentPage, PAGE_SIZE);
+
+	async function fetchAll(form, columns, startISO, endISO) {
+		const all = [];
+		for (let from = 0; ; from += BATCH_SIZE) {
+			let q = supabase
+				.from(form.table)
+				.select(columns)
+				.order('created_at', { ascending: false })
+				.order('id', { ascending: true })
+				.range(from, from + BATCH_SIZE - 1);
+
+			if (startISO) q = q.gte('created_at', startISO);
+			if (endISO) q = q.lte('created_at', endISO);
+
+			const { data, error } = await q;
+			if (error) throw error;
+
+			all.push(...(data ?? []));
+			if (!data || data.length < BATCH_SIZE) break;
+		}
+		return all;
+	}
 
 	async function loadForms() {
 		const token = ++loadToken;
@@ -487,6 +620,7 @@
 		loading = true;
 		errorMsg = '';
 		allRows = [];
+		currentPage = 1;
 
 		if (!form) {
 			loading = false;
@@ -494,25 +628,88 @@
 		}
 
 		try {
-			let q = supabase
-				.from(form.table)
-				.select(listColumns(form))
-				.order('created_at', { ascending: false });
-
-			const startISO = toISOStart(fromDate);
-			const endISO = toISOEnd(toDate);
-			if (startISO) q = q.gte('created_at', startISO);
-			if (endISO) q = q.lte('created_at', endISO);
-
-			const { data, error } = await q;
+			const data = await fetchAll(form, listColumns(form), toISOStart(fromDate), toISOEnd(toDate));
 			if (token !== loadToken) return;
-			if (error) throw error;
 
-			allRows = data ?? [];
+			allRows = data;
 		} catch (e) {
 			if (token === loadToken) errorMsg = e?.message ?? String(e);
 		} finally {
 			if (token === loadToken) loading = false;
+		}
+	}
+
+	function exportValue(value, type) {
+		if (value === null || value === undefined) return '';
+		switch (type) {
+			case 'timestamp':
+				return csvDateTime(value);
+			case 'date':
+				return csvDate(value);
+			case 'boolean':
+				return value ? 'Yes' : 'No';
+			case 'array':
+				return Array.isArray(value) ? value.join('; ') : String(value);
+			case 'competency':
+			case 'attendance':
+			case 'attendanceall':
+			case 'reportday':
+				return formatObjectInline(value, type);
+			default:
+				return String(value);
+		}
+	}
+
+	function formatObjectInline(value, type) {
+		if (!value || typeof value !== 'object') return String(value ?? '');
+		return Object.entries(value)
+			.map(([key, v]) => {
+				const label =
+					type === 'reportday' ? (REPORT_DAY_LABELS[key] ?? titleCase(key)) : titleCase(key);
+				const shown = type === 'competency' ? (v ? titleCase(v) : '-') : (v ?? 0);
+				return `${label}: ${shown}`;
+			})
+			.join('; ');
+	}
+
+	async function exportExcel() {
+		const form = FORMS[formType];
+		if (!form) return;
+		if (!form.exportColumns) {
+			toast.info(`Excel export is not available for ${form.label} yet.`);
+			return;
+		}
+		if (exporting) return;
+
+		exporting = true;
+		try {
+			const columns = form.exportColumns;
+			const data = await fetchAll(
+				form,
+				columns.map(([key]) => key).join(', '),
+				toISOStart(fromDate),
+				toISOEnd(toDate)
+			);
+			const exportRows = filterRows(data, searchText, formType);
+
+			if (exportRows.length === 0) {
+				toast.error('There are no records to export.');
+				return;
+			}
+
+			const today = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+			downloadCsv(
+				`${form.label}_${today}.csv`,
+				columns.map(([key]) => key),
+				exportRows.map((row) => columns.map(([key, type]) => exportValue(row[key], type)))
+			);
+			toast.success(
+				`Exported ${exportRows.length} ${form.label} record${exportRows.length === 1 ? '' : 's'}.`
+			);
+		} catch (e) {
+			toast.error(`Could not export: ${e?.message ?? e}`);
+		} finally {
+			exporting = false;
 		}
 	}
 
@@ -561,48 +758,40 @@
 		return String(value);
 	}
 
-	function formatAttendance(attendance) {
+	function titleCase(text) {
+		return String(text)
+			.replace(/_/g, ' ')
+			.replace(/\b\w/g, (c) => c.toUpperCase());
+	}
+
+	function formatAttendance(attendance, { showZero = false } = {}) {
 		if (!attendance || typeof attendance !== 'object') return '-';
 
-		return Object.entries(attendance)
-			.filter(([, value]) => Number(value) > 0)
-			.map(
-				([key, value]) =>
-					`${key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}: ${value}`
-			)
-			.join(', ');
+		const lines = Object.entries(attendance)
+			.filter(([, value]) => showZero || Number(value) > 0)
+			.map(([key, value]) => `${titleCase(key)}: ${value ?? 0}`);
+
+		return lines.length ? lines.join('\n') : '-';
 	}
 
 	function formatCompetency(obj) {
 		if (!obj || typeof obj !== 'object') return '-';
 
-		return Object.entries(obj)
-			.filter(([, value]) => value && value !== 'no_activity')
-			.map(([key, value]) => `${key.replace(/_/g, ' ').toUpperCase()}: ${value}`)
-			.join(', ');
+		const lines = Object.entries(obj).map(
+			([key, value]) => `${titleCase(key)}: ${value ? titleCase(value) : '-'}`
+		);
+
+		return lines.length ? lines.join('\n') : '-';
 	}
 
 	function formatReportDay(reportDay) {
 		if (!reportDay || typeof reportDay !== 'object') return '-';
 
-		const labelMap = {
-			opd: 'OPD',
-			uauc: 'UAUC',
-			high_risk: 'High Risk',
-			near_miss: 'Near Miss',
-			site_walk: 'Site Walk',
-			stop_work: 'Stop Work',
-			lt_injuries: 'LT Injuries',
-			nlt_injuries: 'NLT Injuries',
-			sd_occurrence: 'SD Occurrence',
-			non_compliance: 'Non-Compliance'
-		};
+		const lines = Object.entries(reportDay).map(
+			([key, value]) => `${REPORT_DAY_LABELS[key] ?? titleCase(key)}: ${value ?? 0}`
+		);
 
-		const parts = Object.entries(reportDay)
-			.filter(([, value]) => Number(value) > 0)
-			.map(([key, value]) => `${labelMap[key] ?? key}: ${value}`);
-
-		return parts.length ? parts.join(', ') : 'None';
+		return lines.length ? lines.join('\n') : '-';
 	}
 
 	function itemResult(item) {
@@ -671,6 +860,8 @@
 				return formatKm(value);
 			case 'attendance':
 				return formatAttendance(value);
+			case 'attendanceall':
+				return formatAttendance(value, { showZero: true });
 			case 'competency':
 				return formatCompetency(value);
 			case 'reportday':
@@ -699,7 +890,13 @@
 	</div>
 	<div>
 		<p>Project No./Project Name</p>
-		<input type="text" placeholder="MP1234" class="filter-input" bind:value={searchText} />
+		<input
+			type="text"
+			placeholder="MP1234"
+			class="filter-input"
+			bind:value={searchText}
+			oninput={() => (currentPage = 1)}
+		/>
 	</div>
 	<div>
 		<p>From Date</p>
@@ -727,9 +924,18 @@
 	</div>
 </div>
 
-<div class="site-safety-download">
-	<button class="button-download"><ArrowDownToLine size={20} /><span>Excel</span></button>
-</div>
+{#if formType}
+	<div class="site-safety-download">
+		<button
+			type="button"
+			class="button-download"
+			onclick={exportExcel}
+			disabled={loading || exporting}
+		>
+			<ArrowDownToLine size={20} /><span>{exporting ? 'Exporting...' : 'Excel'}</span>
+		</button>
+	</div>
+{/if}
 
 {#if !formType}
 	<p class="hint">Please choose an e-Form data.</p>
@@ -740,7 +946,7 @@
 {:else if rows.length === 0}
 	<p class="hint">No records found.</p>
 {:else}
-	{#each rows as r (r.id)}
+	{#each pageRows as r (r.id)}
 		{@const form = FORMS[formType]}
 		<div class="project-box">
 			<div class="project-box-top">
@@ -764,6 +970,18 @@
 				<p><b>Submitted By:&nbsp;</b>{r.created_by_name ?? '-'}</p>
 			{/if}
 			<p><b>Created Date:&nbsp;</b>{formatDateTime(r.created_at)}</p>
+			{#if form.showLocation}
+				<p>
+					<b>Submit Location:&nbsp;</b>
+					{#if mapsUrl(r.submit_location)}
+						<a href={mapsUrl(r.submit_location)} target="_blank" rel="noopener" class="file-url">
+							{r.submit_location}
+						</a>
+					{:else}
+						{r.submit_location || '-'}
+					{/if}
+				</p>
+			{/if}
 			{#each form.summary as field (field.key)}
 				<p><b>{field.label}:&nbsp;</b>{formatValue(r[field.key], field.type)}</p>
 			{/each}
@@ -797,7 +1015,20 @@
 			{/if}
 		</div>
 	{/each}
-	<Modal open={showDetailsModal} title="e-Form Details" onclose={closeDetailsModal} closeOnBackdrop>
+	<div class="pagination-wrap">
+		<Pagination
+			bind:page={currentPage}
+			totalItems={rows.length}
+			pageSize={PAGE_SIZE}
+			itemLabel="records"
+		/>
+	</div>
+	<Modal
+		open={showDetailsModal}
+		title={activeRow && FORMS[formType].titleDateKey ? cardTitle(activeRow) : 'e-Form Details'}
+		onclose={closeDetailsModal}
+		closeOnBackdrop
+	>
 		{#if modalLoading}
 			<Spinner inline size={140} label="Loading details" />
 		{:else if modalError}
@@ -892,6 +1123,10 @@
 	.site-safety-download {
 		display: flex;
 		margin: 10px;
+	}
+
+	.pagination-wrap {
+		padding: 0 10px 10px;
 	}
 
 	@media (max-width: 1024px) {

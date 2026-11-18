@@ -15,7 +15,8 @@
 	import Modal from '$lib/components/Modal.svelte';
 	import Pagination, { pageSlice } from '$lib/components/Pagination.svelte';
 	import { toast } from '$lib/stores/toast';
-	import { sendReport, downloadReport } from '$lib/make';
+	import { sendReport } from '$lib/make';
+	import { csvDate, csvDateTime, downloadCsv } from '$lib/csv';
 
 	const BUCKET = 'scf_uploads';
 	const PAGE_SIZE = 20;
@@ -218,12 +219,14 @@
 	let reportBusy = $state('');
 
 	async function runReportAction(action, scope) {
+		// 'staff' (e-mail each user), 'me' (e-mail me)
 		if (reportBusy) return;
 		const userId = selectedUser;
 		if (scope === 'one' && !userId) {
 			toast.error('Select a user first.');
 			return;
 		}
+		if (scope === 'all' && userId) return;
 
 		const year = viewYear;
 		const month = viewMonth;
@@ -231,14 +234,6 @@
 		reportBusy = `${action}-${scope}`;
 
 		try {
-			if (action === 'download') {
-				toast.info('Preparing the Staff Claim Form(s) in Make. This can take a minute...');
-				const res = await downloadReport('claim-forms', { year, month, userId: scope === 'one' ? userId : null });
-				if (res.ok) toast.success(`Downloaded ${res.fileName}`);
-				else toast.error(res.error);
-				return;
-			}
-
 			const res = await sendReport({
 				report: 'claim',
 				year,
@@ -258,6 +253,52 @@
 		} finally {
 			reportBusy = '';
 		}
+	}
+
+	const CSV_COLUMNS = [
+		['No', (c, i) => i + 1],
+		['Name', (c) => claimantName(c)],
+		['Claim Date', (c) => csvDate(c.claim_date)],
+		['Project No.', (c) => c.project_no],
+		['Travel Location', (c) => c.description],
+		['Staff Position', (c) => c.staff_position],
+		['Department', (c) => c.department],
+		...AMOUNT_FIELDS.map((f) => [`${f.label} (RM)`, (c) => money(toNumber(c[f.key]))]),
+		['Total Amount (RM)', (c) => money(claimAmount(c))],
+		['Remarks', (c) => c.claim_remarks],
+		['Attachment', (c) => c.maps_screenshot_path],
+		['Submit Location', (c) => c.submit_location],
+		['Acknowledged', (c) => (c.acknowledged ? 'Yes' : 'No')],
+		['Created At', (c) => csvDateTime(c.created_at)]
+	];
+
+	// 'all' = every user's claims, 'one' = only the selected user's claims.
+	function exportClaims(scope) {
+		if (loading) return;
+		if (scope === 'one' && !selectedUser) {
+			toast.error('Select a user first.');
+			return;
+		}
+		if (scope === 'all' && selectedUser) return;
+
+		const rows = scope === 'one' ? claims.filter((c) => c.created_by === selectedUser) : claims;
+		if (rows.length === 0) {
+			toast.error(`There are no claims to export for ${monthNames[viewMonth]} ${viewYear}.`);
+			return;
+		}
+
+		const who =
+			scope === 'one'
+				? `_${(userNameById[selectedUser] || 'User').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+				: '';
+		downloadCsv(
+			`StaffClaims_${viewYear}-${pad(viewMonth + 1)}${who}.csv`,
+			CSV_COLUMNS.map(([header]) => header),
+			rows.map((claim, i) => CSV_COLUMNS.map(([, read]) => read(claim, i) ?? ''))
+		);
+		toast.success(
+			`Exported ${rows.length} claim${rows.length === 1 ? '' : 's'} for ${monthNames[viewMonth]} ${viewYear}.`
+		);
 	}
 
 	function openDetails(claim) {
@@ -290,12 +331,12 @@
 <h1 class="title">Staff Claim Dashboard</h1>
 
 <div class="project-box">
-	<div class="total-card">
-		<p class="total-label">Monthly Total Claim</p>
-		<p class="total-value">RM {money(monthlyTotal)}</p>
-	</div>
+	<div class="top-section">
+		<div class="total-card">
+			<p class="total-label">Monthly Total Claim</p>
+			<p class="total-value">RM {money(monthlyTotal)}</p>
+		</div>
 
-	<div class="toolbar">
 		<div class="month-nav">
 			<button class="nav" onclick={prevMonth} aria-label="Previous month">
 				<ChevronsLeft />
@@ -315,63 +356,63 @@
 				{/each}
 			</select>
 		</div>
-	</div>
 
-	<div class="action-buttons">
-		<button
-			class="action-button bg-teal"
-			aria-label="Mails"
-			title="Send Staff Claim Form to All Users' E-mails"
-			disabled={!!reportBusy}
-			onclick={() => runReportAction('staff', 'all')}
-		>
-			{#if reportBusy === 'staff-all'}<span class="busy-dot"></span>{:else}<Mails />{/if}
-		</button>
-		<button
-			class="action-button bg-navy"
-			aria-label="Files"
-			title="Send All Staff Claim Forms to My E-mail"
-			disabled={!!reportBusy}
-			onclick={() => runReportAction('me', 'all')}
-		>
-			{#if reportBusy === 'me-all'}<span class="busy-dot"></span>{:else}<Files />{/if}
-		</button>
-		<button
-			class="action-button bg-green"
-			aria-label="Download"
-			title="Download All Staff Claim Forms in Excel"
-			disabled={!!reportBusy}
-			onclick={() => runReportAction('download', 'all')}
-		>
-			{#if reportBusy === 'download-all'}<span class="busy-dot"></span>{:else}<Download />{/if}
-		</button>
-		<button
-			class="action-button bg-teal"
-			aria-label="Mail"
-			title="Send Staff Claim Form to This User's E-mail"
-			disabled={!!reportBusy || !selectedUser}
-			onclick={() => runReportAction('staff', 'one')}
-		>
-			{#if reportBusy === 'staff-one'}<span class="busy-dot"></span>{:else}<Mail />{/if}
-		</button>
-		<button
-			class="action-button bg-navy"
-			aria-label="File"
-			title="Send This User's Staff Claim Form to My E-mail"
-			disabled={!!reportBusy || !selectedUser}
-			onclick={() => runReportAction('me', 'one')}
-		>
-			{#if reportBusy === 'me-one'}<span class="busy-dot"></span>{:else}<FileIcon />{/if}
-		</button>
-		<button
-			class="action-button bg-green"
-			aria-label="Download"
-			title="Download This User's Staff Claim Form in Excel"
-			disabled={!!reportBusy || !selectedUser}
-			onclick={() => runReportAction('download', 'one')}
-		>
-			{#if reportBusy === 'download-one'}<span class="busy-dot"></span>{:else}<ArrowDownToLine />{/if}
-		</button>
+		<div class="action-buttons">
+			<button
+				class="action-button bg-teal"
+				aria-label="Mails"
+				title="Send Staff Claim Form to All Users' E-mails"
+				disabled={!!reportBusy || !!selectedUser}
+				onclick={() => runReportAction('staff', 'all')}
+			>
+				{#if reportBusy === 'staff-all'}<span class="busy-dot"></span>{:else}<Mails />{/if}
+			</button>
+			<button
+				class="action-button bg-navy"
+				aria-label="Files"
+				title="Send All Staff Claim Forms to My E-mail"
+				disabled={!!reportBusy || !!selectedUser}
+				onclick={() => runReportAction('me', 'all')}
+			>
+				{#if reportBusy === 'me-all'}<span class="busy-dot"></span>{:else}<Files />{/if}
+			</button>
+			<button
+				class="action-button bg-green"
+				aria-label="Download"
+				title="Download All Users' Staff Claims in CSV"
+				disabled={loading || !!selectedUser}
+				onclick={() => exportClaims('all')}
+			>
+				<Download />
+			</button>
+			<button
+				class="action-button bg-teal"
+				aria-label="Mail"
+				title="Send Staff Claim Form to This User's E-mail"
+				disabled={!!reportBusy || !selectedUser}
+				onclick={() => runReportAction('staff', 'one')}
+			>
+				{#if reportBusy === 'staff-one'}<span class="busy-dot"></span>{:else}<Mail />{/if}
+			</button>
+			<button
+				class="action-button bg-navy"
+				aria-label="File"
+				title="Send This User's Staff Claim Form to My E-mail"
+				disabled={!!reportBusy || !selectedUser}
+				onclick={() => runReportAction('me', 'one')}
+			>
+				{#if reportBusy === 'me-one'}<span class="busy-dot"></span>{:else}<FileIcon />{/if}
+			</button>
+			<button
+				class="action-button bg-green"
+				aria-label="Download"
+				title="Download This User's Staff Claims in CSV"
+				disabled={loading || !selectedUser}
+				onclick={() => exportClaims('one')}
+			>
+				<ArrowDownToLine />
+			</button>
+		</div>
 	</div>
 
 	{#if errorMsg}
@@ -553,11 +594,33 @@
 		font-weight: 600;
 	}
 
-	.toolbar {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-end;
-		gap: 12px;
+	.top-section {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		grid-template-areas:
+			'total user'
+			'month actions';
+		gap: 12px 16px;
+	}
+
+	.total-card {
+		grid-area: total;
+		justify-self: start;
+		align-self: end;
+	}
+
+	.user-filter {
+		grid-area: user;
+		justify-self: end;
+		align-self: end;
+		min-width: 0;
+		max-width: 100%;
+	}
+
+	.month-nav {
+		grid-area: month;
+		justify-self: start;
+		align-self: center;
 	}
 
 	.month-nav {
@@ -597,6 +660,7 @@
 	.user-select {
 		height: 40px;
 		width: 350px;
+		max-width: 100%;
 		padding: 0 10px;
 		font-size: 14px;
 		cursor: pointer;
@@ -610,14 +674,17 @@
 	}
 
 	.action-buttons {
+		grid-area: actions;
+		justify-self: end;
+		align-self: center;
 		display: flex;
 		justify-content: flex-end;
 		gap: 12px;
-		margin-top: 12px;
 	}
 
 	.action-button {
-		width: 60px;
+		flex: 0 1 60px;
+		width: 50px;
 		height: 44px;
 		padding: 0;
 		display: flex;
@@ -739,14 +806,35 @@
 		}
 	}
 
+	/* Narrow tablets: not enough room for the month and the buttons side by side. */
+	@media (max-width: 720px) {
+		.top-section {
+			grid-template-areas:
+				'total user'
+				'month month'
+				'actions actions';
+		}
+	}
+
 	@media (max-width: 600px) {
 		.total-card {
 			display: block;
 		}
 
-		.toolbar {
-			flex-direction: column;
-			align-items: stretch;
+		.top-section {
+			grid-template-columns: minmax(0, 1fr);
+			grid-template-areas:
+				'total'
+				'month'
+				'user'
+				'actions';
+		}
+
+		.total-card,
+		.user-filter,
+		.month-nav,
+		.action-buttons {
+			justify-self: stretch;
 		}
 
 		.month-nav {
