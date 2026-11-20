@@ -4,19 +4,27 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { getSupabase } from '$lib/supabase';
 	import { authUser } from '$lib/auth-store';
+	import { hasAdminDepartment } from '$lib/admin';
 	import History from '@lucide/svelte/icons/history';
 	import Calendar from '@lucide/svelte/icons/calendar-days';
 	import Bell from '@lucide/svelte/icons/bell';
 	import House from '@lucide/svelte/icons/house';
 	import LogOut from '@lucide/svelte/icons/log-out';
+	import Settings from '@lucide/svelte/icons/settings';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 
-	const navItems = [
+	const baseNavItems = [
 		{ href: '/', label: 'Main Menu', icon: House },
 		{ href: '/osh/notifications', label: 'Notifications', icon: Bell },
 		{ href: '/osh/calendar-view', label: 'Calendar', icon: Calendar },
 		{ href: '/osh/submission-history', label: 'History', icon: History }
 	];
+
+	let isAdmin = $state(false);
+
+	const settingsNavItem = { href: '/admin/settings', label: 'Settings', icon: Settings };
+
+	const navItems = $derived(isAdmin ? [...baseNavItems, settingsNavItem] : baseNavItems);
 
 	const isAuthPage = $derived.by(() => {
 		const path = $page.url.pathname;
@@ -55,6 +63,7 @@
 	async function syncUser(user) {
 		if (!user) {
 			hasUser = false;
+			isAdmin = false;
 			userName = 'User';
 			firstName = '';
 			lastName = '';
@@ -68,15 +77,17 @@
 
 		const { data: profile, error: profileError } = await supabase
 			.from('profiles')
-			.select('nickname, first_name, last_name')
+			.select('nickname, first_name, last_name, department')
 			.eq('id', user.id)
 			.single();
 
 		if (profileError) {
 			userName = user.email ?? 'User';
+			isAdmin = false;
 			return;
 		}
 
+		isAdmin = hasAdminDepartment(profile?.department);
 		firstName = profile?.first_name ?? '';
 		lastName = profile?.last_name ?? '';
 		userName = profile?.nickname || profile?.first_name || user.email;
@@ -96,6 +107,7 @@
 		const supabase = getSupabase();
 		if (supabase) await supabase.auth.signOut();
 		hasUser = false;
+		isAdmin = false;
 		userName = 'User';
 		firstName = '';
 		lastName = '';

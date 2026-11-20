@@ -17,20 +17,12 @@
 	import { toast } from '$lib/stores/toast';
 	import { getSubmitLocation, sendToMake, warnIfNoLocation } from '$lib/make';
 	import Modal from '$lib/components/Modal.svelte';
+	import { appSettings, siteAllowanceOptions } from '$lib/settings';
 
 	const BUCKET = 'scf_uploads';
 	const ATTACHMENT_FOLDER = 'maps_screenshot';
 
-	const SITE_ALLOWANCE_OPTIONS = [
-		{ id: 'r1', value: '30', label: 'Peninsular (Hometown) to Klang Valley (KL & Selangor) (Site) ~ RM30 / Day' },
-		{ id: 'r2', value: '50', label: 'Peninsular (Hometown) to Other States in Peninsular (Site) ~ RM50 / Day' },
-		{ id: 'r3', value: '65', label: 'Peninsular (Hometown) to Sabah/Sarawak (Site) ~ RM65 / Day' },
-		{ id: 'r4', value: '50', label: 'Sabah (Hometown) to Sabah (Site) ~ RM50 / Day' },
-		{ id: 'r5', value: '50', label: 'Sarawak (Hometown) to Sarawak (Site) ~ RM50 / Day' },
-		{ id: 'r6', value: '65', label: 'Sabah (Hometown) to Sarawak (Site) ~ RM65 / Day' },
-		{ id: 'r7', value: '65', label: 'Sarawak (Hometown) to Sabah (Site) ~ RM65 / Day' },
-		{ id: 'r8', value: '65', label: 'Sabah/Sarawak (Hometown) to Peninsular (Site) ~ RM65 / Day' }
-	];
+	const SITE_ALLOWANCE_OPTIONS = $derived(siteAllowanceOptions($appSettings.site_allowance_routes));
 	const LEGACY_ROUTE = 'legacy';
 
 	const AMOUNT_FIELDS = [

@@ -13,12 +13,16 @@
 	import { checkSession } from '$lib/auth-guard';
 	import { getSupabase } from '$lib/supabase';
 	import { goto, onNavigate } from '$app/navigation';
+	import { appSettings, loadSettings } from '$lib/settings';
+	import Info from '@lucide/svelte/icons/info';
+	import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
+	import X from '@lucide/svelte/icons/x';
 
 	/** @type {{ children: any }} */
 	const { children } = $props();
 
 	const MIN_SPINNER_MS = 400;
-	const INACTIVITY_MS = 30 * 60 * 1000;
+	const SETTINGS_REFRESH_MS = 5 * 60 * 1000;
 	const INACTIVITY_CHECK_MS = 60 * 1000;
 	const NAVIGATION_SESSION_CHECK_MS = 8000;
 	const FORCED_RELOAD_KEY = 'bme:forced-reload-at';
@@ -31,7 +35,15 @@
 	/** @type {ReturnType<typeof setInterval> | null} */
 	let inactivityInterval = null;
 	let lastActivity = Date.now();
+	let lastSettingsLoad = 0;
 	let signingOut = false;
+
+	const inactivityMinutes = $derived($appSettings.session_timeout_minutes);
+	const inactivityMs = $derived(inactivityMinutes * 60 * 1000);
+
+	const announcement = $derived($appSettings.announcement);
+	let dismissedAnnouncement = $state('');
+	const announcementKey = $derived(`${announcement.level}|${announcement.message.trim()}`);
 
 	const AUTH_PATHS = [
 		'/signin',
@@ -47,6 +59,23 @@
 	const isAuthPage = $derived(AUTH_PATHS.includes($page.url.pathname));
 
 	const mustChangePassword = $derived(Boolean($authUser?.app_metadata?.must_change_password));
+
+	const showAnnouncement = $derived(
+		!isAuthPage &&
+			Boolean($authUser) &&
+			announcement.enabled &&
+			announcement.message.trim() !== '' &&
+			dismissedAnnouncement !== announcementKey
+	);
+
+	function refreshSettings() {
+		lastSettingsLoad = Date.now();
+		loadSettings();
+	}
+
+	$effect(() => {
+		if ($authUser && !isAuthPage && !mustChangePassword) refreshSettings();
+	});
 
 	$effect(() => {
 		if (mustChangePassword && $page.url.pathname !== CHANGE_PW_PATH) {
@@ -99,7 +128,7 @@
 			signingOut = false;
 		}
 
-		toast.info('You were signed out after 30 minutes of inactivity.');
+		toast.info(`You were signed out after ${inactivityMinutes} minutes of inactivity.`);
 		await goto('/signin');
 	}
 
@@ -108,13 +137,15 @@
 	}
 
 	function checkInactivity() {
-		if (Date.now() - lastActivity >= INACTIVITY_MS) {
+		if (Date.now() - lastActivity >= inactivityMs) {
 			handleSessionTimeout();
 		}
 	}
 
 	function onVisibilityChange() {
-		if (document.visibilityState === 'visible') checkInactivity();
+		if (document.visibilityState !== 'visible') return;
+		checkInactivity();
+		if (get(authUser) && Date.now() - lastSettingsLoad > SETTINGS_REFRESH_MS) refreshSettings();
 	}
 
 	const ACTIVITY_EVENTS = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
@@ -173,6 +204,31 @@
 		<Header />
 	{/if}
 
+	{#if showAnnouncement}
+		<div
+			class="announcement"
+			class:warning={announcement.level === 'warning'}
+			role={announcement.level === 'warning' ? 'alert' : 'status'}
+		>
+			<div class="announcement-inner">
+				{#if announcement.level === 'warning'}
+					<TriangleAlert size={18} />
+				{:else}
+					<Info size={18} />
+				{/if}
+				<p>{announcement.message.trim()}</p>
+				<button
+					type="button"
+					class="announcement-close"
+					aria-label="Dismiss announcement"
+					onclick={() => (dismissedAnnouncement = announcementKey)}
+				>
+					<X size={16} />
+				</button>
+			</div>
+		</div>
+	{/if}
+
 	<main class="app-main" class:auth={isAuthPage}>
 		{@render children()}
 	</main>
@@ -190,6 +246,54 @@
 		min-height: 100dvh;
 		display: flex;
 		flex-direction: column;
+	}
+
+	.announcement {
+		border-bottom: 1px solid var(--brand);
+		background-color: var(--brand-tint);
+		color: var(--ink);
+		font-size: 14px;
+	}
+
+	.announcement.warning {
+		border-bottom-color: var(--warn);
+		background-color: var(--warn-bg);
+	}
+
+	.announcement-inner {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		max-width: 1320px;
+		margin: 0 auto;
+		padding: 10px 20px;
+		box-sizing: border-box;
+	}
+
+	.announcement-inner :global(svg) {
+		flex-shrink: 0;
+		margin-top: 2px;
+	}
+
+	.announcement p {
+		flex: 1;
+		min-width: 0;
+		margin: 0;
+		line-height: 1.45;
+		overflow-wrap: anywhere;
+		white-space: pre-line;
+	}
+
+	.announcement-close {
+		flex-shrink: 0;
+		padding: 4px;
+		border-color: transparent;
+		background-color: transparent;
+		color: var(--ink);
+	}
+
+	.announcement-close:hover:not(:disabled) {
+		background-color: var(--hover-tint);
 	}
 
 	.app-main {
